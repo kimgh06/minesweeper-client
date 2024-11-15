@@ -9,12 +9,20 @@ interface WindowSize {
 export default function useScreenSize() {
   // 초기 값으로 화면의 너비와 높이를 설정
   const [windowSize, setWindowSize] = useState<WindowSize>({
-    windowWidth: window.innerWidth,
-    windowHeight: window.innerHeight,
+    windowWidth: 0,
+    windowHeight: 0,
   });
 
   useEffect(() => {
     // 윈도우 리사이즈 이벤트 핸들러
+    if (typeof window === 'undefined') {
+      return;
+    }
+    setWindowSize({
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
+    });
+
     const handleResize = () => {
       setWindowSize({
         windowWidth: window.innerWidth,
