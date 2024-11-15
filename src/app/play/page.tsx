@@ -3,7 +3,7 @@
 import S from './page.module.scss';
 
 /** hooks */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import useScreenSize from '@/hooks/useScreenSize';
 import useCursorStore from '../store/cursorStore';
 
@@ -19,7 +19,7 @@ export default function Play() {
   const originTileSize = 80;
   const paddingTiles = 1.3;
   const zoomScale = 1.5;
-  const ws = useRef<WebSocket | null>(null);
+  // const ws = useRef<WebSocket | null>(null);
   const { x: cursorX, y: cursorY } = useCursorStore();
   const { windowWidth, windowHeight } = useScreenSize();
   const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
@@ -92,19 +92,19 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, cursorX, cursorY]);
 
-  const sendMessage = (message: string) => {
-    // 요청 형식
-    //{
-    // 	"event": "fetch-tiles",
-    // 	"data": {
-    // 		"start_x": int,
-    // 		"start_y": int,
-    // 		"end_x": int,
-    // 		"end_y": int
-    // 	}
-    // }
-    ws.current?.send(message);
-  };
+  // const sendMessage = (message: string) => {
+  // 요청 형식
+  //{
+  // 	"event": "fetch-tiles",
+  // 	"data": {
+  // 		"start_x": int,
+  // 		"start_y": int,
+  // 		"end_x": int,
+  // 		"end_y": int
+  // 	}
+  // }
+  //   ws.current?.send(message);
+  // };
 
   /** 초기화 */
   // useEffect(() => {
