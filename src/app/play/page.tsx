@@ -8,7 +8,8 @@ import useScreenSize from '@/hooks/useScreenSize';
 import useCursorStore from '../store/cursorStore';
 
 /** components */
-import Tile from '@/components/tile';
+import ArrowKeys from '@/components/arrowkeys';
+import CanvasRenderer from '@/components/canvas';
 
 interface Point {
   x: number;
@@ -17,7 +18,7 @@ interface Point {
 
 export default function Play() {
   const originTileSize = 80;
-  const paddingTiles = 1.3;
+  const paddingTiles = 1;
   const zoomScale = 1.5;
   // const ws = useRef<WebSocket | null>(null);
   const { x: cursorX, y: cursorY } = useCursorStore();
@@ -39,10 +40,34 @@ export default function Play() {
     const newTileSize = originTileSize * zoom;
     const tileVisibleWidth = Math.floor((windowWidth * paddingTiles) / newTileSize);
     const tileVisibleHeight = Math.floor((windowHeight * paddingTiles) / newTileSize);
+
+    const tilePaddingWidth = Math.floor(tileVisibleWidth / 2);
+    const tilePaddingHeight = Math.floor(tileVisibleHeight / 2);
+    setStartPoint({
+      x: cursorX - tilePaddingWidth,
+      y: cursorY - tilePaddingHeight,
+    });
+    setEndPoint({
+      x: cursorX + tilePaddingWidth,
+      y: cursorY + tilePaddingHeight,
+    });
+    setTileSize(newTileSize);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [windowWidth, windowHeight, zoom, cursorX, cursorY]);
+
+  /** zoom event */
+  useEffect(() => {
+    const newTileSize = originTileSize * zoom;
+    const tileVisibleWidth = Math.floor((windowWidth * paddingTiles) / newTileSize);
+    const tileVisibleHeight = Math.floor((windowHeight * paddingTiles) / newTileSize);
+
+    const tilePaddingWidth = Math.floor(tileVisibleWidth / 2);
+    const tilePaddingHeight = Math.floor(tileVisibleHeight / 2);
     setTiles(tiles => {
       let newTiles = [...tiles];
       /** 확장일 경우 */
-      if (tileVisibleWidth > endPoint.x - startPoint.x) {
+      if (tileVisibleWidth > endPoint.x - startPoint.x + 1 || tileVisibleHeight > endPoint.y - startPoint.y + 1) {
         /** 가로 획 추가 */
         const columnTile = [] as string[];
         const widthExtendLength = Math.round(tilePaddingWidth - (endPoint.x - startPoint.x) / 2);
@@ -73,24 +98,44 @@ export default function Play() {
           newTiles = newTiles.map(row => row.slice(1, -1));
         }
       }
-      console.log(newTiles.map(row => row.join('')).join('\n'));
       return newTiles;
     });
-
-    const tilePaddingWidth = Math.floor(tileVisibleWidth / 2);
-    const tilePaddingHeight = Math.floor(tileVisibleHeight / 2);
-    setStartPoint({
-      x: cursorX - tilePaddingWidth,
-      y: cursorY - tilePaddingHeight,
-    });
-    setEndPoint({
-      x: cursorX + tilePaddingWidth,
-      y: cursorY + tilePaddingHeight,
-    });
-    setTileSize(newTileSize);
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowWidth, windowHeight, zoom, cursorX, cursorY]);
+  }, [windowWidth, windowHeight, zoom]);
+
+  /** cursor change evnet */
+  useEffect(() => {
+    /** 커서 위치가 바뀌었을 때 */
+    let newTiles = [...tiles];
+    const widthExtendLength = 1;
+    const heightExtendLength = 1;
+    /** 우측 이동 */
+    if (Math.abs(cursorX - startPoint.x) > Math.abs(cursorX - endPoint.x)) {
+      for (let i = 0; i < widthExtendLength; i++) {
+        newTiles = newTiles.map(row => [...row.slice(1), '?']);
+      }
+    } else if (Math.abs(cursorX - startPoint.x) < Math.abs(cursorX - endPoint.x)) {
+      /** 좌측 이동 */
+      for (let i = 0; i < widthExtendLength; i++) {
+        newTiles = newTiles.map(row => ['?', ...row.slice(0, -1)]);
+      }
+    }
+    /** 아래 이동 */
+    if (Math.abs(cursorY - startPoint.y) > Math.abs(cursorY - endPoint.y)) {
+      for (let i = 0; i < heightExtendLength; i++) {
+        newTiles.shift();
+        newTiles.push(Array.from({ length: newTiles[0].length }, () => '?'));
+      }
+    } else if (Math.abs(cursorY - startPoint.y) < Math.abs(cursorY - endPoint.y)) {
+      /** 위 이동 */
+      for (let i = 0; i < heightExtendLength; i++) {
+        newTiles.pop();
+        newTiles.unshift(Array.from({ length: newTiles[0].length }, () => '?'));
+      }
+    }
+    setTiles(newTiles);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cursorX, cursorY]);
 
   // const sendMessage = (message: string) => {
   // 요청 형식
@@ -139,8 +184,9 @@ export default function Play() {
 
   return (
     <div className={S.page}>
+      <ArrowKeys />
       <div className={S.zoombar}>
-        {zoom * zoomScale < 1.5 && <button onClick={() => setZoom(zoom * zoomScale)}>+</button>}
+        {zoom * zoomScale < 1.7 && <button onClick={() => setZoom(zoom * zoomScale)}>+</button>}
         {zoom / zoomScale > 0.2 && <button onClick={() => setZoom(zoom / zoomScale)}>-</button>}
       </div>
       <div className={S.monitoringFrame}>
@@ -153,25 +199,11 @@ export default function Play() {
         <p>
           Rendered Y ({startPoint.y} ~ {endPoint.y})
         </p>
-        <p>Total {(endPoint.x - startPoint.x) * (endPoint.y - startPoint.y)} Tiles</p>
+        <p>Total {(endPoint.x - startPoint.x + 1) * (endPoint.y - startPoint.y + 1)} Tiles</p>
         <p></p>
       </div>
       <div className={S.canvas}>
-        <div className={S.map}>
-          {tiles.map((row, yIndex) => (
-            <div className={S.row} key={yIndex}>
-              {row.map((content, xIndex) => (
-                <Tile
-                  key={`${xIndex + startPoint.x - cursorX},${yIndex + startPoint.y - cursorY}`}
-                  x={xIndex + startPoint.x - cursorX}
-                  y={yIndex + startPoint.y - cursorY}
-                  content={content}
-                  tileSize={tileSize}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
+        <CanvasRenderer tiles={tiles} tileSize={tileSize} startPoint={startPoint} cursorX={cursorX} cursorY={cursorY} />
       </div>
     </div>
   );

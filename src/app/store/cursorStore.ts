@@ -9,8 +9,8 @@ interface CursorState {
 }
 
 const useCursorStore = create<CursorState>(set => ({
-  x: 4,
-  y: 3,
+  x: 0,
+  y: 0,
   setX: x => set({ x }),
   setY: y => set({ y }),
   setPosition: (x, y) => set({ x, y }),
