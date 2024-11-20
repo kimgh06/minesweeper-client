@@ -64,34 +64,18 @@ export default function ArrowKeys() {
   return (
     <div className={S.buttons} onPointerUp={() => setActivedButton('')}>
       <div className={S.row}>
-        <button
-          onPointerDown={up}
-          onPointerOver={() => activedButton !== '' && up()}
-          className={`${activedButton === 'up' && S.active}`}
-        >
+        <button onPointerDown={up} className={`${activedButton === 'up' && S.active}`}>
           <div className={S.text}>Up</div>
         </button>
-        <button
-          onPointerDown={right}
-          onPointerOver={() => activedButton !== '' && right()}
-          className={`${activedButton === 'right' && S.active}`}
-        >
+        <button onPointerDown={right} className={`${activedButton === 'right' && S.active}`}>
           <div className={S.text}>Right</div>
         </button>
       </div>
       <div className={S.row}>
-        <button
-          onPointerDown={left}
-          onPointerOver={() => activedButton !== '' && left()}
-          className={`${activedButton === 'left' && S.active}`}
-        >
+        <button onPointerDown={left} className={`${activedButton === 'left' && S.active}`}>
           <div className={S.text}>Left</div>
         </button>
-        <button
-          onPointerDown={down}
-          onPointerOver={() => activedButton !== '' && down()}
-          className={`${activedButton === 'down' && S.active}`}
-        >
+        <button onPointerDown={down} className={`${activedButton === 'down' && S.active}`}>
           <div className={S.text}>Down</div>
         </button>
       </div>

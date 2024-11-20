@@ -19,8 +19,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   startPoint,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const tilePaddingWidth = 4 + ((paddingTiles - 1) * (cursorX - startPoint.x)) / paddingTiles;
-  const tilePaddingHeight = 3 + ((paddingTiles - 1) * (cursorY - startPoint.y)) / paddingTiles;
+  const tilePaddingWidth = 4.5 + ((paddingTiles - 1) * (cursorX - startPoint.x)) / paddingTiles;
+  const tilePaddingHeight = 3.25 + ((paddingTiles - 1) * (cursorY - startPoint.y)) / paddingTiles;
   const borderPixel = 5;
   const { windowHeight, windowWidth } = useScreenSize();
 
@@ -37,8 +37,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const tileArrayY = Math.floor(clickY / tileSize + tilePaddingHeight);
 
     // 캔버스 좌표를 실제 좌표로 변환
-    const tileX = tileArrayX + startPoint.x - 4;
-    const tileY = tileArrayY + startPoint.y - 3;
+    const tileX = Math.round(tileArrayX + startPoint.x - 4.5);
+    const tileY = Math.round(tileArrayY + startPoint.y - 3.25);
 
     // 클릭한 타일의 내용 가져오기
     const clickedTileContent = tiles[tileArrayY]?.[tileArrayX] ?? 'Out of bounds';
@@ -62,37 +62,73 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         const y = (rowIndex - tilePaddingHeight) * tileSize;
 
         if (content === 'C') {
-          const gradient1 = ctx.createLinearGradient(
+          const innerGradient = ctx.createLinearGradient(
             x + borderPixel,
             y + borderPixel,
             x + tileSize - borderPixel * 2,
             y + tileSize - borderPixel * 2,
           );
-          gradient1.addColorStop(0, '#8fe340');
-          gradient1.addColorStop(1, '#A4E863');
+          innerGradient.addColorStop(0, '#8fe340');
+          innerGradient.addColorStop(1, '#A4E863');
 
           // Outer Rectangle Color Gradient
-          const gradient2 = ctx.createLinearGradient(x, y, x + tileSize, y + tileSize);
-          gradient2.addColorStop(0, '#A8EC67');
-          gradient2.addColorStop(0.4, '#A8EC67');
-          gradient2.addColorStop(0.6, '#81D92C');
-          gradient2.addColorStop(1, '#81D92C');
+          const outerGradient = ctx.createLinearGradient(x, y, x + tileSize, y + tileSize);
+          outerGradient.addColorStop(0, '#A8EC67');
+          outerGradient.addColorStop(0.4, '#A8EC67');
+          outerGradient.addColorStop(0.6, '#81D92C');
+          outerGradient.addColorStop(1, '#81D92C');
 
           // Drawing outer rectangle
-          ctx.fillStyle = gradient2;
+          ctx.fillStyle = outerGradient;
           ctx.fillRect(x, y, tileSize, tileSize);
 
           // Drawing inner rectangle
-          ctx.fillStyle = gradient1;
+          ctx.fillStyle = innerGradient;
           ctx.fillRect(x + borderPixel, y + borderPixel, tileSize - borderPixel * 2, tileSize - borderPixel * 2); // Adjust dimensions for inner rect
+        } else if (
+          content === 'O' ||
+          content === '1' ||
+          content === '2' ||
+          content === '3' ||
+          content === '4' ||
+          content === '5' ||
+          content === '6' ||
+          content === '7' ||
+          content === '8'
+        ) {
+          const innerGradient = ctx.createLinearGradient(
+            x + borderPixel,
+            y + borderPixel,
+            x + tileSize - borderPixel * 2,
+            y + tileSize - borderPixel * 2,
+          );
+          innerGradient.addColorStop(0, '#F1FAD1');
+          innerGradient.addColorStop(1, '#E9F6B9');
+
+          const outerGradient = ctx.createLinearGradient(x, y, x + tileSize, y + tileSize);
+          outerGradient.addColorStop(0, '#E9FAAA');
+          outerGradient.addColorStop(0.4, '#E9FAAA');
+          outerGradient.addColorStop(0.6, '#F5FDD8');
+          outerGradient.addColorStop(1, '#F5FDD8');
+
+          ctx.fillStyle = outerGradient;
+          ctx.fillRect(x, y, tileSize, tileSize);
+
+          ctx.fillStyle = innerGradient;
+          ctx.fillRect(x + borderPixel, y + borderPixel, tileSize - borderPixel * 2, tileSize - borderPixel * 2); // Adjust dimensions for inner rect
+
+          if (content !== 'O') {
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(content, x + tileSize / 2, y + tileSize / 2);
+          }
         } else {
           // 타일 색상 설정 (콘텐츠에 따라 변경)
           switch (content) {
             case 'F':
               ctx.fillStyle = 'red';
-              break;
-            case '1':
-              ctx.fillStyle = 'blue';
               break;
             default:
               ctx.fillStyle = 'white';
@@ -116,8 +152,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     });
 
     // 커서 표시
-    const cursorCanvasX = ((cursorX - startPoint.x) / paddingTiles) * tileSize;
-    const cursorCanvasY = ((cursorY - startPoint.y) / paddingTiles) * tileSize;
+    const cursorCanvasX = ((cursorX - startPoint.x) / paddingTiles - 0.5) * tileSize;
+    const cursorCanvasY = ((cursorY - startPoint.y) / paddingTiles - 0.25) * tileSize;
     ctx.fillStyle = 'yellow';
     ctx.fillRect(cursorCanvasX, cursorCanvasY, tileSize, tileSize);
   }, [tiles, tileSize, cursorX, cursorY, startPoint]);

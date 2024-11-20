@@ -18,7 +18,7 @@ interface Point {
 
 export default function Play() {
   const originTileSize = 80;
-  const paddingTiles = 3;
+  const paddingTiles = 1.5;
   const zoomScale = 1.5;
   // const ws = useRef<WebSocket | null>(null);
   const { x: cursorX, y: cursorY } = useCursorStore();
@@ -28,13 +28,13 @@ export default function Play() {
   const [zoom, setZoom] = useState<number>(1);
   const [tileSize, setTileSize] = useState<number>(originTileSize); //px
   const [tiles, setTiles] = useState<string[][]>([
-    ['1', '1', '1', 'C', 'C', 'C', 'C', 'C', 'C'],
-    ['2', 'F', '2', 'C', 'C', 'C', 'C', 'C', 'C'],
-    ['2', 'F', '2', 'C', 'C', 'C', 'C', 'C', 'C'],
-    ['1', '1', '1', 'C', 'C', '1', '1', '1', 'C'],
-    ['C', 'C', 'C', 'C', 'C', '1', 'F', '1', 'C'],
-    ['C', 'C', 'C', 'C', 'C', '1', '1', '1', 'C'],
-    ['C', 'C', 'C', 'C', 'C', 'C', 'C', 'C', 'C'],
+    ['1', '1', '1', 'O', 'O', 'C', 'C', 'C', 'O'],
+    ['2', 'F', '2', 'O', 'O', 'C', 'C', 'C', 'O'],
+    ['2', 'F', '2', 'O', 'O', 'C', 'C', 'C', 'O'],
+    ['1', '1', '1', 'O', 'O', '1', '1', '1', 'O'],
+    ['C', 'C', 'C', 'O', 'O', '1', 'F', '1', 'O'],
+    ['C', 'C', 'C', 'O', 'O', '1', '1', '1', 'O'],
+    ['C', 'C', 'C', 'O', 'O', 'C', 'C', 'C', 'O'],
   ]);
   useEffect(() => {
     const newTileSize = originTileSize * zoom;
@@ -72,13 +72,13 @@ export default function Play() {
         const columnTile = [] as string[];
         const widthExtendLength = Math.round(tilePaddingWidth - (endPoint.x - startPoint.x) / 2);
         for (let i = 0; i < widthExtendLength; i++) {
-          columnTile.push('?');
+          columnTile.push('C');
         }
         /** 가로 요청 보내야 함. */
         newTiles = newTiles.map(row => [...columnTile, ...row, ...columnTile]);
         /** 세로 획 추가 */
         const heightExtendLength = Math.floor(tilePaddingHeight - (endPoint.y - startPoint.y) / 2);
-        const rowTile = Array.from({ length: newTiles[0].length }, () => '?');
+        const rowTile = Array.from({ length: newTiles[0].length }, () => 'C');
         for (let i = 0; i < heightExtendLength; i++) {
           /** 세로 요청 보내야 함. */
           newTiles.unshift(rowTile);
@@ -112,25 +112,25 @@ export default function Play() {
     /** 우측 이동 */
     if (Math.abs(cursorX - startPoint.x) > Math.abs(cursorX - endPoint.x)) {
       for (let i = 0; i < widthExtendLength; i++) {
-        newTiles = newTiles.map(row => [...row.slice(1), '?']);
+        newTiles = newTiles.map(row => [...row.slice(1), 'C']);
       }
     } else if (Math.abs(cursorX - startPoint.x) < Math.abs(cursorX - endPoint.x)) {
       /** 좌측 이동 */
       for (let i = 0; i < widthExtendLength; i++) {
-        newTiles = newTiles.map(row => ['?', ...row.slice(0, -1)]);
+        newTiles = newTiles.map(row => ['C', ...row.slice(0, -1)]);
       }
     }
     /** 아래 이동 */
     if (Math.abs(cursorY - startPoint.y) > Math.abs(cursorY - endPoint.y)) {
       for (let i = 0; i < heightExtendLength; i++) {
         newTiles.shift();
-        newTiles.push(Array.from({ length: newTiles[0].length }, () => '?'));
+        newTiles.push(Array.from({ length: newTiles[0].length }, () => 'C'));
       }
     } else if (Math.abs(cursorY - startPoint.y) < Math.abs(cursorY - endPoint.y)) {
       /** 위 이동 */
       for (let i = 0; i < heightExtendLength; i++) {
         newTiles.pop();
-        newTiles.unshift(Array.from({ length: newTiles[0].length }, () => '?'));
+        newTiles.unshift(Array.from({ length: newTiles[0].length }, () => 'C'));
       }
     }
     setTiles(newTiles);
