@@ -83,7 +83,6 @@ export default function Play() {
         );
 
         const rowlength = Math.abs(end_x - start_x) + 1;
-
         const columnlength = Math.abs(start_y - end_y) + 1;
         console.log(tiles, rowlength, columnlength);
         const newTiles = [] as string[][];
