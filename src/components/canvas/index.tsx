@@ -7,12 +7,20 @@ interface CanvasRendererProps {
   tileSize: number;
   cursorX: number;
   cursorY: number;
+  paddingTiles: number;
   startPoint: { x: number; y: number };
 }
-const CanvasRenderer: React.FC<CanvasRendererProps> = ({ tiles, tileSize, cursorX, cursorY, startPoint }) => {
+const CanvasRenderer: React.FC<CanvasRendererProps> = ({
+  paddingTiles,
+  tiles,
+  tileSize,
+  cursorX,
+  cursorY,
+  startPoint,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const tilePaddingHeight = 3;
-  const tilePaddingWidth = 4;
+  const tilePaddingWidth = 4 + ((paddingTiles - 1) * (cursorX - startPoint.x)) / paddingTiles;
+  const tilePaddingHeight = 3 + ((paddingTiles - 1) * (cursorY - startPoint.y)) / paddingTiles;
   const borderPixel = 5;
   const { windowHeight, windowWidth } = useScreenSize();
 
@@ -25,12 +33,12 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({ tiles, tileSize, cursor
     const clickY = event.clientY - rect.top;
 
     // 캔버스 좌표를 배열 좌표로 변환
-    const tileArrayX = Math.floor(clickX / tileSize) + tilePaddingWidth;
-    const tileArrayY = Math.floor(clickY / tileSize) + tilePaddingHeight;
+    const tileArrayX = Math.floor(clickX / tileSize + tilePaddingWidth);
+    const tileArrayY = Math.floor(clickY / tileSize + tilePaddingHeight);
 
     // 캔버스 좌표를 실제 좌표로 변환
-    const tileX = tileArrayX + startPoint.x - tilePaddingWidth;
-    const tileY = tileArrayY + startPoint.y - tilePaddingHeight;
+    const tileX = tileArrayX + startPoint.x - 4;
+    const tileY = tileArrayY + startPoint.y - 3;
 
     // 클릭한 타일의 내용 가져오기
     const clickedTileContent = tiles[tileArrayY]?.[tileArrayX] ?? 'Out of bounds';
@@ -108,8 +116,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({ tiles, tileSize, cursor
     });
 
     // 커서 표시
-    const cursorCanvasX = (cursorX - startPoint.x) * tileSize;
-    const cursorCanvasY = (cursorY - startPoint.y) * tileSize;
+    const cursorCanvasX = ((cursorX - startPoint.x) / paddingTiles) * tileSize;
+    const cursorCanvasY = ((cursorY - startPoint.y) / paddingTiles) * tileSize;
     ctx.fillStyle = 'yellow';
     ctx.fillRect(cursorCanvasX, cursorCanvasY, tileSize, tileSize);
   }, [tiles, tileSize, cursorX, cursorY, startPoint]);

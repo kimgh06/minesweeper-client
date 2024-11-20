@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { act, useEffect, useState } from 'react';
 import useCursorStore from '@/app/store/cursorStore';
 import S from './style.module.scss';
 
@@ -46,30 +46,52 @@ export default function ArrowKeys() {
       }
     };
 
+    const handleKeyUp = () => {
+      setActivedButton('');
+    };
+
     // Adding event listener
     window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
 
     // Cleanup the event listener
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [x, y]); // Adding x, y as dependencies to make sure they are updated in the event listener
+  }, [x, y]);
 
   return (
-    <div className={S.buttons}>
+    <div className={S.buttons} onPointerUp={() => setActivedButton('')}>
       <div className={S.row}>
-        <button onClick={up} className={`${activedButton === 'up' && S.active}`}>
+        <button
+          onPointerDown={up}
+          onPointerOver={() => activedButton !== '' && up()}
+          className={`${activedButton === 'up' && S.active}`}
+        >
           <div className={S.text}>Up</div>
         </button>
-        <button onClick={right} className={`${activedButton === 'right' && S.active}`}>
+        <button
+          onPointerDown={right}
+          onPointerOver={() => activedButton !== '' && right()}
+          className={`${activedButton === 'right' && S.active}`}
+        >
           <div className={S.text}>Right</div>
         </button>
       </div>
       <div className={S.row}>
-        <button onClick={left} className={`${activedButton === 'left' && S.active}`}>
+        <button
+          onPointerDown={left}
+          onPointerOver={() => activedButton !== '' && left()}
+          className={`${activedButton === 'left' && S.active}`}
+        >
           <div className={S.text}>Left</div>
         </button>
-        <button onClick={down} className={`${activedButton === 'down' && S.active}`}>
+        <button
+          onPointerDown={down}
+          onPointerOver={() => activedButton !== '' && down()}
+          className={`${activedButton === 'down' && S.active}`}
+        >
           <div className={S.text}>Down</div>
         </button>
       </div>

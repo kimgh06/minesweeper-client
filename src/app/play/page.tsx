@@ -18,7 +18,7 @@ interface Point {
 
 export default function Play() {
   const originTileSize = 80;
-  const paddingTiles = 1;
+  const paddingTiles = 3;
   const zoomScale = 1.5;
   // const ws = useRef<WebSocket | null>(null);
   const { x: cursorX, y: cursorY } = useCursorStore();
@@ -137,6 +137,10 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursorX, cursorY]);
 
+  useEffect(() => {
+    console.log(tiles.map(row => row.join('')).join('\n'));
+  }, [tiles]);
+
   // const sendMessage = (message: string) => {
   // 요청 형식
   //{
@@ -203,7 +207,14 @@ export default function Play() {
         <p></p>
       </div>
       <div className={S.canvas}>
-        <CanvasRenderer tiles={tiles} tileSize={tileSize} startPoint={startPoint} cursorX={cursorX} cursorY={cursorY} />
+        <CanvasRenderer
+          paddingTiles={paddingTiles}
+          tiles={tiles}
+          tileSize={tileSize}
+          startPoint={startPoint}
+          cursorX={cursorX}
+          cursorY={cursorY}
+        />
       </div>
     </div>
   );
