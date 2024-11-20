@@ -1,4 +1,5 @@
 import useScreenSize from '@/hooks/useScreenSize';
+import useClickStore from '@/store/clickStore';
 import React, { useRef, useEffect } from 'react';
 
 /** 타입 정의 */
@@ -18,10 +19,11 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   cursorY,
   startPoint,
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const tilePaddingWidth = 4.5 + ((paddingTiles - 1) * (cursorX - startPoint.x)) / paddingTiles;
   const tilePaddingHeight = 3.25 + ((paddingTiles - 1) * (cursorY - startPoint.y)) / paddingTiles;
   const borderPixel = 5;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { setPosition } = useClickStore();
   const { windowHeight, windowWidth } = useScreenSize();
 
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -42,7 +44,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
     // 클릭한 타일의 내용 가져오기
     const clickedTileContent = tiles[tileArrayY]?.[tileArrayX] ?? 'Out of bounds';
-    console.log(`Clicked Tile: (${tileX}, ${tileY}) - Content: ${clickedTileContent}`);
+    setPosition(tileX, tileY, clickedTileContent);
   };
 
   useEffect(() => {

@@ -10,6 +10,7 @@ import useCursorStore from '../../store/cursorStore';
 /** components */
 import ArrowKeys from '@/components/arrowkeys';
 import CanvasRenderer from '@/components/canvas';
+import useClickStore from '@/store/clickStore';
 
 interface Point {
   x: number;
@@ -21,6 +22,7 @@ export default function Play() {
   const zoomScale = 1.5;
   // const ws = useRef<WebSocket | null>(null);
   const { x: cursorX, y: cursorY } = useCursorStore();
+  const { x: clickX, y: clickY, content: clickContent } = useClickStore();
   const { windowWidth, windowHeight } = useScreenSize();
   const [paddingTiles, setPaddingTiles] = useState<number>(1);
   const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(false);
@@ -194,6 +196,9 @@ export default function Play() {
         {!isMonitoringDisabled && (
           <>
             <h2>Monitoring Tools</h2>
+            <p>
+              Clicked XY ({clickX}, {clickY}) : {clickContent}
+            </p>
             <ul>
               Total {(endPoint.x - startPoint.x + 1) * (endPoint.y - startPoint.y + 1)} Tiles
               <li>
@@ -206,7 +211,7 @@ export default function Play() {
                 Rendered Y ({startPoint.y} ~ {endPoint.y})
               </li>
             </ul>
-            <p>zoom: {Math.floor(zoom * 10) / 10}</p>
+            <p>Zoom: {Math.floor(zoom * 10) / 10}</p>
             <p>
               Rendering Area:{paddingTiles}
               {paddingTiles < 10 && <button onClick={() => setPaddingTiles(paddingTiles + 1)}>+</button>}
