@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import useCursorStore from '@/app/store/cursorStore';
+import useCursorStore from '@/store/cursorStore';
 import S from './style.module.scss';
 
 export default function ArrowKeys() {

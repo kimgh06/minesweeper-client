@@ -56,8 +56,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // 타일 그리기
-    tiles.forEach((row, rowIndex) => {
-      row.forEach((content, colIndex) => {
+    tiles?.forEach((row, rowIndex) => {
+      row?.forEach((content, colIndex) => {
         const x = (colIndex - tilePaddingWidth) * tileSize;
         const y = (rowIndex - tilePaddingHeight) * tileSize;
 

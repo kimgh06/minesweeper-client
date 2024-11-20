@@ -28,6 +28,24 @@
     border-radius: 20px;
     padding: 10px 30px;
   }
+
+  .monitoringFrameDisabled {
+    width: 50px;
+    transition: 0.5s ease;
+    padding: 5px;
+    height: 20px;
+    & > * {
+      display: none;
+    }
+    &:hover {
+      width: 100px;
+      height: auto;
+      & > * {
+        display: block;
+      }
+    }
+  }
+
   .canvas {
     top: 0;
     left: 0;

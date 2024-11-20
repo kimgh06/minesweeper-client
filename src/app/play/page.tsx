@@ -5,7 +5,7 @@ import S from './page.module.scss';
 /** hooks */
 import { useEffect, useState } from 'react';
 import useScreenSize from '@/hooks/useScreenSize';
-import useCursorStore from '../store/cursorStore';
+import useCursorStore from '../../store/cursorStore';
 
 /** components */
 import ArrowKeys from '@/components/arrowkeys';
@@ -18,11 +18,12 @@ interface Point {
 
 export default function Play() {
   const originTileSize = 80;
-  const paddingTiles = 1.5;
   const zoomScale = 1.5;
   // const ws = useRef<WebSocket | null>(null);
   const { x: cursorX, y: cursorY } = useCursorStore();
   const { windowWidth, windowHeight } = useScreenSize();
+  const [paddingTiles, setPaddingTiles] = useState<number>(1);
+  const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(false);
   const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
   const [endPoint, setEndPoint] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState<number>(1);
@@ -54,7 +55,7 @@ export default function Play() {
     setTileSize(newTileSize);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowWidth, windowHeight, zoom, cursorX, cursorY]);
+  }, [windowWidth, windowHeight, zoom, cursorX, cursorY, paddingTiles]);
 
   /** zoom event */
   useEffect(() => {
@@ -101,7 +102,7 @@ export default function Play() {
       return newTiles;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowWidth, windowHeight, zoom]);
+  }, [windowWidth, windowHeight, zoom, paddingTiles]);
 
   /** cursor change evnet */
   useEffect(() => {
@@ -136,10 +137,6 @@ export default function Play() {
     setTiles(newTiles);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursorX, cursorY]);
-
-  useEffect(() => {
-    console.log(tiles.map(row => row.join('')).join('\n'));
-  }, [tiles]);
 
   // const sendMessage = (message: string) => {
   // 요청 형식
@@ -193,18 +190,33 @@ export default function Play() {
         {zoom * zoomScale < 1.7 && <button onClick={() => setZoom(zoom * zoomScale)}>+</button>}
         {zoom / zoomScale > 0.2 && <button onClick={() => setZoom(zoom / zoomScale)}>-</button>}
       </div>
-      <div className={S.monitoringFrame}>
-        <p>
-          Pointer XY ({cursorX}, {cursorY})
-        </p>
-        <p>
-          Rendered X ({startPoint.x} ~ {endPoint.x})
-        </p>
-        <p>
-          Rendered Y ({startPoint.y} ~ {endPoint.y})
-        </p>
-        <p>Total {(endPoint.x - startPoint.x + 1) * (endPoint.y - startPoint.y + 1)} Tiles</p>
-        <p></p>
+      <div className={`${S.monitoringFrame} ${isMonitoringDisabled && S.monitoringFrameDisabled}`}>
+        {!isMonitoringDisabled && (
+          <>
+            <h2>Monitoring Tools</h2>
+            <ul>
+              Total {(endPoint.x - startPoint.x + 1) * (endPoint.y - startPoint.y + 1)} Tiles
+              <li>
+                Pointer XY ({cursorX}, {cursorY})
+              </li>
+              <li>
+                Rendered X ({startPoint.x} ~ {endPoint.x})
+              </li>
+              <li>
+                Rendered Y ({startPoint.y} ~ {endPoint.y})
+              </li>
+            </ul>
+            <p>zoom: {Math.floor(zoom * 10) / 10}</p>
+            <p>
+              Rendering Area:{paddingTiles}
+              {paddingTiles < 10 && <button onClick={() => setPaddingTiles(paddingTiles + 1)}>+</button>}
+              {paddingTiles > 1 && <button onClick={() => setPaddingTiles(paddingTiles - 1)}>-</button>}{' '}
+            </p>
+          </>
+        )}
+        <button onClick={() => setIsMonitoringDisabled(e => !e)}>
+          {isMonitoringDisabled ? 'Enable' : 'Disable'} Monitoring
+        </button>
       </div>
       <div className={S.canvas}>
         <CanvasRenderer
