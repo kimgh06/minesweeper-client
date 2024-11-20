@@ -11,20 +11,31 @@ import useCursorStore from '../../store/cursorStore';
 import ArrowKeys from '@/components/arrowkeys';
 import CanvasRenderer from '@/components/canvas';
 import useClickStore from '@/store/clickStore';
+import useWebSocket from '@/hooks/useWebsocket';
 
 interface Point {
   x: number;
   y: number;
 }
 
+interface RenderingTask {
+  start_x: number;
+  start_y: number;
+  end_x: number;
+  end_y: number;
+  type: 'R' | 'L' | 'U' | 'D';
+}
+
 export default function Play() {
   const originTileSize = 80;
   const zoomScale = 1.5;
-  // const ws = useRef<WebSocket | null>(null);
+  const webSocketUrl = 'ws://152.67.203.244/session';
   const { x: cursorX, y: cursorY } = useCursorStore();
   const { x: clickX, y: clickY, content: clickContent } = useClickStore();
   const { windowWidth, windowHeight } = useScreenSize();
-  const [paddingTiles, setPaddingTiles] = useState<number>(1);
+  const { isOpen, message, sendMessage } = useWebSocket(webSocketUrl);
+  const [paddingTiles, setPaddingTiles] = useState<number>(2);
+  const [taskArray, setTaskArray] = useState<RenderingTask[]>([]);
   const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(false);
   const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
   const [endPoint, setEndPoint] = useState<Point>({ x: 0, y: 0 });
@@ -39,6 +50,94 @@ export default function Play() {
     ['C', 'C', 'C', 'O', 'O', '1', '1', '1', 'O'],
     ['C', 'C', 'C', 'O', 'O', 'C', 'C', 'C', 'O'],
   ]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const body = JSON.stringify({
+        event: 'fetch-tiles',
+        payload: {
+          start_x: startPoint.x,
+          start_y: endPoint.y,
+          end_x: endPoint.x,
+          end_y: startPoint.y,
+        },
+      });
+      sendMessage(body);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!message) return;
+    try {
+      const { event, payload } = JSON.parse(message as string);
+      if (event === 'tiles') {
+        const { end_x, end_y, start_x, start_y, tiles } = payload;
+        const type = taskArray.filter(
+          task => task.start_x === start_x && task.start_y === start_y && task.end_x === end_x && task.end_y === end_y,
+        )[0]?.type;
+        setTaskArray(taskArray =>
+          taskArray.filter(
+            task =>
+              task.start_x !== start_x && task.start_y !== start_y && task.end_x !== end_x && task.end_y !== end_y,
+          ),
+        );
+
+        const rowlength = Math.abs(end_x - start_x) + 1;
+        const columnlength = Math.abs(start_y - end_y) + 1;
+        console.log(tiles, rowlength, columnlength);
+        const newTiles = [] as string[][];
+        for (let i = 0; i < columnlength; i++) {
+          const row = tiles.slice(i * rowlength, (i + 1) * rowlength).split('');
+          newTiles.push(row);
+        }
+        switch (type) {
+          case 'R':
+            setTiles(tiles => {
+              const newTiles = [...tiles];
+              newTiles.forEach((row, index) => {
+                row.splice(-1, 1, ...newTiles[index]);
+              });
+              return newTiles;
+            });
+            break;
+          case 'L':
+            setTiles(tiles => {
+              const newTiles = [...tiles];
+              newTiles.forEach((row, index) => {
+                row.splice(0, 1, ...newTiles[index]);
+              });
+              return newTiles;
+            });
+            break;
+          case 'U':
+            setTiles(tiles => {
+              const newTiles = [...tiles];
+              newTiles.shift();
+              newTiles.push(...newTiles);
+              return newTiles;
+            });
+            break;
+          case 'D':
+            setTiles(tiles => {
+              const newTiles = [...tiles];
+              newTiles.pop();
+              newTiles.unshift(...newTiles);
+              return newTiles;
+            });
+            break;
+          default:
+            setTiles(newTiles.reverse());
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [message]);
+
+  useEffect(() => {
+    console.log(tiles.map(row => row.join('')).join('\n'));
+  }, [tiles]);
+
   useEffect(() => {
     const newTileSize = originTileSize * zoom;
     const tileVisibleWidth = Math.floor((windowWidth * paddingTiles) / newTileSize);
@@ -114,76 +213,113 @@ export default function Play() {
     const heightExtendLength = 1;
     /** 우측 이동 */
     if (Math.abs(cursorX - startPoint.x) > Math.abs(cursorX - endPoint.x)) {
-      for (let i = 0; i < widthExtendLength; i++) {
-        newTiles = newTiles.map(row => [...row.slice(1), 'C']);
-      }
+      const body = JSON.stringify({
+        event: 'fetch-tiles',
+        payload: {
+          start_x: startPoint.x + widthExtendLength,
+          start_y: endPoint.y,
+          end_x: endPoint.x + widthExtendLength,
+          end_y: startPoint.y,
+        },
+      });
+      sendMessage(body);
+      setTaskArray([
+        ...taskArray,
+        {
+          start_x: startPoint.x + widthExtendLength,
+          start_y: endPoint.y,
+          end_x: endPoint.x + widthExtendLength,
+          end_y: startPoint.y,
+          type: 'R',
+        },
+      ]);
+
+      // for (let i = 0; i < widthExtendLength; i++) {
+      //   newTiles = newTiles.map(row => [...row.slice(1), 'C']);
+      // }
     } else if (Math.abs(cursorX - startPoint.x) < Math.abs(cursorX - endPoint.x)) {
       /** 좌측 이동 */
-      for (let i = 0; i < widthExtendLength; i++) {
-        newTiles = newTiles.map(row => ['C', ...row.slice(0, -1)]);
-      }
+      const body = JSON.stringify({
+        event: 'fetch-tiles',
+        payload: {
+          start_x: startPoint.x - widthExtendLength,
+          start_y: endPoint.y,
+          end_x: endPoint.x - widthExtendLength,
+          end_y: startPoint.y,
+        },
+      });
+      sendMessage(body);
+      setTaskArray([
+        ...taskArray,
+        {
+          start_x: startPoint.x - widthExtendLength,
+          start_y: endPoint.y,
+          end_x: endPoint.x - widthExtendLength,
+          end_y: startPoint.y,
+          type: 'L',
+        },
+      ]);
+
+      // for (let i = 0; i < widthExtendLength; i++) {
+      //   newTiles = newTiles.map(row => ['C', ...row.slice(0, -1)]);
+      // }
     }
     /** 아래 이동 */
     if (Math.abs(cursorY - startPoint.y) > Math.abs(cursorY - endPoint.y)) {
-      for (let i = 0; i < heightExtendLength; i++) {
-        newTiles.shift();
-        newTiles.push(Array.from({ length: newTiles[0].length }, () => 'C'));
-      }
+      // for (let i = 0; i < heightExtendLength; i++) {
+      //   newTiles.shift();
+      //   newTiles.push(Array.from({ length: newTiles[0].length }, () => 'C'));
+      // }
+      const body = JSON.stringify({
+        event: 'fetch-tiles',
+        payload: {
+          start_x: startPoint.x,
+          start_y: endPoint.y + heightExtendLength,
+          end_x: endPoint.x,
+          end_y: startPoint.y + heightExtendLength,
+        },
+      });
+      sendMessage(body);
+      setTaskArray([
+        ...taskArray,
+        {
+          start_x: startPoint.x,
+          start_y: endPoint.y + heightExtendLength,
+          end_x: endPoint.x,
+          end_y: startPoint.y + heightExtendLength,
+          type: 'D',
+        },
+      ]);
     } else if (Math.abs(cursorY - startPoint.y) < Math.abs(cursorY - endPoint.y)) {
       /** 위 이동 */
-      for (let i = 0; i < heightExtendLength; i++) {
-        newTiles.pop();
-        newTiles.unshift(Array.from({ length: newTiles[0].length }, () => 'C'));
-      }
+      // for (let i = 0; i < heightExtendLength; i++) {
+      //   newTiles.pop();
+      //   newTiles.unshift(Array.from({ length: newTiles[0].length }, () => 'C'));
+      // }
+      const body = JSON.stringify({
+        event: 'fetch-tiles',
+        payload: {
+          start_x: startPoint.x,
+          start_y: endPoint.y - heightExtendLength,
+          end_x: endPoint.x,
+          end_y: startPoint.y - heightExtendLength,
+        },
+      });
+      sendMessage(body);
+      setTaskArray([
+        ...taskArray,
+        {
+          start_x: startPoint.x,
+          start_y: endPoint.y - heightExtendLength,
+          end_x: endPoint.x,
+          end_y: startPoint.y - heightExtendLength,
+          type: 'U',
+        },
+      ]);
     }
     setTiles(newTiles);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursorX, cursorY]);
-
-  // const sendMessage = (message: string) => {
-  // 요청 형식
-  //{
-  // 	"event": "fetch-tiles",
-  // 	"data": {
-  // 		"start_x": int,
-  // 		"start_y": int,
-  // 		"end_x": int,
-  // 		"end_y": int
-  // 	}
-  // }
-  //   ws.current?.send(message);
-  // };
-
-  /** 초기화 */
-  // useEffect(() => {
-  //   ws.current = new WebSocket('ws://localhost:8080');
-  //   ws.current.onopen = () => {
-  //     console.log('WebSocket connection established');
-  //   };
-  //   ws.current.onmessage = event => {
-  //     console.log('Message from server:', event.data);
-  //     // 응답 형식
-  //     // {
-  //     // 	"event": "tiles",
-  //     // 	"data": {
-  //     // 		"start_x": int,
-  //     // 		"start_y": int,
-  //     // 		"end_x": int,
-  //     // 		"end_y": int,
-  //     // 		"tiles": "CCCCCCCCCCC111CC1F1CC111C"
-  //     // 	}
-  //     // }
-  //   };
-  //   ws.current.onclose = () => {
-  //     console.log('WebSocket connection closed');
-  //   };
-  //   ws.current.onerror = error => {
-  //     console.error('WebSocket error:', error);
-  //   };
-  //   return () => {
-  //     ws.current?.close();
-  //   };
-  // }, []);
 
   return (
     <div className={S.page}>
