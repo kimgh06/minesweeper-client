@@ -70,16 +70,27 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             x + tileSize - borderPixel * 2,
             y + tileSize - borderPixel * 2,
           );
-          innerGradient.addColorStop(0, '#8fe340');
-          innerGradient.addColorStop(1, '#A4E863');
-
-          // Outer Rectangle Color Gradient
           const outerGradient = ctx.createLinearGradient(x, y, x + tileSize, y + tileSize);
-          outerGradient.addColorStop(0, '#A8EC67');
-          outerGradient.addColorStop(0.4, '#A8EC67');
-          outerGradient.addColorStop(0.6, '#81D92C');
-          outerGradient.addColorStop(1, '#81D92C');
+          if ((rowIndex + colIndex - startPoint.x - startPoint.y) % 2 === 0) {
+            innerGradient.addColorStop(0, '#8fe340');
+            innerGradient.addColorStop(1, '#A4E863');
 
+            // Outer Rectangle Color Gradient
+            outerGradient.addColorStop(0, '#A8EC67');
+            outerGradient.addColorStop(0.4, '#A8EC67');
+            outerGradient.addColorStop(0.6, '#81D92C');
+            outerGradient.addColorStop(1, '#81D92C');
+          }
+          if ((rowIndex + colIndex - startPoint.x - startPoint.y) % 2 === 1) {
+            innerGradient.addColorStop(0, '#62B628');
+            innerGradient.addColorStop(1, '#71C637');
+
+            // Outer Rectangle Color Gradient
+            outerGradient.addColorStop(0, '#74C63C');
+            outerGradient.addColorStop(0.4, '#74C63C');
+            outerGradient.addColorStop(0.6, '#5BB31F');
+            outerGradient.addColorStop(1, '#5BB31F');
+          }
           // Drawing outer rectangle
           ctx.fillStyle = outerGradient;
           ctx.fillRect(x, y, tileSize, tileSize);
@@ -156,8 +167,11 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     // 커서 표시
     const cursorCanvasX = ((cursorX - startPoint.x) / paddingTiles - 0.5) * tileSize;
     const cursorCanvasY = ((cursorY - startPoint.y) / paddingTiles - 0.25) * tileSize;
+    ctx.beginPath();
+    ctx.arc(cursorCanvasX + tileSize / 2, cursorCanvasY + tileSize / 2, tileSize / 2, 0, 2 * Math.PI);
+    ctx.stroke();
     ctx.fillStyle = 'yellow';
-    ctx.fillRect(cursorCanvasX, cursorCanvasY, tileSize, tileSize);
+    ctx.fill();
   }, [tiles, tileSize, cursorX, cursorY, startPoint]);
 
   return (

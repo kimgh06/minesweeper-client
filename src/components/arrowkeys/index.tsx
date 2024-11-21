@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { act, useEffect, useState } from 'react';
 import useCursorStore from '@/store/cursorStore';
 import S from './style.module.scss';
 
@@ -28,6 +28,7 @@ export default function ArrowKeys() {
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (activedButton !== '') return;
       switch (e.key) {
         case 'ArrowUp':
           up();
@@ -44,20 +45,15 @@ export default function ArrowKeys() {
         default:
           break;
       }
-    };
-
-    const handleKeyUp = () => {
       setActivedButton('');
     };
 
     // Adding event listener
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
 
     // Cleanup the event listener
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
     };
   }, [x, y]);
 

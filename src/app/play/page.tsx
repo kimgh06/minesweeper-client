@@ -23,13 +23,13 @@ interface RenderingTask {
   start_y: number;
   end_x: number;
   end_y: number;
-  type: 'R' | 'L' | 'U' | 'D';
+  type: 'R' | 'L' | 'U' | 'D' | 'A';
 }
 
 export default function Play() {
   const originTileSize = 80;
   const zoomScale = 1.5;
-  const webSocketUrl = 'ws://152.67.203.244/session';
+  const webSocketUrl = `${process.env.NEXT_PUBLIC_WS_HOST}/session`;
   const { x: cursorX, y: cursorY } = useCursorStore();
   const { x: clickX, y: clickY, content: clickContent } = useClickStore();
   const { windowWidth, windowHeight } = useScreenSize();
@@ -53,16 +53,7 @@ export default function Play() {
 
   useEffect(() => {
     if (isOpen) {
-      const body = JSON.stringify({
-        event: 'fetch-tiles',
-        payload: {
-          start_x: startPoint.x,
-          start_y: endPoint.y,
-          end_x: endPoint.x,
-          end_y: startPoint.y,
-        },
-      });
-      sendMessage(body);
+      appendTask(startPoint.x, endPoint.y, endPoint.x, startPoint.y, 'A');
     }
   }, [isOpen]);
 
@@ -71,62 +62,76 @@ export default function Play() {
     try {
       const { event, payload } = JSON.parse(message as string);
       if (event === 'tiles') {
-        const { end_x, end_y, start_x, start_y, tiles } = payload;
-        const type = taskArray.filter(
-          task => task.start_x === start_x && task.start_y === start_y && task.end_x === end_x && task.end_y === end_y,
-        )[0]?.type;
+        const { end_x, end_y, start_x, start_y, tiles: newtiles } = payload;
+        const type = taskArray.find(
+          task => task.start_x === start_x && task.start_y === end_y && task.end_x === end_x && task.end_y === start_y,
+        )?.type;
         setTaskArray(taskArray =>
           taskArray.filter(
             task =>
-              task.start_x !== start_x && task.start_y !== start_y && task.end_x !== end_x && task.end_y !== end_y,
+              task.start_x !== start_x && task.start_y !== end_y && task.end_x !== end_x && task.end_y !== start_y,
           ),
         );
 
         const rowlength = Math.abs(end_x - start_x) + 1;
         const columnlength = Math.abs(start_y - end_y) + 1;
-        console.log(tiles, rowlength, columnlength);
-        const newTiles = [] as string[][];
-        for (let i = 0; i < columnlength; i++) {
-          const row = tiles.slice(i * rowlength, (i + 1) * rowlength).split('');
-          newTiles.push(row);
-        }
-        switch (type) {
-          case 'R':
-            setTiles(tiles => {
-              const newTiles = [...tiles];
-              newTiles.forEach((row, index) => {
-                row.splice(-1, 1, ...newTiles[index]);
-              });
-              return newTiles;
-            });
-            break;
-          case 'L':
-            setTiles(tiles => {
-              const newTiles = [...tiles];
-              newTiles.forEach((row, index) => {
-                row.splice(0, 1, ...newTiles[index]);
-              });
-              return newTiles;
-            });
-            break;
-          case 'U':
-            setTiles(tiles => {
-              const newTiles = [...tiles];
-              newTiles.shift();
-              newTiles.push(...newTiles);
-              return newTiles;
-            });
-            break;
-          case 'D':
-            setTiles(tiles => {
-              const newTiles = [...tiles];
-              newTiles.pop();
-              newTiles.unshift(...newTiles);
-              return newTiles;
-            });
-            break;
-          default:
-            setTiles(newTiles.reverse());
+        console.log(type, rowlength, columnlength);
+        if (type === 'R') {
+          /** 오른쪽으로 갈 경우 */
+          const fetchedTiles = [] as string[][];
+          for (let i = 0; i < columnlength; i++) {
+            const row = newtiles.slice(i * rowlength, (i + 1) * rowlength).split('');
+            fetchedTiles.push(row);
+          }
+          setTiles(tiles => {
+            const newTiles = [...tiles];
+            for (let i = 0; i < columnlength; i++) {
+              newTiles[i] = [...newTiles[i].slice(1), ...fetchedTiles[i]];
+            }
+            return newTiles;
+          });
+        } else if (type === 'L') {
+          /** 왼쪽으로 갈 경우 */
+          const fetchedTiles = [] as string[][];
+          for (let i = 0; i < columnlength; i++) {
+            const row = newtiles.slice(i * rowlength, (i + 1) * rowlength).split('');
+            fetchedTiles.push(row);
+          }
+          setTiles(tiles => {
+            const newTiles = [...tiles];
+            for (let i = 0; i < columnlength; i++) {
+              newTiles[i] = [...fetchedTiles[i], ...newTiles[i].slice(0, -1)];
+            }
+            return newTiles;
+          });
+        } else if (type === 'U') {
+          /** 위로 갈 경우 */
+          const newTiles = [] as string[][];
+          for (let i = 0; i < columnlength; i++) {
+            const row = newtiles.slice(i * rowlength, (i + 1) * rowlength).split('');
+            newTiles.push(row);
+          }
+          setTiles(tiles => {
+            return [...newTiles, ...tiles.slice(0, -1)];
+          });
+        } else if (type === 'D') {
+          /** 아래로 갈 경우 */
+          const newTiles = [] as string[][];
+          for (let i = 0; i < columnlength; i++) {
+            const row = newtiles.slice(i * rowlength, (i + 1) * rowlength).split('');
+            newTiles.push(row);
+          }
+          setTiles(tiles => {
+            return [...tiles.slice(1), ...newTiles];
+          });
+        } else if (type === 'A') {
+          /** 전체 갱신 */
+          const newTiles = [] as string[][];
+          for (let i = 0; i < columnlength; i++) {
+            const row = newtiles.slice(i * rowlength, (i + 1) * rowlength).split('');
+            newTiles.push(row);
+          }
+          setTiles(newTiles.reverse());
         }
       }
     } catch (e) {
@@ -136,7 +141,8 @@ export default function Play() {
 
   useEffect(() => {
     console.log(tiles.map(row => row.join('')).join('\n'));
-  }, [tiles]);
+    console.log('taskarray', taskArray.map(task => task.type).join(''));
+  }, [tiles, taskArray]);
 
   useEffect(() => {
     const newTileSize = originTileSize * zoom;
@@ -160,50 +166,56 @@ export default function Play() {
 
   /** zoom event */
   useEffect(() => {
+    if (!isOpen) return;
     const newTileSize = originTileSize * zoom;
     const tileVisibleWidth = Math.floor((windowWidth * paddingTiles) / newTileSize);
     const tileVisibleHeight = Math.floor((windowHeight * paddingTiles) / newTileSize);
 
     const tilePaddingWidth = Math.floor(tileVisibleWidth / 2);
     const tilePaddingHeight = Math.floor(tileVisibleHeight / 2);
-    setTiles(tiles => {
-      let newTiles = [...tiles];
-      /** 확장일 경우 */
-      if (tileVisibleWidth > endPoint.x - startPoint.x + 1 || tileVisibleHeight > endPoint.y - startPoint.y + 1) {
-        /** 가로 획 추가 */
-        const columnTile = [] as string[];
-        const widthExtendLength = Math.round(tilePaddingWidth - (endPoint.x - startPoint.x) / 2);
-        for (let i = 0; i < widthExtendLength; i++) {
-          columnTile.push('C');
-        }
-        /** 가로 요청 보내야 함. */
-        newTiles = newTiles.map(row => [...columnTile, ...row, ...columnTile]);
-        /** 세로 획 추가 */
-        const heightExtendLength = Math.floor(tilePaddingHeight - (endPoint.y - startPoint.y) / 2);
-        const rowTile = Array.from({ length: newTiles[0].length }, () => 'C');
-        for (let i = 0; i < heightExtendLength; i++) {
-          /** 세로 요청 보내야 함. */
-          newTiles.unshift(rowTile);
-          newTiles.push(rowTile);
-        }
-      } else {
-        /** 축소일 경우 */
-        /** 세로 획 */
-        const heightExtendLength = Math.round((endPoint.y - startPoint.y - tileVisibleHeight) / 2);
-        for (let i = 0; i < heightExtendLength; i++) {
-          newTiles.shift();
-          newTiles.pop();
-        }
-        /** 가로 획 */
-        const widthExtendLength = Math.round((endPoint.x - startPoint.x - tileVisibleWidth) / 2);
-        for (let i = 0; i < widthExtendLength; i++) {
-          newTiles = newTiles.map(row => row.slice(1, -1));
-        }
-      }
-      return newTiles;
-    });
+    if (tileVisibleWidth > endPoint.x - startPoint.x + 1 || tileVisibleHeight > endPoint.y - startPoint.y + 1) {
+      /** 확장된 전체 타일 요청 */
+      appendTask(
+        startPoint.x - Math.round(tilePaddingWidth - (endPoint.x - startPoint.x) / 2),
+        endPoint.y + Math.floor(tilePaddingHeight - (endPoint.y - startPoint.y) / 2),
+        endPoint.x + Math.round(tilePaddingWidth - (endPoint.x - startPoint.x) / 2),
+        startPoint.y - Math.floor(tilePaddingHeight - (endPoint.y - startPoint.y) / 2),
+        'A',
+      );
+    } else {
+      /** 축소된 전체 타일 요청 */
+      const heightExtendLength = Math.round((endPoint.y - startPoint.y - tileVisibleHeight) / 2);
+      const widthExtendLength = Math.round((endPoint.x - startPoint.x - tileVisibleWidth) / 2);
+      appendTask(
+        startPoint.x + widthExtendLength,
+        endPoint.y - heightExtendLength,
+        endPoint.x - widthExtendLength,
+        startPoint.y + heightExtendLength,
+        'A',
+      );
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, paddingTiles]);
+
+  const appendTask = (
+    start_x: number,
+    start_y: number,
+    end_x: number,
+    end_y: number,
+    type: 'R' | 'L' | 'U' | 'D' | 'A',
+  ) => {
+    setTaskArray([...taskArray, { start_x, start_y: end_y, end_x, end_y: start_y, type }]);
+    const body = JSON.stringify({
+      event: 'fetch-tiles',
+      payload: {
+        start_x,
+        start_y,
+        end_x,
+        end_y,
+      },
+    });
+    sendMessage(body);
+  };
 
   /** cursor change evnet */
   useEffect(() => {
@@ -213,109 +225,24 @@ export default function Play() {
     const heightExtendLength = 1;
     /** 우측 이동 */
     if (Math.abs(cursorX - startPoint.x) > Math.abs(cursorX - endPoint.x)) {
-      const body = JSON.stringify({
-        event: 'fetch-tiles',
-        payload: {
-          start_x: startPoint.x + widthExtendLength,
-          start_y: endPoint.y,
-          end_x: endPoint.x + widthExtendLength,
-          end_y: startPoint.y,
-        },
-      });
-      sendMessage(body);
-      setTaskArray([
-        ...taskArray,
-        {
-          start_x: startPoint.x + widthExtendLength,
-          start_y: endPoint.y,
-          end_x: endPoint.x + widthExtendLength,
-          end_y: startPoint.y,
-          type: 'R',
-        },
-      ]);
-
+      appendTask(endPoint.x + widthExtendLength, endPoint.y, endPoint.x + widthExtendLength, startPoint.y, 'R');
       // for (let i = 0; i < widthExtendLength; i++) {
       //   newTiles = newTiles.map(row => [...row.slice(1), 'C']);
       // }
     } else if (Math.abs(cursorX - startPoint.x) < Math.abs(cursorX - endPoint.x)) {
       /** 좌측 이동 */
-      const body = JSON.stringify({
-        event: 'fetch-tiles',
-        payload: {
-          start_x: startPoint.x - widthExtendLength,
-          start_y: endPoint.y,
-          end_x: endPoint.x - widthExtendLength,
-          end_y: startPoint.y,
-        },
-      });
-      sendMessage(body);
-      setTaskArray([
-        ...taskArray,
-        {
-          start_x: startPoint.x - widthExtendLength,
-          start_y: endPoint.y,
-          end_x: endPoint.x - widthExtendLength,
-          end_y: startPoint.y,
-          type: 'L',
-        },
-      ]);
 
+      appendTask(startPoint.x - widthExtendLength, endPoint.y, startPoint.x - widthExtendLength, startPoint.y, 'L');
       // for (let i = 0; i < widthExtendLength; i++) {
       //   newTiles = newTiles.map(row => ['C', ...row.slice(0, -1)]);
       // }
     }
     /** 아래 이동 */
     if (Math.abs(cursorY - startPoint.y) > Math.abs(cursorY - endPoint.y)) {
-      // for (let i = 0; i < heightExtendLength; i++) {
-      //   newTiles.shift();
-      //   newTiles.push(Array.from({ length: newTiles[0].length }, () => 'C'));
-      // }
-      const body = JSON.stringify({
-        event: 'fetch-tiles',
-        payload: {
-          start_x: startPoint.x,
-          start_y: endPoint.y + heightExtendLength,
-          end_x: endPoint.x,
-          end_y: startPoint.y + heightExtendLength,
-        },
-      });
-      sendMessage(body);
-      setTaskArray([
-        ...taskArray,
-        {
-          start_x: startPoint.x,
-          start_y: endPoint.y + heightExtendLength,
-          end_x: endPoint.x,
-          end_y: startPoint.y + heightExtendLength,
-          type: 'D',
-        },
-      ]);
+      appendTask(startPoint.x, startPoint.y + heightExtendLength, endPoint.x, startPoint.y + heightExtendLength, 'D');
     } else if (Math.abs(cursorY - startPoint.y) < Math.abs(cursorY - endPoint.y)) {
       /** 위 이동 */
-      // for (let i = 0; i < heightExtendLength; i++) {
-      //   newTiles.pop();
-      //   newTiles.unshift(Array.from({ length: newTiles[0].length }, () => 'C'));
-      // }
-      const body = JSON.stringify({
-        event: 'fetch-tiles',
-        payload: {
-          start_x: startPoint.x,
-          start_y: endPoint.y - heightExtendLength,
-          end_x: endPoint.x,
-          end_y: startPoint.y - heightExtendLength,
-        },
-      });
-      sendMessage(body);
-      setTaskArray([
-        ...taskArray,
-        {
-          start_x: startPoint.x,
-          start_y: endPoint.y - heightExtendLength,
-          end_x: endPoint.x,
-          end_y: startPoint.y - heightExtendLength,
-          type: 'U',
-        },
-      ]);
+      appendTask(startPoint.x, endPoint.y - heightExtendLength, endPoint.x, endPoint.y - heightExtendLength, 'U');
     }
     setTiles(newTiles);
     // eslint-disable-next-line react-hooks/exhaustive-deps
