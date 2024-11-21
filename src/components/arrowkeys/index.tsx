@@ -1,4 +1,4 @@
-import React, { act, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useCursorStore from '@/store/cursorStore';
 import S from './style.module.scss';
 

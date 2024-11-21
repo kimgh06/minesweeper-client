@@ -220,22 +220,15 @@ export default function Play() {
   /** cursor change evnet */
   useEffect(() => {
     /** 커서 위치가 바뀌었을 때 */
-    let newTiles = [...tiles];
+    const newTiles = [...tiles];
     const widthExtendLength = 1;
     const heightExtendLength = 1;
     /** 우측 이동 */
     if (Math.abs(cursorX - startPoint.x) > Math.abs(cursorX - endPoint.x)) {
       appendTask(endPoint.x + widthExtendLength, endPoint.y, endPoint.x + widthExtendLength, startPoint.y, 'R');
-      // for (let i = 0; i < widthExtendLength; i++) {
-      //   newTiles = newTiles.map(row => [...row.slice(1), 'C']);
-      // }
     } else if (Math.abs(cursorX - startPoint.x) < Math.abs(cursorX - endPoint.x)) {
       /** 좌측 이동 */
-
       appendTask(startPoint.x - widthExtendLength, endPoint.y, startPoint.x - widthExtendLength, startPoint.y, 'L');
-      // for (let i = 0; i < widthExtendLength; i++) {
-      //   newTiles = newTiles.map(row => ['C', ...row.slice(0, -1)]);
-      // }
     }
     /** 아래 이동 */
     if (Math.abs(cursorY - startPoint.y) > Math.abs(cursorY - endPoint.y)) {
