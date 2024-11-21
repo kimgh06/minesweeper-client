@@ -18,14 +18,6 @@ interface Point {
   y: number;
 }
 
-interface RenderingTask {
-  start_x: number;
-  start_y: number;
-  end_x: number;
-  end_y: number;
-  type: 'R' | 'L' | 'U' | 'D' | 'A';
-}
-
 export default function Play() {
   const originTileSize = 80;
   const zoomScale = 1.5;
@@ -35,7 +27,6 @@ export default function Play() {
   const { windowWidth, windowHeight } = useScreenSize();
   const { isOpen, message, sendMessage } = useWebSocket(webSocketUrl);
   const [paddingTiles, setPaddingTiles] = useState<number>(2);
-  const [taskArray, setTaskArray] = useState<RenderingTask[]>([]);
   const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(false);
   const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
   const [endPoint, setEndPoint] = useState<Point>({ x: 0, y: 0 });
@@ -51,88 +42,86 @@ export default function Play() {
     ['C', 'C', 'C', 'O', 'O', 'C', 'C', 'C', 'O'],
   ]);
 
-  useEffect(() => {
-    if (isOpen) {
-      appendTask(startPoint.x, endPoint.y, endPoint.x, startPoint.y, 'A');
+  const appendTask = (
+    start_x: number,
+    start_y: number,
+    end_x: number,
+    end_y: number,
+    type: 'R' | 'L' | 'U' | 'D' | 'A',
+  ) => {
+    /** add Dummy data to originTiles */
+    const newTiles = [...tiles];
+    if (type === 'R') {
+      const rowlength = Math.abs(end_x - start_x) + 1;
+      const columnlength = Math.abs(start_y - end_y) + 1;
+      for (let i = 0; i < columnlength; i++) {
+        newTiles[i] = [...newTiles[i].slice(1), ...Array(rowlength).fill('?')];
+      }
     }
-  }, [isOpen]);
+    if (type === 'L') {
+      const rowlength = Math.abs(end_x - start_x) + 1;
+      const columnlength = Math.abs(start_y - end_y) + 1;
+      for (let i = 0; i < columnlength; i++) {
+        newTiles[i] = [...Array(rowlength).fill('?'), ...newTiles[i].slice(0, -1)];
+      }
+    }
+    if (type === 'D') {
+      const rowlength = Math.abs(end_x - start_x) + 1;
+      const columnlength = Math.abs(start_y - end_y) + 1;
+      for (let i = 0; i < columnlength; i++) {
+        newTiles.push([...Array(rowlength).fill('?')]);
+        newTiles.shift();
+      }
+    }
+    if (type === 'U') {
+      const rowlength = Math.abs(end_x - start_x) + 1;
+      const columnlength = Math.abs(start_y - end_y) + 1;
+      for (let i = 0; i < columnlength; i++) {
+        newTiles.unshift([...Array(rowlength).fill('?')]);
+        newTiles.pop();
+      }
+    }
+    console.log('dummy', newTiles.map(row => row?.join('')).join('\n'));
+    setTiles(newTiles);
+    const body = JSON.stringify({
+      event: 'fetch-tiles',
+      payload: {
+        start_x,
+        start_y,
+        end_x,
+        end_y,
+      },
+    });
+    sendMessage(body);
+  };
 
   useEffect(() => {
     if (!message) return;
     try {
       const { event, payload } = JSON.parse(message as string);
       if (event === 'tiles') {
-        const { end_x, end_y, start_x, start_y, tiles: newtiles } = payload;
-        const type = taskArray.find(
-          task => task.start_x === start_x && task.start_y === end_y && task.end_x === end_x && task.end_y === start_y,
-        )?.type;
-        setTaskArray(taskArray =>
-          taskArray.filter(
-            task =>
-              task.start_x !== start_x && task.start_y !== end_y && task.end_x !== end_x && task.end_y !== start_y,
-          ),
-        );
+        const { end_x, end_y, start_x, start_y, tiles: unsortedTiles } = payload;
 
         const rowlength = Math.abs(end_x - start_x) + 1;
         const columnlength = Math.abs(start_y - end_y) + 1;
-        console.log(type, rowlength, columnlength);
-        if (type === 'R') {
-          /** 오른쪽으로 갈 경우 */
-          const fetchedTiles = [] as string[][];
-          for (let i = 0; i < columnlength; i++) {
-            const row = newtiles.slice(i * rowlength, (i + 1) * rowlength).split('');
-            fetchedTiles.push(row);
-          }
-          setTiles(tiles => {
-            const newTiles = [...tiles];
-            for (let i = 0; i < columnlength; i++) {
-              newTiles[i] = [...newTiles[i].slice(1), ...fetchedTiles[i]];
-            }
-            return newTiles;
-          });
-        } else if (type === 'L') {
-          /** 왼쪽으로 갈 경우 */
-          const fetchedTiles = [] as string[][];
-          for (let i = 0; i < columnlength; i++) {
-            const row = newtiles.slice(i * rowlength, (i + 1) * rowlength).split('');
-            fetchedTiles.push(row);
-          }
-          setTiles(tiles => {
-            const newTiles = [...tiles];
-            for (let i = 0; i < columnlength; i++) {
-              newTiles[i] = [...fetchedTiles[i], ...newTiles[i].slice(0, -1)];
-            }
-            return newTiles;
-          });
-        } else if (type === 'U') {
-          /** 위로 갈 경우 */
-          const newTiles = [] as string[][];
-          for (let i = 0; i < columnlength; i++) {
-            const row = newtiles.slice(i * rowlength, (i + 1) * rowlength).split('');
-            newTiles.push(row);
-          }
-          setTiles(tiles => {
-            return [...newTiles, ...tiles.slice(0, -1)];
-          });
-        } else if (type === 'D') {
-          /** 아래로 갈 경우 */
-          const newTiles = [] as string[][];
-          for (let i = 0; i < columnlength; i++) {
-            const row = newtiles.slice(i * rowlength, (i + 1) * rowlength).split('');
-            newTiles.push(row);
-          }
-          setTiles(tiles => {
-            return [...tiles.slice(1), ...newTiles];
-          });
-        } else if (type === 'A') {
-          /** 전체 갱신 */
-          const newTiles = [] as string[][];
-          for (let i = 0; i < columnlength; i++) {
-            const row = newtiles.slice(i * rowlength, (i + 1) * rowlength).split('');
-            newTiles.push(row);
-          }
-          setTiles(newTiles.reverse());
+        console.log(rowlength, columnlength);
+        const sortedTiles = [] as string[][];
+        for (let i = 0; i < columnlength; i++) {
+          sortedTiles[i] = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
         }
+        console.log('sorted', unsortedTiles, sortedTiles);
+        /** 좌표에 맞게 더미 데이터를 갈아끼우기 */
+        const newTiles = [...tiles];
+        for (let i = 0; i < columnlength; i++) {
+          const rowIndex = i + endPoint.y - start_y;
+          for (let j = 0; j < rowlength; j++) {
+            if (!newTiles[rowIndex]) {
+              newTiles[rowIndex] = [];
+            }
+            newTiles[rowIndex][j + start_x - startPoint.x] = sortedTiles[i][j];
+          }
+        }
+        setTiles(newTiles);
       }
     } catch (e) {
       console.error(e);
@@ -141,8 +130,7 @@ export default function Play() {
 
   useEffect(() => {
     console.log(tiles.map(row => row.join('')).join('\n'));
-    console.log('taskarray', taskArray.map(task => task.type).join(''));
-  }, [tiles, taskArray]);
+  }, [tiles]);
 
   useEffect(() => {
     const newTileSize = originTileSize * zoom;
@@ -162,7 +150,7 @@ export default function Play() {
     setTileSize(newTileSize);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowWidth, windowHeight, zoom, cursorX, cursorY, paddingTiles]);
+  }, [windowWidth, windowHeight, zoom, cursorX, cursorY, paddingTiles, isOpen]);
 
   /** zoom event */
   useEffect(() => {
@@ -184,60 +172,41 @@ export default function Play() {
       );
     } else {
       /** 축소된 전체 타일 요청 */
-      const heightExtendLength = Math.round((endPoint.y - startPoint.y - tileVisibleHeight) / 2);
-      const widthExtendLength = Math.round((endPoint.x - startPoint.x - tileVisibleWidth) / 2);
+      const heightReductionLength = Math.round((endPoint.y - startPoint.y - tileVisibleHeight) / 2);
+      const widthReductionLength = Math.round((endPoint.x - startPoint.x - tileVisibleWidth) / 2);
       appendTask(
-        startPoint.x + widthExtendLength,
-        endPoint.y - heightExtendLength,
-        endPoint.x - widthExtendLength,
-        startPoint.y + heightExtendLength,
+        startPoint.x + widthReductionLength,
+        endPoint.y - heightReductionLength,
+        endPoint.x - widthReductionLength,
+        startPoint.y + heightReductionLength,
         'A',
       );
+      setTiles([[]]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowWidth, windowHeight, zoom, paddingTiles]);
-
-  const appendTask = (
-    start_x: number,
-    start_y: number,
-    end_x: number,
-    end_y: number,
-    type: 'R' | 'L' | 'U' | 'D' | 'A',
-  ) => {
-    setTaskArray([...taskArray, { start_x, start_y: end_y, end_x, end_y: start_y, type }]);
-    const body = JSON.stringify({
-      event: 'fetch-tiles',
-      payload: {
-        start_x,
-        start_y,
-        end_x,
-        end_y,
-      },
-    });
-    sendMessage(body);
-  };
+  }, [windowWidth, windowHeight, zoom, paddingTiles, isOpen]);
 
   /** cursor change evnet */
   useEffect(() => {
     /** 커서 위치가 바뀌었을 때 */
-    const newTiles = [...tiles];
     const widthExtendLength = 1;
     const heightExtendLength = 1;
     /** 우측 이동 */
     if (Math.abs(cursorX - startPoint.x) > Math.abs(cursorX - endPoint.x)) {
       appendTask(endPoint.x + widthExtendLength, endPoint.y, endPoint.x + widthExtendLength, startPoint.y, 'R');
-    } else if (Math.abs(cursorX - startPoint.x) < Math.abs(cursorX - endPoint.x)) {
+    }
+    if (Math.abs(cursorX - startPoint.x) < Math.abs(cursorX - endPoint.x)) {
       /** 좌측 이동 */
       appendTask(startPoint.x - widthExtendLength, endPoint.y, startPoint.x - widthExtendLength, startPoint.y, 'L');
     }
     /** 아래 이동 */
     if (Math.abs(cursorY - startPoint.y) > Math.abs(cursorY - endPoint.y)) {
       appendTask(startPoint.x, startPoint.y + heightExtendLength, endPoint.x, startPoint.y + heightExtendLength, 'D');
-    } else if (Math.abs(cursorY - startPoint.y) < Math.abs(cursorY - endPoint.y)) {
+    }
+    if (Math.abs(cursorY - startPoint.y) < Math.abs(cursorY - endPoint.y)) {
       /** 위 이동 */
       appendTask(startPoint.x, endPoint.y - heightExtendLength, endPoint.x, endPoint.y - heightExtendLength, 'U');
     }
-    setTiles(newTiles);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursorX, cursorY]);
 

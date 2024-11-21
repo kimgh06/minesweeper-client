@@ -19,8 +19,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   cursorY,
   startPoint,
 }) => {
-  const tilePaddingWidth = 4.5 + ((paddingTiles - 1) * (cursorX - startPoint.x)) / paddingTiles;
-  const tilePaddingHeight = 3.25 + ((paddingTiles - 1) * (cursorY - startPoint.y)) / paddingTiles;
+  const tilePaddingWidth = ((paddingTiles - 1) * (cursorX - startPoint.x)) / paddingTiles;
+  const tilePaddingHeight = ((paddingTiles - 1) * (cursorY - startPoint.y)) / paddingTiles;
   const borderPixel = 5;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { setPosition } = useClickStore();
@@ -39,8 +39,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const tileArrayY = Math.floor(clickY / tileSize + tilePaddingHeight);
 
     // 캔버스 좌표를 실제 좌표로 변환
-    const tileX = Math.round(tileArrayX + startPoint.x - 4.5);
-    const tileY = Math.round(tileArrayY + startPoint.y - 3.25);
+    const tileX = Math.round(tileArrayX + startPoint.x);
+    const tileY = Math.round(tileArrayY + startPoint.y);
 
     // 클릭한 타일의 내용 가져오기
     const clickedTileContent = tiles[tileArrayY]?.[tileArrayX] ?? 'Out of bounds';
@@ -80,8 +80,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             outerGradient.addColorStop(0.4, '#A8EC67');
             outerGradient.addColorStop(0.6, '#81D92C');
             outerGradient.addColorStop(1, '#81D92C');
-          }
-          if ((rowIndex + colIndex - startPoint.x - startPoint.y) % 2 === 1) {
+          } else {
             innerGradient.addColorStop(0, '#62B628');
             innerGradient.addColorStop(1, '#71C637');
 
@@ -165,8 +164,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     });
 
     // 커서 표시
-    const cursorCanvasX = ((cursorX - startPoint.x) / paddingTiles - 0.5) * tileSize;
-    const cursorCanvasY = ((cursorY - startPoint.y) / paddingTiles - 0.25) * tileSize;
+    const cursorCanvasX = ((cursorX - startPoint.x) / paddingTiles) * tileSize;
+    const cursorCanvasY = ((cursorY - startPoint.y) / paddingTiles) * tileSize;
     ctx.beginPath();
     ctx.arc(cursorCanvasX + tileSize / 2, cursorCanvasY + tileSize / 2, tileSize / 2, 0, 2 * Math.PI);
     ctx.stroke();
