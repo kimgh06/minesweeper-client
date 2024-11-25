@@ -1,6 +1,25 @@
 import useScreenSize from '@/hooks/useScreenSize';
 import useClickStore from '@/store/clickStore';
+import useCursorStore from '@/store/cursorStore';
 import React, { useRef, useEffect } from 'react';
+
+class Node {
+  x: number;
+  y: number;
+  g: number;
+  h: number;
+  f: number;
+  parent: Node | null;
+
+  constructor(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+    this.g = Infinity; // Cost from start node
+    this.h = 0; // Heuristic (estimated cost to goal)
+    this.f = Infinity; // Total cost f = g + h
+    this.parent = null; // For path reconstruction
+  }
+}
 
 /** 타입 정의 */
 interface CanvasRendererProps {
@@ -24,6 +43,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const borderPixel = 5;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { setPosition } = useClickStore();
+  const { x, y, godown, goleft, goright, goup } = useCursorStore();
+
   const { windowHeight, windowWidth } = useScreenSize();
 
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -45,6 +66,105 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     // 클릭한 타일의 내용 가져오기
     const clickedTileContent = tiles[tileArrayY]?.[tileArrayX] ?? 'Out of bounds';
     setPosition(tileX, tileY, clickedTileContent);
+
+    /** 길을 찾아서 실제로 이동하는 로직 */
+    let paths = findPathUsingAStar(cursorX - startPoint.x, cursorY - startPoint.y, tileArrayX, tileArrayY);
+    console.log('paths', paths.map(path => tiles[path.y][path.x]).join(' -> '));
+    paths = paths.map(path => ({ ...path, x: path.x + startPoint.x, y: path.y + startPoint.y }));
+    console.log('paths', paths.map(path => `(${path.x}, ${path.y})`).join(' -> '));
+    /** 이동 */
+  };
+
+  // Function to get neighbors of a node
+  function getNeighbors(grid: (Node | null)[][], node: Node) {
+    const neighbors = [];
+    const directions = [
+      [-1, 0], // up
+      [0, -1], // left
+      [0, 1], // right
+      [1, 0], // down
+      [1, -1], // down-left
+      [-1, 1], // up-right
+      [-1, -1], // up-left
+      [1, 1], // down-right
+    ]; // 8-directional neighbors
+
+    for (const [dx, dy] of directions) {
+      const x = node.x + dx;
+      const y = node.y + dy;
+
+      // Make sure the neighbor is within bounds and not an obstacle
+      if (x >= 0 && x < grid.length && y >= 0 && y < grid[0].length && grid[x][y] !== null) {
+        neighbors.push(grid[x][y]);
+      }
+    }
+
+    return neighbors;
+  }
+
+  /** Flag를 피해서 astar 알고리즘으로 길찾고 커서를 8방향으로 이동하기 */
+  const findPathUsingAStar = (startX: number, startY: number, targetX: number, targetY: number) => {
+    /** initialize tiles */
+    const start = new Node(startX, startY);
+    const target = new Node(targetX, targetY);
+    const grid = [...tiles.map(row => [...row.map(() => null)])] as (Node | null)[][];
+    for (let i = 0; i < tiles.length; i++) {
+      for (let j = 0; j < tiles[i].length; j++) {
+        if (tiles[i][j] !== 'F') {
+          grid[i][j] = new Node(i, j);
+        } else {
+          grid[i][j] = null;
+        }
+      }
+    }
+
+    /** initialize open and close list */
+    let openList = [start];
+    const closedList = [];
+    start.g = 0;
+    start.f = start.g + start.h;
+
+    while (openList.length > 0) {
+      const current = openList.reduce((a, b) => (a.f < b.f ? a : b));
+
+      if (current.x === target.x && current.y === target.y) {
+        const path = [];
+        let temp = current;
+        while (temp) {
+          path.unshift(temp);
+          temp = temp.parent as Node;
+        }
+        return path;
+      }
+      openList = openList.filter(node => node !== current);
+      closedList.push(current);
+
+      const neighbors = getNeighbors(grid, current);
+
+      for (const neighbor of neighbors) {
+        if (closedList.includes(neighbor)) {
+          continue;
+        }
+
+        const tempG = current.g + 1;
+        if (!openList.includes(neighbor)) {
+          openList.push(neighbor);
+        } else if (tempG >= neighbor.g) {
+          continue;
+        }
+
+        if (neighbor) {
+          neighbor.parent = current;
+          neighbor.g = tempG;
+          const dx = Math.abs(neighbor.x - target.x);
+          const dy = Math.abs(neighbor.y - target.y);
+          neighbor.h = dx + dy + Math.abs(neighbor.x - target.x) + Math.abs(neighbor.y - target.y);
+          neighbor.f = neighbor.g + neighbor.h;
+        }
+      }
+    }
+
+    return [];
   };
 
   useEffect(() => {

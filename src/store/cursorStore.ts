@@ -5,6 +5,10 @@ interface CursorState {
   y: number;
   setX: (x: number) => void;
   setY: (y: number) => void;
+  goup: () => void;
+  godown: () => void;
+  goleft: () => void;
+  goright: () => void;
   setPosition: (x: number, y: number) => void;
 }
 
@@ -13,6 +17,10 @@ const useCursorStore = create<CursorState>(set => ({
   y: 0,
   setX: x => set({ x }),
   setY: y => set({ y }),
+  goup: () => set(state => ({ y: state.y - 1 })),
+  godown: () => set(state => ({ y: state.y + 1 })),
+  goleft: () => set(state => ({ x: state.x - 1 })),
+  goright: () => set(state => ({ x: state.x + 1 })),
   setPosition: (x, y) => set({ x, y }),
 }));
 

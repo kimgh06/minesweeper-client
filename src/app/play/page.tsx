@@ -111,17 +111,19 @@ export default function Play() {
         }
         console.log('sorted', unsortedTiles, sortedTiles);
         /** 좌표에 맞게 더미 데이터를 갈아끼우기 */
-        const newTiles = [...tiles];
-        for (let i = 0; i < columnlength; i++) {
-          const rowIndex = i + endPoint.y - start_y;
-          for (let j = 0; j < rowlength; j++) {
-            if (!newTiles[rowIndex]) {
-              newTiles[rowIndex] = [];
+        setTiles(tiles => {
+          const newTiles = [...tiles];
+          for (let i = 0; i < columnlength; i++) {
+            const rowIndex = i + endPoint.y - start_y;
+            for (let j = 0; j < rowlength; j++) {
+              if (!newTiles[rowIndex]) {
+                newTiles[rowIndex] = [];
+              }
+              newTiles[rowIndex][j + start_x - startPoint.x] = sortedTiles[i][j];
             }
-            newTiles[rowIndex][j + start_x - startPoint.x] = sortedTiles[i][j];
           }
-        }
-        setTiles(newTiles);
+          return newTiles;
+        });
       }
     } catch (e) {
       console.error(e);
@@ -195,16 +197,16 @@ export default function Play() {
     if (Math.abs(cursorX - startPoint.x) > Math.abs(cursorX - endPoint.x)) {
       appendTask(endPoint.x + widthExtendLength, endPoint.y, endPoint.x + widthExtendLength, startPoint.y, 'R');
     }
+    /** 좌측 이동 */
     if (Math.abs(cursorX - startPoint.x) < Math.abs(cursorX - endPoint.x)) {
-      /** 좌측 이동 */
       appendTask(startPoint.x - widthExtendLength, endPoint.y, startPoint.x - widthExtendLength, startPoint.y, 'L');
     }
     /** 아래 이동 */
     if (Math.abs(cursorY - startPoint.y) > Math.abs(cursorY - endPoint.y)) {
       appendTask(startPoint.x, startPoint.y + heightExtendLength, endPoint.x, startPoint.y + heightExtendLength, 'D');
     }
+    /** 위 이동 */
     if (Math.abs(cursorY - startPoint.y) < Math.abs(cursorY - endPoint.y)) {
-      /** 위 이동 */
       appendTask(startPoint.x, endPoint.y - heightExtendLength, endPoint.x, endPoint.y - heightExtendLength, 'U');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
