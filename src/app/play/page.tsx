@@ -91,7 +91,6 @@ export default function Play() {
     } else {
       setTiles(newTiles);
     }
-    console.log('dummy', newTiles.map(row => row?.join('')).join('\n'));
     if (type.length > 1) {
       return;
     }
@@ -125,8 +124,8 @@ export default function Play() {
         setTiles(tiles => {
           const newTiles = [...tiles];
           for (let i = 0; i < columnlength; i++) {
-            /** column 형태로 올 때에만 rowIndex를 뒤집기 */
-            const rowIndex = i + endPoint.y - start_y;
+            /** 아래쪽을 받아 올 때에만 위아래 위치를 반전시킨다. */
+            const rowIndex = i + (columnlength === 1 && cursorY < end_y ? endPoint.y - startPoint.y : 0);
             for (let j = 0; j < rowlength; j++) {
               if (!newTiles[rowIndex]) {
                 newTiles[rowIndex] = [];
@@ -218,11 +217,11 @@ export default function Play() {
     }
     /** 아래 이동 */
     if (Math.abs(cursorY - startPoint.y) > Math.abs(cursorY - endPoint.y)) {
-      appendTask(startPoint.x, startPoint.y + heightExtendLength, endPoint.x, startPoint.y + heightExtendLength, 'D');
+      appendTask(startPoint.x, endPoint.y + heightExtendLength, endPoint.x, endPoint.y + heightExtendLength, 'D');
     }
     /** 위 이동 */
     if (Math.abs(cursorY - startPoint.y) < Math.abs(cursorY - endPoint.y)) {
-      appendTask(startPoint.x, endPoint.y - heightExtendLength, endPoint.x, endPoint.y - heightExtendLength, 'U');
+      appendTask(startPoint.x, startPoint.y - heightExtendLength, endPoint.x, startPoint.y - heightExtendLength, 'U');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursorX, cursorY]);
