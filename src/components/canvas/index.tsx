@@ -43,7 +43,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const borderPixel = 5;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { setPosition } = useClickStore();
-  const { x, y, godown, goleft, goright, goup } = useCursorStore();
+  const { godown, goleft, goright, goup } = useCursorStore();
 
   const { windowHeight, windowWidth } = useScreenSize();
 
@@ -68,25 +68,61 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     setPosition(tileX, tileY, clickedTileContent);
 
     /** 길을 찾아서 실제로 이동하는 로직 */
-    let paths = findPathUsingAStar(cursorX - startPoint.x, cursorY - startPoint.y, tileArrayX, tileArrayY);
-    console.log('paths', paths.map(path => tiles[path.y][path.x]).join(' -> '));
-    paths = paths.map(path => ({ ...path, x: path.x + startPoint.x, y: path.y + startPoint.y }));
-    console.log('paths', paths.map(path => `(${path.x}, ${path.y})`).join(' -> '));
-    /** 이동 */
+    const paths = findPathUsingAStar(cursorX - startPoint.x, cursorY - startPoint.y, tileArrayX, tileArrayY);
+    let currentPath = paths[0];
+    /** 8방향 이동 */
+    let index = 1;
+    const interval = setInterval(() => {
+      const path = paths[index++];
+      if (currentPath.x < path.x && currentPath.y < path.y) {
+        goright();
+        setTimeout(() => {
+          godown();
+        }, 1);
+      } else if (currentPath.x < path.x && currentPath.y > path.y) {
+        goright();
+        setTimeout(() => {
+          goup();
+        }, 1);
+      } else if (currentPath.x < path.x && currentPath.y === path.y) {
+        goright();
+      } else if (currentPath.x > path.x && currentPath.y < path.y) {
+        goleft();
+        setTimeout(() => {
+          godown();
+        }, 1);
+      } else if (currentPath.x > path.x && currentPath.y > path.y) {
+        goleft();
+        setTimeout(() => {
+          goup();
+        }, 1);
+      } else if (currentPath.x > path.x && currentPath.y === path.y) {
+        goleft();
+      } else if (currentPath.x === path.x && currentPath.y < path.y) {
+        godown();
+      } else if (currentPath.x === path.x && currentPath.y > path.y) {
+        goup();
+      }
+      currentPath = path;
+      if (index >= paths.length) {
+        clearInterval(interval);
+      }
+    }, 500);
+    console.log('paths', paths.map(path => `(${path.x} ${path.y})`).join(' -> '));
   };
 
   // Function to get neighbors of a node
   function getNeighbors(grid: (Node | null)[][], node: Node) {
     const neighbors = [];
     const directions = [
-      [-1, 0], // up
-      [0, -1], // left
-      [0, 1], // right
-      [1, 0], // down
-      [1, -1], // down-left
-      [-1, 1], // up-right
-      [-1, -1], // up-left
-      [1, 1], // down-right
+      [-1, -1], // left-up
+      [-1, 0], // left
+      [-1, 1], // left-down
+      [0, -1], // up
+      [0, 1], // down
+      [1, -1], // right-up
+      [1, 0], // right
+      [1, 1], // right-down
     ]; // 8-directional neighbors
 
     for (const [dx, dy] of directions) {
@@ -94,8 +130,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       const y = node.y + dy;
 
       // Make sure the neighbor is within bounds and not an obstacle
-      if (x >= 0 && x < grid.length && y >= 0 && y < grid[0].length && grid[x][y] !== null) {
-        neighbors.push(grid[x][y]);
+      if (x >= 0 && x < grid[0].length && y >= 0 && y < grid.length && grid[y][x] !== null) {
+        neighbors.push(grid[y][x]);
       }
     }
 
@@ -111,7 +147,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     for (let i = 0; i < tiles.length; i++) {
       for (let j = 0; j < tiles[i].length; j++) {
         if (tiles[i][j] !== 'F') {
-          grid[i][j] = new Node(i, j);
+          grid[i][j] = new Node(j, i);
         } else {
           grid[i][j] = null;
         }
@@ -136,6 +172,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         }
         return path;
       }
+
       openList = openList.filter(node => node !== current);
       closedList.push(current);
 
@@ -153,14 +190,13 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           continue;
         }
 
-        if (neighbor) {
-          neighbor.parent = current;
-          neighbor.g = tempG;
-          const dx = Math.abs(neighbor.x - target.x);
-          const dy = Math.abs(neighbor.y - target.y);
-          neighbor.h = dx + dy + Math.abs(neighbor.x - target.x) + Math.abs(neighbor.y - target.y);
-          neighbor.f = neighbor.g + neighbor.h;
-        }
+        neighbor.parent = current;
+        neighbor.g = tempG;
+        const dx = Math.abs(neighbor.x - target.x);
+        const dy = Math.abs(neighbor.y - target.y);
+        const IsDiagonal = dx === 1 && dy === 1 ? 0.5 : 0;
+        neighbor.h = IsDiagonal + Math.abs(neighbor.x - target.x) + Math.abs(neighbor.y - target.y);
+        neighbor.f = neighbor.g + neighbor.h;
       }
     }
 
@@ -291,6 +327,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     ctx.stroke();
     ctx.fillStyle = 'yellow';
     ctx.fill();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tiles, tileSize, cursorX, cursorY, startPoint]);
 
   return (
