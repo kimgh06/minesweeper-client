@@ -38,15 +38,22 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   cursorY,
   startPoint,
 }) => {
+  const animationSpeed = 500;
   const tilePaddingWidth = ((paddingTiles - 1) * (cursorX - startPoint.x)) / paddingTiles;
   const tilePaddingHeight = ((paddingTiles - 1) * (cursorY - startPoint.y)) / paddingTiles;
   const borderPixel = 5;
+  const movementInterval = useRef<NodeJS.Timeout | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { setPosition } = useClickStore();
+  const { setPosition, x: clickX, y: clickY } = useClickStore();
   const { godown, goleft, goright, goup } = useCursorStore();
 
   const { windowHeight, windowWidth } = useScreenSize();
-
+  const cancelCurrentMovement = () => {
+    if (movementInterval.current) {
+      clearInterval(movementInterval.current);
+      movementInterval.current = null;
+    }
+  };
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -67,34 +74,39 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const clickedTileContent = tiles[tileArrayY]?.[tileArrayX] ?? 'Out of bounds';
     setPosition(tileX, tileY, clickedTileContent);
 
-    /** 길을 찾아서 실제로 이동하는 로직 */
+    /** 기존 이동 멈춤 */
+    cancelCurrentMovement();
+    /** astar를 사용한 길 찾기 */
     const paths = findPathUsingAStar(cursorX - startPoint.x, cursorY - startPoint.y, tileArrayX, tileArrayY);
-    let currentPath = paths[0];
+
     /** 8방향 이동 */
+    let currentPath = paths[0];
     let index = 1;
-    const interval = setInterval(() => {
+    if (currentPath?.x === undefined || currentPath?.y === undefined) return;
+    movementInterval.current = setInterval(() => {
       const path = paths[index++];
+      if (!path) return;
       if (currentPath.x < path.x && currentPath.y < path.y) {
-        goright();
+        godown();
         setTimeout(() => {
-          godown();
+          goright();
         }, 1);
       } else if (currentPath.x < path.x && currentPath.y > path.y) {
-        goright();
+        goup();
         setTimeout(() => {
-          goup();
+          goright();
         }, 1);
       } else if (currentPath.x < path.x && currentPath.y === path.y) {
         goright();
       } else if (currentPath.x > path.x && currentPath.y < path.y) {
-        goleft();
+        godown();
         setTimeout(() => {
-          godown();
+          goleft();
         }, 1);
       } else if (currentPath.x > path.x && currentPath.y > path.y) {
-        goleft();
+        goup();
         setTimeout(() => {
-          goup();
+          goleft();
         }, 1);
       } else if (currentPath.x > path.x && currentPath.y === path.y) {
         goleft();
@@ -105,9 +117,9 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       }
       currentPath = path;
       if (index >= paths.length) {
-        clearInterval(interval);
+        cancelCurrentMovement();
       }
-    }, 500);
+    }, animationSpeed);
     console.log('paths', paths.map(path => `(${path.x} ${path.y})`).join(' -> '));
   };
 
@@ -115,28 +127,31 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   function getNeighbors(grid: (Node | null)[][], node: Node) {
     const neighbors = [];
     const directions = [
-      [-1, -1], // left-up
       [-1, 0], // left
-      [-1, 1], // left-down
       [0, -1], // up
       [0, 1], // down
-      [1, -1], // right-up
       [1, 0], // right
+      [-1, -1], // left-up
+      [-1, 1], // left-down
+      [1, -1], // right-up
       [1, 1], // right-down
     ]; // 8-directional neighbors
-
     for (const [dx, dy] of directions) {
       const x = node.x + dx;
       const y = node.y + dy;
 
       // Make sure the neighbor is within bounds and not an obstacle
-      if (x >= 0 && x < grid[0].length && y >= 0 && y < grid.length && grid[y][x] !== null) {
+      if (y >= 0 && y < grid.length && x >= 0 && x < grid[y].length && grid[y][x] !== null) {
         neighbors.push(grid[y][x]);
       }
     }
 
     return neighbors;
   }
+
+  useEffect(() => {
+    return () => cancelCurrentMovement();
+  }, []);
 
   /** Flag를 피해서 astar 알고리즘으로 길찾고 커서를 8방향으로 이동하기 */
   const findPathUsingAStar = (startX: number, startY: number, targetX: number, targetY: number) => {
@@ -205,13 +220,14 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || tileSize === 0) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     // 캔버스 초기화
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.lineWidth = 1;
 
     // 타일 그리기
     tiles?.forEach((row, rowIndex) => {
@@ -327,8 +343,26 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     ctx.stroke();
     ctx.fillStyle = 'yellow';
     ctx.fill();
+
+    // 클릭한 타일 표시
+    const clickCanvasX = cursorCanvasX + (clickX - cursorX) * tileSize;
+    const clickCanvasY = cursorCanvasY + (clickY - cursorY) * tileSize;
+    console.log(clickCanvasX, clickCanvasY);
+
+    ctx.beginPath();
+    ctx.strokeStyle = 'red'; // 테두리 색상
+    ctx.lineWidth = 3; // 테두리 두께
+    ctx.rect(
+      clickCanvasX + ctx.lineWidth / 2,
+      clickCanvasY + ctx.lineWidth / 2,
+      tileSize - ctx.lineWidth,
+      tileSize - ctx.lineWidth,
+    );
+    ctx.stroke();
+    ctx.closePath();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tiles, tileSize, cursorX, cursorY, startPoint]);
+  }, [tiles, tileSize, cursorX, cursorY, startPoint, clickX, clickY]);
 
   return (
     <canvas

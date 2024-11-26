@@ -22,7 +22,7 @@ export default function Play() {
   const originTileSize = 80;
   const zoomScale = 1.5;
   const webSocketUrl = `${process.env.NEXT_PUBLIC_WS_HOST}/session`;
-  const { x: cursorX, y: cursorY } = useCursorStore();
+  const { x: cursorX, y: cursorY, zoom, setZoom } = useCursorStore();
   const { x: clickX, y: clickY, content: clickContent } = useClickStore();
   const { windowWidth, windowHeight } = useScreenSize();
   const { isOpen, message, sendMessage } = useWebSocket(webSocketUrl);
@@ -30,8 +30,7 @@ export default function Play() {
   const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(false);
   const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
   const [endPoint, setEndPoint] = useState<Point>({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState<number>(1);
-  const [tileSize, setTileSize] = useState<number>(originTileSize); //px
+  const [tileSize, setTileSize] = useState<number>(0); //px
   const [tiles, setTiles] = useState<string[][]>([
     ['1', '1', '1', 'O', 'O', 'C', 'C', 'C', 'O'],
     ['2', 'F', '2', 'O', 'O', 'C', 'C', 'C', 'O'],
@@ -47,25 +46,25 @@ export default function Play() {
     start_y: number,
     end_x: number,
     end_y: number,
-    type: 'R' | 'L' | 'U' | 'D' | 'A',
+    type: 'R' | 'L' | 'U' | 'D' | 'UL' | 'UR' | 'DL' | 'DR' | 'A' | '',
   ) => {
     /** add Dummy data to originTiles */
     const newTiles = [...tiles];
-    if (type === 'R') {
+    if (type.includes('R')) {
       const rowlength = Math.abs(end_x - start_x) + 1;
       const columnlength = Math.abs(start_y - end_y) + 1;
       for (let i = 0; i < columnlength; i++) {
         newTiles[i] = [...newTiles[i].slice(1), ...Array(rowlength).fill('?')];
       }
     }
-    if (type === 'L') {
+    if (type.includes('L')) {
       const rowlength = Math.abs(end_x - start_x) + 1;
       const columnlength = Math.abs(start_y - end_y) + 1;
       for (let i = 0; i < columnlength; i++) {
         newTiles[i] = [...Array(rowlength).fill('?'), ...newTiles[i].slice(0, -1)];
       }
     }
-    if (type === 'D') {
+    if (type.includes('D')) {
       const rowlength = Math.abs(end_x - start_x) + 1;
       const columnlength = Math.abs(start_y - end_y) + 1;
       for (let i = 0; i < columnlength; i++) {
@@ -73,7 +72,7 @@ export default function Play() {
         newTiles.shift();
       }
     }
-    if (type === 'U') {
+    if (type.includes('U')) {
       const rowlength = Math.abs(end_x - start_x) + 1;
       const columnlength = Math.abs(start_y - end_y) + 1;
       for (let i = 0; i < columnlength; i++) {
@@ -81,8 +80,21 @@ export default function Play() {
         newTiles.pop();
       }
     }
+    if (type.includes('A')) {
+      /** 크기에 맞게 생성 */
+      setTiles(() => {
+        const newTiles = Array.from({ length: Math.abs(end_y - start_y) + 1 }, () =>
+          Array.from({ length: Math.abs(end_x - start_x) + 1 }, () => '?'),
+        );
+        return newTiles;
+      });
+    } else {
+      setTiles(newTiles);
+    }
     console.log('dummy', newTiles.map(row => row?.join('')).join('\n'));
-    setTiles(newTiles);
+    if (type.length > 1) {
+      return;
+    }
     const body = JSON.stringify({
       event: 'fetch-tiles',
       payload: {
@@ -104,17 +116,17 @@ export default function Play() {
 
         const rowlength = Math.abs(end_x - start_x) + 1;
         const columnlength = Math.abs(start_y - end_y) + 1;
-        console.log(rowlength, columnlength);
         const sortedTiles = [] as string[][];
         for (let i = 0; i < columnlength; i++) {
           sortedTiles[i] = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
         }
-        console.log('sorted', unsortedTiles, sortedTiles);
         /** 좌표에 맞게 더미 데이터를 갈아끼우기 */
         setTiles(tiles => {
           const newTiles = [...tiles];
           for (let i = 0; i < columnlength; i++) {
-            const rowIndex = i + endPoint.y - start_y;
+            /** column 형태로 올 때에만 rowIndex를 뒤집기 */
+            const rowIndex =
+              columnlength === tiles.length ? columnlength - (i + endPoint.y - start_y) : i + endPoint.y - start_y;
             for (let j = 0; j < rowlength; j++) {
               if (!newTiles[rowIndex]) {
                 newTiles[rowIndex] = [];
@@ -122,6 +134,7 @@ export default function Play() {
               newTiles[rowIndex][j + start_x - startPoint.x] = sortedTiles[i][j];
             }
           }
+
           return newTiles;
         });
       }
@@ -138,9 +151,11 @@ export default function Play() {
     const newTileSize = originTileSize * zoom;
     const tileVisibleWidth = Math.floor((windowWidth * paddingTiles) / newTileSize);
     const tileVisibleHeight = Math.floor((windowHeight * paddingTiles) / newTileSize);
+    setTileSize(newTileSize);
 
     const tilePaddingWidth = Math.floor(tileVisibleWidth / 2);
     const tilePaddingHeight = Math.floor(tileVisibleHeight / 2);
+
     setStartPoint({
       x: cursorX - tilePaddingWidth,
       y: cursorY - tilePaddingHeight,
@@ -149,7 +164,6 @@ export default function Play() {
       x: cursorX + tilePaddingWidth,
       y: cursorY + tilePaddingHeight,
     });
-    setTileSize(newTileSize);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, cursorX, cursorY, paddingTiles, isOpen]);
@@ -183,7 +197,6 @@ export default function Play() {
         startPoint.y + heightReductionLength,
         'A',
       );
-      setTiles([[]]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, paddingTiles, isOpen]);
@@ -193,6 +206,7 @@ export default function Play() {
     /** 커서 위치가 바뀌었을 때 */
     const widthExtendLength = 1;
     const heightExtendLength = 1;
+
     /** 우측 이동 */
     if (Math.abs(cursorX - startPoint.x) > Math.abs(cursorX - endPoint.x)) {
       appendTask(endPoint.x + widthExtendLength, endPoint.y, endPoint.x + widthExtendLength, startPoint.y, 'R');
