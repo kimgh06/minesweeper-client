@@ -133,7 +133,6 @@ export default function Play() {
               newTiles[rowIndex][j + start_x - startPoint.x] = sortedTiles[i][j];
             }
           }
-
           return newTiles;
         });
       }
