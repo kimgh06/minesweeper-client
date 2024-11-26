@@ -44,7 +44,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const borderPixel = 5;
   const movementInterval = useRef<NodeJS.Timeout | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { setPosition, x: clickX, y: clickY } = useClickStore();
+  const { setPosition, x: clickX, y: clickY, setMovecost } = useClickStore();
   const { godown, goleft, goright, goup } = useCursorStore();
 
   const { windowHeight, windowWidth } = useScreenSize();
@@ -80,6 +80,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const paths = findPathUsingAStar(cursorX - startPoint.x, cursorY - startPoint.y, tileArrayX, tileArrayY);
 
     /** 8방향 이동 */
+    setMovecost(paths.length);
     let currentPath = paths[0];
     let index = 1;
     if (currentPath?.x === undefined || currentPath?.y === undefined) return;
@@ -87,9 +88,9 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       const path = paths[index++];
       if (!path) return;
       if (currentPath.x < path.x && currentPath.y < path.y) {
-        godown();
+        goright();
         setTimeout(() => {
-          goright();
+          godown();
         }, 1);
       } else if (currentPath.x < path.x && currentPath.y > path.y) {
         goup();
@@ -99,9 +100,9 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       } else if (currentPath.x < path.x && currentPath.y === path.y) {
         goright();
       } else if (currentPath.x > path.x && currentPath.y < path.y) {
-        godown();
+        goleft();
         setTimeout(() => {
-          goleft();
+          godown();
         }, 1);
       } else if (currentPath.x > path.x && currentPath.y > path.y) {
         goup();
@@ -120,7 +121,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         cancelCurrentMovement();
       }
     }, animationSpeed);
-    console.log('paths', paths.map(path => `(${path.x} ${path.y})`).join(' -> '));
+    // console.log('paths', paths.map(path => `(${path.x} ${path.y})`).join(' -> '));
   };
 
   // Function to get neighbors of a node
@@ -347,7 +348,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     // 클릭한 타일 표시
     const clickCanvasX = cursorCanvasX + (clickX - cursorX) * tileSize;
     const clickCanvasY = cursorCanvasY + (clickY - cursorY) * tileSize;
-    console.log(clickCanvasX, clickCanvasY);
 
     ctx.beginPath();
     ctx.strokeStyle = 'red'; // 테두리 색상

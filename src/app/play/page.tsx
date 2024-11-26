@@ -23,7 +23,7 @@ export default function Play() {
   const zoomScale = 1.5;
   const webSocketUrl = `${process.env.NEXT_PUBLIC_WS_HOST}/session`;
   const { x: cursorX, y: cursorY, zoom, setZoom } = useCursorStore();
-  const { x: clickX, y: clickY, content: clickContent } = useClickStore();
+  const { x: clickX, y: clickY, content: clickContent, movecost } = useClickStore();
   const { windowWidth, windowHeight } = useScreenSize();
   const { isOpen, message, sendMessage } = useWebSocket(webSocketUrl);
   const [paddingTiles, setPaddingTiles] = useState<number>(2);
@@ -120,13 +120,13 @@ export default function Play() {
         for (let i = 0; i < columnlength; i++) {
           sortedTiles[i] = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
         }
+        sortedTiles.reverse();
         /** 좌표에 맞게 더미 데이터를 갈아끼우기 */
         setTiles(tiles => {
           const newTiles = [...tiles];
           for (let i = 0; i < columnlength; i++) {
             /** column 형태로 올 때에만 rowIndex를 뒤집기 */
-            const rowIndex =
-              columnlength === tiles.length ? columnlength - (i + endPoint.y - start_y) : i + endPoint.y - start_y;
+            const rowIndex = i + endPoint.y - start_y;
             for (let j = 0; j < rowlength; j++) {
               if (!newTiles[rowIndex]) {
                 newTiles[rowIndex] = [];
@@ -241,6 +241,7 @@ export default function Play() {
             <p>
               Clicked XY ({clickX}, {clickY}) : {clickContent}
             </p>
+            <p>Move Cost: {movecost}</p>
             <ul>
               Total {(endPoint.x - startPoint.x + 1) * (endPoint.y - startPoint.y + 1)} Tiles
               <li>
