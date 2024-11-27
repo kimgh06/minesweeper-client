@@ -10,8 +10,8 @@ interface ClickState {
 }
 
 const useClickStore = create<ClickState>(set => ({
-  x: 0,
-  y: 0,
+  x: -1,
+  y: -1,
   content: '',
   movecost: 0,
   setMovecost: movecost => set({ movecost }),

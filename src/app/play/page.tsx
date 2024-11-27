@@ -12,18 +12,26 @@ import ArrowKeys from '@/components/arrowkeys';
 import CanvasRenderer from '@/components/canvas';
 import useClickStore from '@/store/clickStore';
 import useWebSocketStore from '@/store/websocketStore';
+import useColorStore from '@/store/colorStore';
 
 interface Point {
   x: number;
   y: number;
 }
 
+interface UserCursor {
+  position: { x: number; y: number };
+  pointer: { x: number; y: number };
+  color: string;
+}
+
 export default function Play() {
   const originTileSize = 80;
   const zoomScale = 1.5;
   const webSocketUrl = `${process.env.NEXT_PUBLIC_WS_HOST}/session`;
-  const { x: cursorX, y: cursorY, zoom, setZoom } = useCursorStore();
-  const { x: clickX, y: clickY, content: clickContent, movecost } = useClickStore();
+  const { x: cursorX, y: cursorY, setPosition: setCursorPosition, zoom, setZoom } = useCursorStore();
+  const { x: clickX, y: clickY, setPosition: setClickPosition, content: clickContent, movecost } = useClickStore();
+  const { color, setColor } = useColorStore();
   const { windowWidth, windowHeight } = useScreenSize();
   const { isOpen, message, sendMessage, connect } = useWebSocketStore();
   const [paddingTiles, setPaddingTiles] = useState<number>(2);
@@ -40,7 +48,9 @@ export default function Play() {
     ['C', 'C', 'C', 'O', 'O', '1', '1', '1', 'O'],
     ['C', 'C', 'C', 'O', 'O', 'C', 'C', 'C', 'O'],
   ]);
+  const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
 
+  /** 타일 요청 */
   const appendTask = (
     start_x: number,
     start_y: number,
@@ -118,33 +128,62 @@ export default function Play() {
     if (!message) return;
     try {
       const { event, payload } = JSON.parse(message as string);
-      switch (event) {
-        case 'tiles':
-          const { end_x, end_y, start_x, start_y, tiles: unsortedTiles } = payload;
+      if (event === 'tiles') {
+        const { end_x, end_y, start_x, start_y, tiles: unsortedTiles } = payload;
 
-          const rowlength = Math.abs(end_x - start_x) + 1;
-          const columnlength = Math.abs(start_y - end_y) + 1;
-          const sortedTiles = [] as string[][];
+        const rowlength = Math.abs(end_x - start_x) + 1;
+        const columnlength = Math.abs(start_y - end_y) + 1;
+        const sortedTiles = [] as string[][];
+        for (let i = 0; i < columnlength; i++) {
+          sortedTiles[i] = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
+        }
+        sortedTiles.reverse();
+        /** 좌표에 맞게 더미 데이터를 갈아끼우기 */
+        setTiles(tiles => {
+          const newTiles = [...tiles];
           for (let i = 0; i < columnlength; i++) {
-            sortedTiles[i] = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
-          }
-          sortedTiles.reverse();
-          /** 좌표에 맞게 더미 데이터를 갈아끼우기 */
-          setTiles(tiles => {
-            const newTiles = [...tiles];
-            for (let i = 0; i < columnlength; i++) {
-              /** 아래쪽을 받아 올 때에만 위아래 위치를 반전시킨다. */
-              const rowIndex = i + (columnlength === 1 && cursorY < end_y ? endPoint.y - startPoint.y : 0);
-              for (let j = 0; j < rowlength; j++) {
-                if (!newTiles[rowIndex]) {
-                  newTiles[rowIndex] = [];
-                }
-                newTiles[rowIndex][j + start_x - startPoint.x] = sortedTiles[i][j];
+            /** 아래쪽을 받아 올 때에만 위아래 위치를 반전시킨다. */
+            const rowIndex = i + (columnlength === 1 && cursorY < end_y ? endPoint.y - startPoint.y : 0);
+            for (let j = 0; j < rowlength; j++) {
+              if (!newTiles[rowIndex]) {
+                newTiles[rowIndex] = [];
               }
+              newTiles[rowIndex][j + start_x - startPoint.x] = sortedTiles[i][j];
             }
-            return newTiles;
-          });
-          break;
+          }
+          return newTiles;
+        });
+      } else if (event === 'flag-set' || event === 'tile-opened') {
+        setTiles(tiles => {
+          const {
+            position: { x, y },
+            state,
+          } = payload;
+          const newTiles = [...tiles];
+          newTiles[y][x] = state;
+          return newTiles;
+        });
+      } else if (event === 'my-cursor') {
+        /** 연결될 때 단 한 번만 받음. */
+        const { position, pointer, color } = payload;
+        setCursorPosition(position.x, position.y);
+        setClickPosition(pointer.x, pointer.y, '');
+        setColor(color);
+      } else if (event === 'cursors') {
+        setUserCursors(payload);
+      } else if (event === 'moved') {
+        const { origin_position, new_position, color } = payload;
+        const { x: originX, y: originY } = origin_position;
+        const { x: newX, y: newY } = new_position;
+        setUserCursors(cursors => {
+          const newCursors = [...cursors];
+          let index = newCursors.findIndex(cursor => cursor.position.x === originX && cursor.position.y === originY);
+          if (index === -1) {
+            index = newCursors.length;
+          }
+          newCursors[index] = { position: { x: newX, y: newY }, pointer: { x: newX, y: newY }, color };
+          return newCursors;
+        });
       }
     } catch (e) {
       console.error(e);
@@ -157,6 +196,7 @@ export default function Play() {
     console.log(tiles.map(row => row.join('')).join('\n'));
   }, [tiles]);
 
+  /** 커서 위치나 화면 크기가 바뀌면 화면 범위 재설정 */
   useEffect(() => {
     const newTileSize = originTileSize * zoom;
     setTileSize(newTileSize);
