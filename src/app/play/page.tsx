@@ -26,18 +26,26 @@ interface UserCursor {
 }
 
 export default function Play() {
+  /** constants */
   const originTileSize = 80;
   const zoomScale = 1.5;
   const webSocketUrl = `${process.env.NEXT_PUBLIC_WS_HOST}/session`;
+
+  /** stores */
+  const { isOpen, message, sendMessage, connect } = useWebSocketStore();
   const { x: cursorX, y: cursorY, setPosition: setCursorPosition, zoom, setZoom } = useCursorStore();
   const { x: clickX, y: clickY, setPosition: setClickPosition, content: clickContent, movecost } = useClickStore();
   const { color, setColor } = useColorStore();
+
+  /** hooks */
   const { windowWidth, windowHeight } = useScreenSize();
-  const { isOpen, message, sendMessage, connect } = useWebSocketStore();
+
+  /** states */
   const [paddingTiles, setPaddingTiles] = useState<number>(2);
-  const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(false);
-  const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
   const [endPoint, setEndPoint] = useState<Point>({ x: 0, y: 0 });
+  const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
+  const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
+  const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(false);
   const [tileSize, setTileSize] = useState<number>(0); //px
   const [tiles, setTiles] = useState<string[][]>([
     ['1', '1', '1', 'O', 'O', 'C', 'C', 'C', 'O'],
@@ -48,7 +56,6 @@ export default function Play() {
     ['C', 'C', 'C', 'O', 'O', '1', '1', '1', 'O'],
     ['C', 'C', 'C', 'O', 'O', 'C', 'C', 'C', 'O'],
   ]);
-  const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
 
   /** 타일 요청 */
   const appendTask = (
