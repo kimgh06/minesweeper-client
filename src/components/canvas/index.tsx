@@ -1,6 +1,7 @@
 import useScreenSize from '@/hooks/useScreenSize';
 import useClickStore from '@/store/clickStore';
 import useCursorStore from '@/store/cursorStore';
+import useWebSocketStore from '@/store/websocketStore';
 import React, { useRef, useEffect, useState } from 'react';
 
 class Node {
@@ -41,6 +42,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const animationSpeed = 500;
   const tilePaddingWidth = ((paddingTiles - 1) * (cursorX - startPoint.x)) / paddingTiles;
   const tilePaddingHeight = ((paddingTiles - 1) * (cursorY - startPoint.y)) / paddingTiles;
+  const { message, sendMessage, isOpen } = useWebSocketStore();
   const borderPixel = 5;
   const movementInterval = useRef<NodeJS.Timeout | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -70,6 +72,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     // 캔버스 좌표를 실제 좌표로 변환
     const tileX = Math.round(tileArrayX + startPoint.x);
     const tileY = Math.round(tileArrayY + startPoint.y);
+
+    /** 추후 웹 소켓 통신 추가 예정 */
 
     // 클릭한 타일의 내용 가져오기
     const clickedTileContent = tiles[tileArrayY]?.[tileArrayX] ?? 'Out of bounds';
@@ -155,6 +159,15 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     return () => cancelCurrentMovement();
   }, []);
 
+  useEffect(() => {
+    if (!message) return;
+    try {
+      const { event, payload } = JSON.parse(message);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [message]);
+
   /** Flag를 피해서 astar 알고리즘으로 길찾고 커서를 8방향으로 이동하기 */
   const findPathUsingAStar = (startX: number, startY: number, targetX: number, targetY: number) => {
     /** initialize tiles */
@@ -238,7 +251,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         const x = (colIndex - tilePaddingWidth) * tileSize;
         const y = (rowIndex - tilePaddingHeight) * tileSize;
 
-        if (content === 'C') {
+        if (content === 'C' || content === 'F') {
           const innerGradient = ctx.createLinearGradient(
             x + borderPixel,
             y + borderPixel,
@@ -273,11 +286,19 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           ctx.fillStyle = innerGradient;
           ctx.fillRect(x + borderPixel, y + borderPixel, tileSize - borderPixel * 2, tileSize - borderPixel * 2); // Adjust dimensions for inner rect
 
+          if (content === 'F') {
+            ctx.fillStyle = 'red';
+            ctx.font = '30px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('F', x + tileSize / 2, y + tileSize / 2);
+          }
           // Drawing outer rectangle border
           if (
             Math.abs(rowIndex - (cursorY - startPoint.y)) <= 1 &&
             Math.abs(colIndex - (cursorX - startPoint.x)) <= 1 &&
-            !(colIndex === cursorX - startPoint.x && rowIndex === cursorY - startPoint.y)
+            !(colIndex === cursorX - startPoint.x && rowIndex === cursorY - startPoint.y) &&
+            content === 'C'
           ) {
             ctx.strokeStyle = 'yellow';
             const lineWidth = 3;
@@ -326,10 +347,9 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           }
         } else {
           // 타일 색상 설정 (콘텐츠에 따라 변경)
+          const lineWidth = 1;
+          ctx.lineWidth = lineWidth;
           switch (content) {
-            case 'F':
-              ctx.fillStyle = 'red';
-              break;
             default:
               ctx.fillStyle = 'white';
           }
@@ -346,7 +366,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
           // 경계선 그리기
           ctx.strokeStyle = 'black';
-          ctx.strokeRect(x, y, tileSize, tileSize);
+          ctx.strokeRect(x + lineWidth, y + lineWidth, tileSize - lineWidth, tileSize - lineWidth);
         }
       });
     });
@@ -366,13 +386,13 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
     ctx.beginPath();
     ctx.strokeStyle = 'red'; // 테두리 색상
-    const linewidth = 3;
-    ctx.lineWidth = linewidth; // 테두리 두께
+    const lineWidth = 3;
+    ctx.lineWidth = lineWidth; // 테두리 두께
     ctx.strokeRect(
-      clickCanvasX + linewidth / 2,
-      clickCanvasY + linewidth / 2,
-      tileSize - linewidth,
-      tileSize - linewidth,
+      clickCanvasX + lineWidth / 2,
+      clickCanvasY + lineWidth / 2,
+      tileSize - lineWidth,
+      tileSize - lineWidth,
     ); // 테두리 그리기
     ctx.closePath();
     setRenderedTiles(tiles);

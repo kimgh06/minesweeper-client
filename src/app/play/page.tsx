@@ -11,7 +11,7 @@ import useCursorStore from '../../store/cursorStore';
 import ArrowKeys from '@/components/arrowkeys';
 import CanvasRenderer from '@/components/canvas';
 import useClickStore from '@/store/clickStore';
-import useWebSocket from '@/hooks/useWebsocket';
+import useWebSocketStore from '@/store/websocketStore';
 
 interface Point {
   x: number;
@@ -25,7 +25,7 @@ export default function Play() {
   const { x: cursorX, y: cursorY, zoom, setZoom } = useCursorStore();
   const { x: clickX, y: clickY, content: clickContent, movecost } = useClickStore();
   const { windowWidth, windowHeight } = useScreenSize();
-  const { isOpen, message, sendMessage } = useWebSocket(webSocketUrl);
+  const { isOpen, message, sendMessage, connect } = useWebSocketStore();
   const [paddingTiles, setPaddingTiles] = useState<number>(2);
   const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(false);
   const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
@@ -48,6 +48,7 @@ export default function Play() {
     end_y: number,
     type: 'R' | 'L' | 'U' | 'D' | 'UL' | 'UR' | 'DL' | 'DR' | 'A' | '',
   ) => {
+    if (!isOpen) return;
     /** add Dummy data to originTiles */
     const newTiles = [...tiles];
     if (type.includes('R')) {
@@ -105,6 +106,12 @@ export default function Play() {
     });
     sendMessage(body);
   };
+
+  useEffect(() => {
+    if (!isOpen) {
+      connect(webSocketUrl);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!message) return;
@@ -169,7 +176,6 @@ export default function Play() {
 
   /** zoom event */
   useEffect(() => {
-    if (!isOpen) return;
     const newTileSize = originTileSize * zoom;
     const tileVisibleWidth = Math.floor((windowWidth * paddingTiles) / newTileSize);
     const tileVisibleHeight = Math.floor((windowHeight * paddingTiles) / newTileSize);
