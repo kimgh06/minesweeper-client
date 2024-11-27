@@ -1,8 +1,11 @@
+'use client';
+import S from './style.module.scss';
+import React, { useRef, useEffect, useState } from 'react';
+
 import useScreenSize from '@/hooks/useScreenSize';
 import useClickStore from '@/store/clickStore';
 import useCursorStore from '@/store/cursorStore';
 import useWebSocketStore from '@/store/websocketStore';
-import React, { useRef, useEffect, useState } from 'react';
 
 class Node {
   x: number;
@@ -402,6 +405,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
   return (
     <canvas
+      className={S.canvas}
       ref={canvasRef}
       width={windowWidth}
       height={windowHeight}

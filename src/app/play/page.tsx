@@ -113,35 +113,38 @@ export default function Play() {
     }
   }, [isOpen]);
 
+  /** ws 메시지 처리 */
   useEffect(() => {
     if (!message) return;
     try {
       const { event, payload } = JSON.parse(message as string);
-      if (event === 'tiles') {
-        const { end_x, end_y, start_x, start_y, tiles: unsortedTiles } = payload;
+      switch (event) {
+        case 'tiles':
+          const { end_x, end_y, start_x, start_y, tiles: unsortedTiles } = payload;
 
-        const rowlength = Math.abs(end_x - start_x) + 1;
-        const columnlength = Math.abs(start_y - end_y) + 1;
-        const sortedTiles = [] as string[][];
-        for (let i = 0; i < columnlength; i++) {
-          sortedTiles[i] = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
-        }
-        sortedTiles.reverse();
-        /** 좌표에 맞게 더미 데이터를 갈아끼우기 */
-        setTiles(tiles => {
-          const newTiles = [...tiles];
+          const rowlength = Math.abs(end_x - start_x) + 1;
+          const columnlength = Math.abs(start_y - end_y) + 1;
+          const sortedTiles = [] as string[][];
           for (let i = 0; i < columnlength; i++) {
-            /** 아래쪽을 받아 올 때에만 위아래 위치를 반전시킨다. */
-            const rowIndex = i + (columnlength === 1 && cursorY < end_y ? endPoint.y - startPoint.y : 0);
-            for (let j = 0; j < rowlength; j++) {
-              if (!newTiles[rowIndex]) {
-                newTiles[rowIndex] = [];
-              }
-              newTiles[rowIndex][j + start_x - startPoint.x] = sortedTiles[i][j];
-            }
+            sortedTiles[i] = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
           }
-          return newTiles;
-        });
+          sortedTiles.reverse();
+          /** 좌표에 맞게 더미 데이터를 갈아끼우기 */
+          setTiles(tiles => {
+            const newTiles = [...tiles];
+            for (let i = 0; i < columnlength; i++) {
+              /** 아래쪽을 받아 올 때에만 위아래 위치를 반전시킨다. */
+              const rowIndex = i + (columnlength === 1 && cursorY < end_y ? endPoint.y - startPoint.y : 0);
+              for (let j = 0; j < rowlength; j++) {
+                if (!newTiles[rowIndex]) {
+                  newTiles[rowIndex] = [];
+                }
+                newTiles[rowIndex][j + start_x - startPoint.x] = sortedTiles[i][j];
+              }
+            }
+            return newTiles;
+          });
+          break;
       }
     } catch (e) {
       console.error(e);
@@ -149,19 +152,17 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message]);
 
+  /** 타일 디버깅 */
   useEffect(() => {
     console.log(tiles.map(row => row.join('')).join('\n'));
   }, [tiles]);
 
   useEffect(() => {
     const newTileSize = originTileSize * zoom;
-    const tileVisibleWidth = Math.floor((windowWidth * paddingTiles) / newTileSize);
-    const tileVisibleHeight = Math.floor((windowHeight * paddingTiles) / newTileSize);
     setTileSize(newTileSize);
 
-    const tilePaddingWidth = Math.floor(tileVisibleWidth / 2);
-    const tilePaddingHeight = Math.floor(tileVisibleHeight / 2);
-
+    const tilePaddingWidth = Math.floor(Math.floor((windowWidth * paddingTiles) / newTileSize) / 2);
+    const tilePaddingHeight = Math.floor(Math.floor((windowHeight * paddingTiles) / newTileSize) / 2);
     setStartPoint({
       x: cursorX - tilePaddingWidth,
       y: cursorY - tilePaddingHeight,
@@ -170,7 +171,6 @@ export default function Play() {
       x: cursorX + tilePaddingWidth,
       y: cursorY + tilePaddingHeight,
     });
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, cursorX, cursorY, paddingTiles, isOpen]);
 
@@ -206,12 +206,10 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, paddingTiles, isOpen]);
 
-  /** cursor change evnet */
+  /** 커서 위치가 바뀌었을 때 */
   useEffect(() => {
-    /** 커서 위치가 바뀌었을 때 */
     const widthExtendLength = 1;
     const heightExtendLength = 1;
-
     /** 우측 이동 */
     if (Math.abs(cursorX - startPoint.x) > Math.abs(cursorX - endPoint.x)) {
       appendTask(endPoint.x + widthExtendLength, endPoint.y, endPoint.x + widthExtendLength, startPoint.y, 'R');
