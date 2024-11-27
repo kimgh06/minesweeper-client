@@ -1,7 +1,7 @@
 import useScreenSize from '@/hooks/useScreenSize';
 import useClickStore from '@/store/clickStore';
 import useCursorStore from '@/store/cursorStore';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 
 class Node {
   x: number;
@@ -44,6 +44,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const borderPixel = 5;
   const movementInterval = useRef<NodeJS.Timeout | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [renderedTiles, setRenderedTiles] = useState<string[][]>();
   const { setPosition, x: clickX, y: clickY, setMovecost } = useClickStore();
   const { godown, goleft, goright, goup } = useCursorStore();
 
@@ -233,6 +234,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     // 타일 그리기
     tiles?.forEach((row, rowIndex) => {
       row?.forEach((content, colIndex) => {
+        // if (renderedTiles && renderedTiles[rowIndex][colIndex] === content) return;
         const x = (colIndex - tilePaddingWidth) * tileSize;
         const y = (rowIndex - tilePaddingHeight) * tileSize;
 
@@ -270,6 +272,18 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           // Drawing inner rectangle
           ctx.fillStyle = innerGradient;
           ctx.fillRect(x + borderPixel, y + borderPixel, tileSize - borderPixel * 2, tileSize - borderPixel * 2); // Adjust dimensions for inner rect
+
+          // Drawing outer rectangle border
+          if (
+            Math.abs(rowIndex - (cursorY - startPoint.y)) <= 1 &&
+            Math.abs(colIndex - (cursorX - startPoint.x)) <= 1 &&
+            !(colIndex === cursorX - startPoint.x && rowIndex === cursorY - startPoint.y)
+          ) {
+            ctx.strokeStyle = 'yellow';
+            const lineWidth = 3;
+            ctx.lineWidth = lineWidth;
+            ctx.strokeRect(x + lineWidth / 2, y + lineWidth / 2, tileSize - lineWidth, tileSize - lineWidth);
+          }
         } else if (
           content === 'O' ||
           content === '1' ||
@@ -281,6 +295,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           content === '7' ||
           content === '8'
         ) {
+          ctx.lineWidth = 1;
           const innerGradient = ctx.createLinearGradient(
             x + borderPixel,
             y + borderPixel,
@@ -340,7 +355,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const cursorCanvasX = ((cursorX - startPoint.x) / paddingTiles) * tileSize;
     const cursorCanvasY = ((cursorY - startPoint.y) / paddingTiles) * tileSize;
     ctx.beginPath();
-    ctx.arc(cursorCanvasX + tileSize / 2, cursorCanvasY + tileSize / 2, tileSize / 2, 0, 2 * Math.PI);
+    ctx.arc(cursorCanvasX + tileSize / 2, cursorCanvasY + tileSize / 2, tileSize / 4, 0, 2 * Math.PI);
     ctx.stroke();
     ctx.fillStyle = 'yellow';
     ctx.fill();
@@ -351,15 +366,16 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
     ctx.beginPath();
     ctx.strokeStyle = 'red'; // 테두리 색상
-    ctx.lineWidth = 3; // 테두리 두께
-    ctx.rect(
-      clickCanvasX + ctx.lineWidth / 2,
-      clickCanvasY + ctx.lineWidth / 2,
-      tileSize - ctx.lineWidth,
-      tileSize - ctx.lineWidth,
-    );
-    ctx.stroke();
+    const linewidth = 3;
+    ctx.lineWidth = linewidth; // 테두리 두께
+    ctx.strokeRect(
+      clickCanvasX + linewidth / 2,
+      clickCanvasY + linewidth / 2,
+      tileSize - linewidth,
+      tileSize - linewidth,
+    ); // 테두리 그리기
     ctx.closePath();
+    setRenderedTiles(tiles);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tiles, tileSize, cursorX, cursorY, startPoint, clickX, clickY]);
