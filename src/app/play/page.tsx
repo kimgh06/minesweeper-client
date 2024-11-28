@@ -309,6 +309,13 @@ export default function Play() {
               {paddingTiles < 10 && <button onClick={() => setPaddingTiles(paddingTiles + 1)}>+</button>}
               {paddingTiles > 1 && <button onClick={() => setPaddingTiles(paddingTiles - 1)}>-</button>}{' '}
             </p>
+            <p>Color: {color}</p>
+            <ol>
+              <button onClick={() => setColor('red')}>red</button>
+              <button onClick={() => setColor('blue')}>blue</button>
+              <button onClick={() => setColor('yellow')}>yellow</button>
+              <button onClick={() => setColor('purple')}>purple</button>
+            </ol>
           </>
         )}
         <button onClick={() => setIsMonitoringDisabled(e => !e)}>

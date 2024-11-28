@@ -44,16 +44,14 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   startPoint,
 }) => {
   /** constants */
-  const borderPixel = 5;
-  const lineWidth = 8;
-  const animationSpeed = 500;
+  const animationSpeed = 1000;
   const tilePaddingWidth = ((paddingTiles - 1) * (cursorX - startPoint.x)) / paddingTiles;
   const tilePaddingHeight = ((paddingTiles - 1) * (cursorY - startPoint.y)) / paddingTiles;
 
   /** stores */
   const { color } = useColorStore();
   const { windowHeight, windowWidth } = useScreenSize();
-  const { godown, goleft, goright, goup } = useCursorStore();
+  const { godown, goleft, goright, goup, zoom } = useCursorStore();
   const { setPosition, x: clickX, y: clickY, setMovecost } = useClickStore();
   const { message, sendMessage, isOpen } = useWebSocketStore();
 
@@ -185,6 +183,26 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     return neighbors;
   }
 
+  const drawCursor = (ctx: CanvasRenderingContext2D, x: number, y: number, color: string, scale: number = 1) => {
+    const adjustedScale = (zoom / 3.5) * scale;
+    ctx.fillStyle = color;
+    const path = new Path2D(` 
+      M12.2719 13.6437 
+      C11.4141 6.37712 19.6676 1.61197 25.5317 5.9881 
+      L165.217 110.229 
+      C171.554 114.958 168.358 125.029 160.453 125.238 
+      L100.228 126.83 
+      C91.7695 127.053 83.9984 131.54 79.5756 138.753 
+      L48.0844 190.114 
+      C43.9511 196.855 33.6313 194.587 32.7043 186.735 
+      L12.2719 13.6437 Z`);
+    ctx.save();
+    ctx.translate(x + tileSize / 6 / scale, y + tileSize / 6 / scale);
+    ctx.scale(adjustedScale, adjustedScale);
+    ctx.fill(path);
+    ctx.restore();
+  };
+
   /** 웹 소켓 메시지 처리 */
   useEffect(() => {
     if (!message) return;
@@ -253,7 +271,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         neighbor.g = tempG;
         const dx = Math.abs(neighbor.x - target.x);
         const dy = Math.abs(neighbor.y - target.y);
-        const IsDiagonal = dx === dy ? Math.SQRT2 : 0;
+        const IsDiagonal = dx === dy ? Math.SQRT2 : 1;
         neighbor.h = IsDiagonal + Math.abs(neighbor.x - target.x) + Math.abs(neighbor.y - target.y);
         neighbor.f = neighbor.g + neighbor.h;
       }
@@ -271,6 +289,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     // 캔버스 초기화
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.lineWidth = 1;
+    const borderPixel = 5 * zoom;
+    const lineWidth = 5 * zoom;
 
     // 타일 그리기
     tiles?.forEach((row, rowIndex) => {
@@ -319,13 +339,53 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             ctx.fillStyle = innerGradient;
             ctx.fillRect(x + borderPixel, y + borderPixel, tileSize - borderPixel * 2, tileSize - borderPixel * 2); // Adjust dimensions for inner rect
 
+            // 커서 색상 설정
+            let cursorColor = '#FF4D00';
+            if (color === 'blue') cursorColor = '#0094FF';
+            if (color === 'yellow') cursorColor = '#F0C800';
+            if (color === 'purple') cursorColor = '#BC3FDC';
             // 깃발이 꽂혀있을 경우에는 깃발 그리기
             if (content === 'F') {
-              ctx.fillStyle = 'red';
-              ctx.font = '30px Arial';
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillText('F', x + tileSize / 2, y + tileSize / 2);
+              const pathData1 = `
+                M219.428 109.389 
+                C226.519 114.964 223.188 126.337 214.21 127.205 
+                L79.8702 140.188 
+                L115.929 28.0267 
+                L219.428 109.389 Z
+              `;
+
+              const pathData2 = `
+                M79.9801 8.51632 
+                C75.8798 9.72627 73.972 13.8825 73.0599 18.0591 
+                L25.8244 234.356 
+                C30.5707 235.401 36.0988 236 42 236 
+                C45.1362 236 48.1671 235.831 51.0311 235.515 
+                L116.451 28.5289 
+                C117.573 24.9766 117.96 21.0358 115.39 18.3387 
+                C112.87 15.6942 108.055 12.4097 98.862 9.69397 
+                C89.7757 7.00975 83.7643 7.39963 79.9801 8.51632 Z
+              `;
+
+              const path1 = new Path2D(pathData1);
+              const path2 = new Path2D(pathData2);
+
+              ctx.save();
+              ctx.translate(x + tileSize / 6, y + tileSize / 6);
+              const scale = zoom / 4.5;
+              ctx.scale(scale, scale);
+
+              /** 깃발 자체 색상은 커서 색상을 따라감 */
+              ctx.fillStyle = cursorColor;
+              ctx.fill(path1);
+
+              // 깃대 그리기
+              const gradient = ctx.createLinearGradient(36.5, 212.5, 36.5, 259);
+              gradient.addColorStop(0, '#E8E8E8');
+              gradient.addColorStop(1, 'transparent');
+              ctx.fillStyle = gradient;
+              ctx.fill(path2);
+
+              ctx.restore();
             }
             // 특수 클릭이 가능한 타일만 외곽선 그리기
             if (
@@ -337,6 +397,9 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               ctx.strokeStyle = 'white';
               ctx.lineWidth = lineWidth;
               ctx.strokeRect(x + lineWidth / 2, y + lineWidth / 2, tileSize - lineWidth, tileSize - lineWidth);
+
+              /** 커서 모양 그리기 */
+              drawCursor(ctx, x, y, '#0000002f', 0.5);
             }
             break;
           /** 열린 타일 */
@@ -349,6 +412,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           case '6':
           case '7':
           case '8':
+          case 'B':
             ctx.lineWidth = 1;
             innerGradient.addColorStop(0, '#F1FAD1');
             innerGradient.addColorStop(1, '#E9F6B9');
@@ -365,12 +429,84 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             ctx.fillRect(x + borderPixel, y + borderPixel, tileSize - borderPixel * 2, tileSize - borderPixel * 2); // Adjust dimensions for inner rect
 
             /** 글자 새기기 */
-            if (content !== 'O') {
-              ctx.fillStyle = 'black';
-              ctx.font = '20px Arial';
+            if (parseInt(content) > 0) {
+              const colors = [
+                '#0059B280',
+                '#0095B280',
+                '#00B20080',
+                '#77B20080',
+                '#B2950080',
+                '#B24A0080',
+                '#B2000080',
+                '#7700B280',
+              ];
+              const index = parseInt(content) - 1;
+              ctx.fillStyle = colors[index];
+              ctx.font = 50 * zoom + 'px LOTTERIACHAB';
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
-              ctx.fillText(content, x + tileSize / 2, y + tileSize / 2);
+              ctx.fillText((index + 1).toString(), x + tileSize / 2, y + tileSize / 2);
+            }
+
+            /** 터짐 표현 */
+            if (content === 'B') {
+              const pathData1 = `
+                M77.85 145.025
+                L0.899994 54.5752
+                L103.5 92.3752
+                L117 0.575195
+                L164.25 74.8252
+                L219.6 38.3752
+                L202.05 103.175
+                L276.3 108.575
+                L219.6 153.125
+                L287.1 223.325
+                L198 230.075
+                L177.75 312.425
+                L130.5 236.825
+                L67.05 284.075
+                L75.15 196.325
+                L11.7 177.425
+                L77.85 145.025
+              `;
+
+              // 두 번째 경로 데이터 (SVG Path2)
+              const pathData2 = `
+                M67.05 104.525
+                L104.85 150.425
+                L71.1 169.325
+                L104.85 178.775
+                L100.8 226.025
+                L133.2 200.375
+                L158.85 239.525
+                L168.3 196.325
+                L218.25 192.275
+                L181.8 154.475
+                L212.85 131.525
+                L171 128.825
+                L181.8 93.7251
+                L152.1 113.975
+                L126.45 73.4751
+                L118.35 122.075
+                L67.05 104.525
+              `;
+
+              // Path2D 객체로 변환
+              const path1 = new Path2D(pathData1);
+              const path2 = new Path2D(pathData2);
+              ctx.save();
+              ctx.translate(x, y);
+              const scale = zoom / 3.5;
+              ctx.scale(scale, scale);
+
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; // 첫 번째 경로 색상
+              ctx.fill(path1);
+
+              // 두 번째 경로 그리기
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // 두 번째 경로 색상
+              ctx.fill(path2);
+
+              ctx.restore();
             }
             break;
           default:
@@ -380,20 +516,21 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     });
 
     // 커서 표시
+    let cursorColor = '#FF4D00';
+    if (color === 'blue') cursorColor = '#0094FF';
+    if (color === 'yellow') cursorColor = '#F0C800';
+    if (color === 'purple') cursorColor = '#BC3FDC';
     const cursorCanvasX = ((cursorX - startPoint.x) / paddingTiles) * tileSize;
     const cursorCanvasY = ((cursorY - startPoint.y) / paddingTiles) * tileSize;
-    ctx.beginPath();
-    ctx.arc(cursorCanvasX + tileSize / 2, cursorCanvasY + tileSize / 2, tileSize / 4, 0, 2 * Math.PI);
-    ctx.stroke();
-    ctx.fillStyle = color;
-    ctx.fill();
+
+    drawCursor(ctx, cursorCanvasX, cursorCanvasY, cursorColor);
 
     // 클릭한 타일 표시
     const clickCanvasX = cursorCanvasX + (clickX - cursorX) * tileSize;
     const clickCanvasY = cursorCanvasY + (clickY - cursorY) * tileSize;
 
     ctx.beginPath();
-    ctx.strokeStyle = color; // 테두리 색상
+    ctx.strokeStyle = cursorColor; // 테두리 색상
     ctx.lineWidth = lineWidth; // 테두리 두께
     ctx.strokeRect(
       clickCanvasX + lineWidth / 2,
@@ -405,7 +542,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     setRenderedTiles(tiles);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tiles, tileSize, cursorX, cursorY, startPoint, clickX, clickY]);
+  }, [tiles, tileSize, cursorX, cursorY, startPoint, clickX, clickY, color]);
 
   return (
     <canvas
