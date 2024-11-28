@@ -80,15 +80,11 @@ export default function Play() {
     const rowlength = Math.abs(end_x - start_x) + 1;
     const columnlength = Math.abs(start_y - end_y) + 1;
 
-    const newTileSize = originTileSize * zoom;
-    const tilePaddingWidth = Math.floor(Math.floor((windowWidth * paddingTiles) / newTileSize) / 2);
-    const tilePaddingHeight = Math.floor(Math.floor((windowHeight * paddingTiles) / newTileSize) / 2);
-
     setCachingTiles(tiles => {
       const newTiles = [...tiles];
       if (type.includes('R')) {
         for (let i = 0; i < columnlength; i++) {
-          newTiles[i] = [...newTiles[i].slice(rowlength, newTiles.length), ...Array(rowlength).fill('?')];
+          newTiles[i] = [...newTiles[i].slice(rowlength, newTiles[0].length), ...Array(rowlength).fill('?')];
         }
       }
       if (type.includes('L')) {
@@ -159,8 +155,8 @@ export default function Play() {
         setCachingTiles(() => {
           const newTiles = [...cachingTiles];
           for (let i = 0; i < columnlength; i++) {
-            /** 아래쪽을 받아 올 때에만 위아래 위치를 반전시킨다. */
-            const rowIndex = i + (cursorY < end_y ? endPoint.y - startPoint.y : 0);
+            /** 아래쪽을 받아 올 때에만 아래로 옮긴다. */
+            const rowIndex = i + (cursorY < end_y ? endPoint.y - startPoint.y - columnlength + 1 : 0);
             for (let j = 0; j < rowlength; j++) {
               if (!newTiles[rowIndex]) {
                 newTiles[rowIndex] = [];
@@ -210,7 +206,6 @@ export default function Play() {
 
   /** 타일 콘텐츠, 위치 변경 감지 */
   useEffect(() => {
-    if (cachingTiles.map(row => [...row]) === renderTiles.map(row => [...row])) return;
     setRenderTiles(() => {
       const newTiles = [...cachingTiles.map(row => [...row.map(() => '?')])];
       for (let i = 0; i < cachingTiles.length; i++) {
@@ -225,6 +220,7 @@ export default function Play() {
       }
       return newTiles;
     });
+    console.log('cache\n', cachingTiles.map(row => row.join('')).join('\n'));
   }, [cachingTiles, cursorOriginX, cursorOriginY]);
 
   /** 커서 위치나 화면 크기가 바뀌면 화면 범위 재설정 */
