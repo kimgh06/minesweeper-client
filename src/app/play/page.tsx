@@ -220,7 +220,7 @@ export default function Play() {
       }
       return newTiles;
     });
-    console.log('cache\n', cachingTiles.map(row => row.join('')).join('\n'));
+    // console.log('cache\n', cachingTiles.map(row => row.join('')).join('\n'));
   }, [cachingTiles, cursorOriginX, cursorOriginY]);
 
   /** 커서 위치나 화면 크기가 바뀌면 화면 범위 재설정 */
@@ -385,8 +385,8 @@ export default function Play() {
           tiles={renderTiles}
           tileSize={tileSize}
           startPoint={renderStartPoint}
-          cursorX={cursorOriginX}
-          cursorY={cursorOriginY}
+          cursorOriginX={cursorOriginX}
+          cursorOriginY={cursorOriginY}
         />
       </div>
     </div>
