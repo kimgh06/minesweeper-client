@@ -44,23 +44,31 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   startPoint,
 }) => {
   /** constants */
-  const animationSpeed = 1000;
+  const animationSpeed = 100;
   const tilePaddingWidth = ((paddingTiles - 1) * (cursorX - startPoint.x)) / paddingTiles;
   const tilePaddingHeight = ((paddingTiles - 1) * (cursorY - startPoint.y)) / paddingTiles;
 
   /** stores */
   const { color } = useColorStore();
   const { windowHeight, windowWidth } = useScreenSize();
-  const { godown, goleft, goright, goup, zoom } = useCursorStore();
+  const {
+    godown,
+    goleft,
+    goright,
+    goup,
+    goDownLeft,
+    goDownRight,
+    goUpLeft,
+    goUpRight,
+    zoom,
+    setPosition: setCusorPosition,
+  } = useCursorStore();
   const { setPosition, x: clickX, y: clickY, setMovecost } = useClickStore();
   const { message, sendMessage, isOpen } = useWebSocketStore();
 
   /** references */
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const movementInterval = useRef<NodeJS.Timeout | null>(null);
-
-  /** states */
-  const [renderedTiles, setRenderedTiles] = useState<string[][]>();
 
   const cancelCurrentMovement = () => {
     if (movementInterval.current) {
@@ -114,34 +122,23 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     setMovecost(paths.length - 1);
 
     /** 8방향 이동 */
-    let currentPath = paths[0];
-    let index = 1;
+    let index = 0;
+    let currentPath = paths[index];
     if (currentPath?.x === undefined || currentPath?.y === undefined) return;
+    setCusorPosition(tileArrayX + startPoint.x, tileArrayY + startPoint.y);
     movementInterval.current = setInterval(() => {
       const path = paths[index++];
       if (!path) return;
       if (currentPath.x < path.x && currentPath.y < path.y) {
-        goright();
-        setTimeout(() => {
-          godown();
-        }, 1);
+        goDownRight();
       } else if (currentPath.x < path.x && currentPath.y > path.y) {
-        goup();
-        setTimeout(() => {
-          goright();
-        }, 1);
+        goUpRight();
       } else if (currentPath.x < path.x && currentPath.y === path.y) {
         goright();
       } else if (currentPath.x > path.x && currentPath.y < path.y) {
-        goleft();
-        setTimeout(() => {
-          godown();
-        }, 1);
+        goDownLeft();
       } else if (currentPath.x > path.x && currentPath.y > path.y) {
-        goup();
-        setTimeout(() => {
-          goleft();
-        }, 1);
+        goUpLeft();
       } else if (currentPath.x > path.x && currentPath.y === path.y) {
         goleft();
       } else if (currentPath.x === path.x && currentPath.y < path.y) {
@@ -539,7 +536,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       tileSize - lineWidth,
     ); // 테두리 그리기
     ctx.closePath();
-    setRenderedTiles(tiles);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tiles, tileSize, cursorX, cursorY, startPoint, clickX, clickY, color]);

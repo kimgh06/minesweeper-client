@@ -33,7 +33,15 @@ export default function Play() {
 
   /** stores */
   const { isOpen, message, sendMessage, connect } = useWebSocketStore();
-  const { x: cursorX, y: cursorY, setPosition: setCursorPosition, zoom, setZoom } = useCursorStore();
+  const {
+    x: cursorX,
+    y: cursorY,
+    setPosition: setCursorPosition,
+    zoom,
+    setZoom,
+    originX: cursorOriginX,
+    originY: cursorOriginY,
+  } = useCursorStore();
   const { x: clickX, y: clickY, setPosition: setClickPosition, content: clickContent, movecost } = useClickStore();
   const { color, setColor } = useColorStore();
 
@@ -41,13 +49,15 @@ export default function Play() {
   const { windowWidth, windowHeight } = useScreenSize();
 
   /** states */
-  const [paddingTiles, setPaddingTiles] = useState<number>(2);
-  const [endPoint, setEndPoint] = useState<Point>({ x: 0, y: 0 });
-  const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
   const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
+  const [endPoint, setEndPoint] = useState<Point>({ x: 0, y: 0 });
+  const [renderStartPoint, setRenderStartPoint] = useState<Point>({ x: 0, y: 0 });
+  const [renderEndPoint, setRenderEndPoint] = useState<Point>({ x: 0, y: 0 });
+  const [paddingTiles, setPaddingTiles] = useState<number>(2);
+  const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
   const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(false);
   const [tileSize, setTileSize] = useState<number>(0); //px
-  const [tiles, setTiles] = useState<string[][]>([
+  const [cachingTiles, setCachingTiles] = useState<string[][]>([
     ['1', '1', '1', 'O', 'O', 'C', 'C', 'C', 'O'],
     ['2', 'F', '2', 'O', 'O', 'C', 'C', 'C', 'O'],
     ['2', 'F', '2', 'O', 'O', 'C', 'C', 'C', 'O'],
@@ -56,7 +66,7 @@ export default function Play() {
     ['C', 'C', 'C', 'O', 'O', '1', '1', '1', 'O'],
     ['C', 'C', 'C', 'O', 'O', 'C', 'C', 'C', 'O'],
   ]);
-
+  const [renderTiles, setRenderTiles] = useState<string[][]>([...cachingTiles.map(row => [...row])]);
   /** 타일 요청 */
   const appendTask = (
     start_x: number,
@@ -67,47 +77,45 @@ export default function Play() {
   ) => {
     if (!isOpen) return;
     /** add Dummy data to originTiles */
-    const newTiles = [...tiles];
-    if (type.includes('R')) {
-      const rowlength = Math.abs(end_x - start_x) + 1;
-      const columnlength = Math.abs(start_y - end_y) + 1;
-      for (let i = 0; i < columnlength; i++) {
-        newTiles[i] = [...newTiles[i].slice(1), ...Array(rowlength).fill('?')];
+    const rowlength = Math.abs(end_x - start_x) + 1;
+    const columnlength = Math.abs(start_y - end_y) + 1;
+
+    const newTileSize = originTileSize * zoom;
+    const tilePaddingWidth = Math.floor(Math.floor((windowWidth * paddingTiles) / newTileSize) / 2);
+    const tilePaddingHeight = Math.floor(Math.floor((windowHeight * paddingTiles) / newTileSize) / 2);
+
+    setCachingTiles(tiles => {
+      const newTiles = [...tiles];
+      if (type.includes('R')) {
+        for (let i = 0; i < columnlength; i++) {
+          newTiles[i] = [...newTiles[i].slice(rowlength, newTiles.length), ...Array(rowlength).fill('?')];
+        }
       }
-    }
-    if (type.includes('L')) {
-      const rowlength = Math.abs(end_x - start_x) + 1;
-      const columnlength = Math.abs(start_y - end_y) + 1;
-      for (let i = 0; i < columnlength; i++) {
-        newTiles[i] = [...Array(rowlength).fill('?'), ...newTiles[i].slice(0, -1)];
+      if (type.includes('L')) {
+        for (let i = 0; i < columnlength; i++) {
+          newTiles[i] = [...Array(rowlength).fill('?'), ...newTiles[i].slice(0, -1)];
+        }
       }
-    }
-    if (type.includes('D')) {
-      const rowlength = Math.abs(end_x - start_x) + 1;
-      const columnlength = Math.abs(start_y - end_y) + 1;
-      for (let i = 0; i < columnlength; i++) {
-        newTiles.push([...Array(rowlength).fill('?')]);
-        newTiles.shift();
+      if (type.includes('D')) {
+        for (let i = 0; i < columnlength; i++) {
+          newTiles.push([...Array(rowlength).fill('?')]);
+          newTiles.shift();
+        }
       }
-    }
-    if (type.includes('U')) {
-      const rowlength = Math.abs(end_x - start_x) + 1;
-      const columnlength = Math.abs(start_y - end_y) + 1;
-      for (let i = 0; i < columnlength; i++) {
-        newTiles.unshift([...Array(rowlength).fill('?')]);
-        newTiles.pop();
+      if (type.includes('U')) {
+        for (let i = 0; i < columnlength; i++) {
+          newTiles.unshift([...Array(rowlength).fill('?')]);
+          newTiles.pop();
+        }
       }
-    }
+      return newTiles;
+    });
     if (type.includes('A')) {
       /** 크기에 맞게 생성 */
-      setTiles(() => {
-        const newTiles = Array.from({ length: Math.abs(end_y - start_y) + 1 }, () =>
-          Array.from({ length: Math.abs(end_x - start_x) + 1 }, () => '?'),
-        );
+      setCachingTiles(() => {
+        const newTiles = Array.from({ length: columnlength }, () => Array.from({ length: rowlength }, () => '?'));
         return newTiles;
       });
-    } else {
-      setTiles(newTiles);
     }
     if (type.length > 1) {
       return;
@@ -122,6 +130,7 @@ export default function Play() {
       },
     });
     sendMessage(body);
+    return;
   };
 
   useEffect(() => {
@@ -141,16 +150,17 @@ export default function Play() {
         const rowlength = Math.abs(end_x - start_x) + 1;
         const columnlength = Math.abs(start_y - end_y) + 1;
         const sortedTiles = [] as string[][];
+        if (unsortedTiles.length === 0) return;
         for (let i = 0; i < columnlength; i++) {
           sortedTiles[i] = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
         }
         sortedTiles.reverse();
         /** 좌표에 맞게 더미 데이터를 갈아끼우기 */
-        setTiles(tiles => {
-          const newTiles = [...tiles];
+        setCachingTiles(() => {
+          const newTiles = [...cachingTiles];
           for (let i = 0; i < columnlength; i++) {
             /** 아래쪽을 받아 올 때에만 위아래 위치를 반전시킨다. */
-            const rowIndex = i + (columnlength === 1 && cursorY < end_y ? endPoint.y - startPoint.y : 0);
+            const rowIndex = i + (cursorY < end_y ? endPoint.y - startPoint.y : 0);
             for (let j = 0; j < rowlength; j++) {
               if (!newTiles[rowIndex]) {
                 newTiles[rowIndex] = [];
@@ -161,13 +171,13 @@ export default function Play() {
           return newTiles;
         });
       } else if (event === 'flag-set' || event === 'tile-opened') {
-        setTiles(tiles => {
+        setCachingTiles(tiles => {
           const {
             position: { x, y },
             state,
           } = payload;
           const newTiles = [...tiles];
-          newTiles[y][x] = state;
+          newTiles[y - startPoint.y][x - startPoint.x] = state;
           return newTiles;
         });
       } else if (event === 'my-cursor') {
@@ -198,10 +208,24 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message]);
 
-  /** 타일 디버깅 */
+  /** 타일 콘텐츠, 위치 변경 감지 */
   useEffect(() => {
-    console.log(tiles.map(row => row.join('')).join('\n'));
-  }, [tiles]);
+    if (cachingTiles.map(row => [...row]) === renderTiles.map(row => [...row])) return;
+    setRenderTiles(() => {
+      const newTiles = [...cachingTiles.map(row => [...row.map(() => '?')])];
+      for (let i = 0; i < cachingTiles.length; i++) {
+        const rowIndex = i + cursorOriginY - cursorY;
+        for (let j = 0; j < cachingTiles[i].length; j++) {
+          const columnIndex = j + cursorOriginX - cursorX;
+          if (!cachingTiles[rowIndex]?.[columnIndex]) {
+            continue;
+          }
+          newTiles[i][j] = cachingTiles[rowIndex]?.[columnIndex] || '?';
+        }
+      }
+      return newTiles;
+    });
+  }, [cachingTiles, cursorOriginX, cursorOriginY]);
 
   /** 커서 위치나 화면 크기가 바뀌면 화면 범위 재설정 */
   useEffect(() => {
@@ -210,6 +234,7 @@ export default function Play() {
 
     const tilePaddingWidth = Math.floor(Math.floor((windowWidth * paddingTiles) / newTileSize) / 2);
     const tilePaddingHeight = Math.floor(Math.floor((windowHeight * paddingTiles) / newTileSize) / 2);
+
     setStartPoint({
       x: cursorX - tilePaddingWidth,
       y: cursorY - tilePaddingHeight,
@@ -218,8 +243,17 @@ export default function Play() {
       x: cursorX + tilePaddingWidth,
       y: cursorY + tilePaddingHeight,
     });
+
+    setRenderStartPoint({
+      x: cursorOriginX - tilePaddingWidth,
+      y: cursorOriginY - tilePaddingHeight,
+    });
+    setRenderEndPoint({
+      x: cursorOriginX + tilePaddingWidth,
+      y: cursorOriginY + tilePaddingHeight,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowWidth, windowHeight, zoom, cursorX, cursorY, paddingTiles, isOpen]);
+  }, [windowWidth, windowHeight, zoom, cursorOriginX, cursorOriginY, cursorX, cursorY, paddingTiles, isOpen]);
 
   /** zoom event */
   useEffect(() => {
@@ -255,23 +289,47 @@ export default function Play() {
 
   /** 커서 위치가 바뀌었을 때 */
   useEffect(() => {
-    const widthExtendLength = 1;
-    const heightExtendLength = 1;
-    /** 우측 이동 */
-    if (Math.abs(cursorX - startPoint.x) > Math.abs(cursorX - endPoint.x)) {
-      appendTask(endPoint.x + widthExtendLength, endPoint.y, endPoint.x + widthExtendLength, startPoint.y, 'R');
-    }
-    /** 좌측 이동 */
-    if (Math.abs(cursorX - startPoint.x) < Math.abs(cursorX - endPoint.x)) {
-      appendTask(startPoint.x - widthExtendLength, endPoint.y, startPoint.x - widthExtendLength, startPoint.y, 'L');
-    }
-    /** 아래 이동 */
-    if (Math.abs(cursorY - startPoint.y) > Math.abs(cursorY - endPoint.y)) {
-      appendTask(startPoint.x, endPoint.y + heightExtendLength, endPoint.x, endPoint.y + heightExtendLength, 'D');
-    }
-    /** 위 이동 */
-    if (Math.abs(cursorY - startPoint.y) < Math.abs(cursorY - endPoint.y)) {
-      appendTask(startPoint.x, startPoint.y - heightExtendLength, endPoint.x, startPoint.y - heightExtendLength, 'U');
+    const widthExtendLength = cursorX - cursorOriginX;
+    const heightExtendLength = cursorY - cursorOriginY;
+
+    const upfrom = startPoint.y - 1;
+    const upto = startPoint.y + heightExtendLength;
+    const downfrom = endPoint.y + heightExtendLength;
+    const downto = endPoint.y + 1;
+    const leftfrom = startPoint.x + widthExtendLength;
+    const leftto = startPoint.x - 1;
+    const rightfrom = endPoint.x + 1;
+    const rightto = endPoint.x + widthExtendLength;
+
+    /** 우측 아래 */
+    if (widthExtendLength > 0 && heightExtendLength > 0) {
+      appendTask(rightfrom, downfrom, rightto, upto, 'R');
+      appendTask(leftfrom, downfrom, rightto, downto, 'D');
+      /** 좌측 아래 */
+    } else if (widthExtendLength < 0 && heightExtendLength > 0) {
+      appendTask(leftfrom, downfrom, leftto, upto, 'L');
+      appendTask(leftfrom, downfrom, rightto, downto, 'D');
+      /** 우측 위 */
+    } else if (widthExtendLength > 0 && heightExtendLength < 0) {
+      appendTask(rightfrom, downfrom, rightto, upto, 'R');
+      appendTask(leftfrom, upfrom, rightto, upto, 'U');
+      /** 좌측 위 */
+    } else if (widthExtendLength < 0 && heightExtendLength < 0) {
+      appendTask(leftfrom, downfrom, leftto, upto, 'L');
+      appendTask(leftfrom, upfrom, rightto, upto, 'U');
+    } else if (widthExtendLength > 0) {
+      /** 우측 이동 */
+      appendTask(rightfrom, endPoint.y, rightto, startPoint.y, 'R');
+      /** 아래 이동 */
+    } else if (widthExtendLength < 0) {
+      /** 좌측 이동 */
+      appendTask(leftfrom, endPoint.y, leftto, startPoint.y, 'L');
+    } else if (heightExtendLength > 0) {
+      /** 아래 이동 */
+      appendTask(startPoint.x, downfrom, endPoint.x, downto, 'D');
+    } else if (heightExtendLength < 0) {
+      /** 위 이동 */
+      appendTask(startPoint.x, upfrom, endPoint.x, upto, 'U');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursorX, cursorY]);
@@ -294,7 +352,10 @@ export default function Play() {
             <ul>
               Total {(endPoint.x - startPoint.x + 1) * (endPoint.y - startPoint.y + 1)} Tiles
               <li>
-                Pointer XY ({cursorX}, {cursorY})
+                Cursor XY ({cursorX}, {cursorY})
+              </li>
+              <li>
+                Origin XY ({cursorOriginX}, {cursorOriginY})
               </li>
               <li>
                 Rendered X ({startPoint.x} ~ {endPoint.x})
@@ -325,11 +386,11 @@ export default function Play() {
       <div className={S.canvas}>
         <CanvasRenderer
           paddingTiles={paddingTiles}
-          tiles={tiles}
+          tiles={renderTiles}
           tileSize={tileSize}
-          startPoint={startPoint}
-          cursorX={cursorX}
-          cursorY={cursorY}
+          startPoint={renderStartPoint}
+          cursorX={cursorOriginX}
+          cursorY={cursorOriginY}
         />
       </div>
     </div>
