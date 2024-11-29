@@ -18,11 +18,11 @@ interface Point {
   y: number;
 }
 
-interface UserCursor {
-  position: { x: number; y: number };
-  pointer: { x: number; y: number };
-  color: string;
-}
+// interface UserCursor {
+//   position: { x: number; y: number };
+//   pointer: { x: number; y: number };
+//   color: string;
+// }
 
 export default function Play() {
   /** constants */
@@ -189,9 +189,9 @@ export default function Play() {
         // setUserCursors(payload);
         /** 다른 유저들의 이동 이벤트를 받아옴. */
       } else if (event === 'moved') {
-        const { origin_position, new_position, color } = payload;
-        const { x: originX, y: originY } = origin_position;
-        const { x: newX, y: newY } = new_position;
+        // const { origin_position, new_position, color } = payload;
+        // const { x: originX, y: originY } = origin_position;
+        // const { x: newX, y: newY } = new_position;
         // setUserCursors(cursors => {
         //   const newCursors = [...cursors];
         //   let index = newCursors.findIndex(cursor => cursor.position.x === originX && cursor.position.y === originY);
