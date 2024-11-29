@@ -55,7 +55,7 @@ export default function Play() {
   // const [renderEndPoint, setRenderEndPoint] = useState<Point>({ x: 0, y: 0 });
   // const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
   const [paddingTiles, setPaddingTiles] = useState<number>(2);
-  const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(false);
+  const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(true);
   const [tileSize, setTileSize] = useState<number>(0); //px
   const [cachingTiles, setCachingTiles] = useState<string[][]>([
     ['1', '1', '1', 'O', 'O', 'C', 'C', 'C', 'O'],
@@ -385,7 +385,7 @@ export default function Play() {
             <ul>
               Total {(endPoint.x - startPoint.x + 1) * (endPoint.y - startPoint.y + 1)} Tiles
               <li>
-                Cursor XY ({cursorX}, {cursorY})
+                Target XY ({cursorX}, {cursorY})
               </li>
               <li>
                 Origin XY ({cursorOriginX}, {cursorOriginY})
