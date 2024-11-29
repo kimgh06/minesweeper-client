@@ -82,9 +82,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       C89.7757 7.00975 83.7643 7.39963 79.9801 8.51632 Z
     `,
   ];
-  const flagPath1 = new Path2D(flagPaths[0]);
-  const flagPath2 = new Path2D(flagPaths[1]);
-
   const boomPaths = [
     `
       M77.85 145.025
@@ -125,8 +122,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       L67.05 104.525
     `,
   ];
-  const boomPath1 = new Path2D(boomPaths[0]);
-  const boomPath2 = new Path2D(boomPaths[1]);
 
   const countColors = [
     '#0059B280',
@@ -399,6 +394,12 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const cursorCanvasY = ((cursorOriginY - startPoint.y) / paddingTiles) * tileSize;
     const clickCanvasX = cursorCanvasX + (clickX - cursorOriginX) * tileSize;
     const clickCanvasY = cursorCanvasY + (clickY - cursorOriginY) * tileSize;
+
+    const flagPath1 = new Path2D(flagPaths[0]);
+    const flagPath2 = new Path2D(flagPaths[1]);
+
+    const boomPath1 = new Path2D(boomPaths[0]);
+    const boomPath2 = new Path2D(boomPaths[1]);
 
     // 커서 색상 설정
     let cursorColor = '#FF4D00';
