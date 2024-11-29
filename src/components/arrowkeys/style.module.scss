@@ -1,12 +1,5 @@
 .buttons {
   $button-color: darkgray;
-  position: absolute;
-  bottom: 50px;
-  left: 50px;
-  overflow: hidden;
-  z-index: 1;
-  // transform: rotate(45deg);
-  border-radius: 20px;
 
   .row {
     display: flex;
@@ -22,7 +15,7 @@
         background-color: lighten($button-color, 10%);
       }
       .text {
-        // transform: rotate(-45deg);
+        color: white;
       }
     }
     .active {

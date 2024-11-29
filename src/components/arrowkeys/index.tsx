@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import useCursorStore from '@/store/cursorStore';
+import { useCursorStore } from '@/store/cursorStore';
 import S from './style.module.scss';
 
 export default function ArrowKeys() {
@@ -33,7 +33,6 @@ export default function ArrowKeys() {
   };
   const down = () => {
     setActivedButton('down');
-
     godown();
   };
   const downRight = () => {

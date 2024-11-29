@@ -1,11 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+type Color = 'red' | 'blue' | 'yellow' | 'purple';
+
 interface CursorState {
   x: number;
   y: number;
+  color: Color;
+}
+
+interface ClientCursorState extends CursorState {
   originX: number;
   originY: number;
+  setColor: (newColor: Color) => void;
+  setPosition: (x: number, y: number) => void;
   setX: (x: number) => void;
   setY: (y: number) => void;
   goup: () => void;
@@ -16,23 +24,31 @@ interface CursorState {
   goUpRight: () => void;
   goDownLeft: () => void;
   goDownRight: () => void;
-  setPosition: (x: number, y: number) => void;
   setOringinPosition: (x: number, y: number) => void;
   zoom: number;
   setZoom: (zoom: number) => void;
 }
 
-const useCursorStore = create<
-  CursorState,
-  [['zustand/persist', CursorState]] // 미들웨어 타입 추가
+interface OtherUserCursorsState {
+  cursors: CursorState[];
+  addCursor: (cursor: CursorState) => void;
+  removeCursor: (cursor: CursorState) => void;
+  setCursors: (cursors: CursorState[]) => void;
+}
+
+export const useCursorStore = create<
+  ClientCursorState,
+  [['zustand/persist', ClientCursorState]] // 미들웨어 타입 추가
 >(
-  persist<CursorState>(
+  persist<ClientCursorState>(
     set => ({
       x: 0,
       y: 0,
+      color: 'blue',
       originX: 0,
       originY: 0,
       zoom: 1,
+      setColor: color => set({ color }),
       setX: x => set({ x }),
       setY: y => set({ y }),
       setZoom: zoom => set({ zoom }),
@@ -53,4 +69,9 @@ const useCursorStore = create<
   ),
 );
 
-export default useCursorStore;
+export const useOtherUserCursorsStore = create<OtherUserCursorsState>(set => ({
+  cursors: [],
+  addCursor: cursor => set(state => ({ cursors: [...state.cursors, cursor] })),
+  removeCursor: cursor => set(state => ({ cursors: state.cursors.filter(c => c !== cursor) })),
+  setCursors: cursors => set({ cursors }),
+}));

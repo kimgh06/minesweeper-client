@@ -5,14 +5,13 @@ import S from './page.module.scss';
 /** hooks */
 import { useEffect, useState } from 'react';
 import useScreenSize from '@/hooks/useScreenSize';
-import useCursorStore from '../../store/cursorStore';
+import { useCursorStore } from '../../store/cursorStore';
 
 /** components */
 import ArrowKeys from '@/components/arrowkeys';
 import CanvasRenderer from '@/components/canvas';
 import useClickStore from '@/store/clickStore';
 import useWebSocketStore from '@/store/websocketStore';
-import useColorStore from '@/store/colorStore';
 
 interface Point {
   x: number;
@@ -36,6 +35,8 @@ export default function Play() {
   const {
     x: cursorX,
     y: cursorY,
+    color,
+    setColor,
     setPosition: setCursorPosition,
     zoom,
     setZoom,
@@ -43,7 +44,6 @@ export default function Play() {
     originY: cursorOriginY,
   } = useCursorStore();
   const { x: clickX, y: clickY, setPosition: setClickPosition, content: clickContent, movecost } = useClickStore();
-  const { color, setColor } = useColorStore();
 
   /** hooks */
   const { windowWidth, windowHeight } = useScreenSize();
@@ -220,7 +220,6 @@ export default function Play() {
       }
       return newTiles;
     });
-    // console.log('cache\n', cachingTiles.map(row => row.join('')).join('\n'));
   }, [cachingTiles, cursorOriginX, cursorOriginY]);
 
   /** 커서 위치나 화면 크기가 바뀌면 화면 범위 재설정 */
@@ -330,9 +329,42 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursorX, cursorY]);
 
+  /** 유저 이동 이벤트 전송 */
+  // useEffect(() => {
+  //   if (!isOpen) {
+  //     return;
+  //   }
+  //   const body = JSON.stringify({
+  //     event: 'moving',
+  //     payload: {
+  //       position: {
+  //         x: cursorOriginX,
+  //         y: cursorOriginY,
+  //       },
+  //     },
+  //   });
+  //   sendMessage(body);
+  // }, [cursorOriginX, cursorOriginY]);
+
+  // /** 유저 클릭 이벤트 전송 */
+  // useEffect(() => {
+  //   if (!isOpen) {
+  //     return;
+  //   }
+  //   const body = JSON.stringify({
+  //     event: 'moving',
+  //     payload: {
+  //       position: {
+  //         x: clickX,
+  //         y: clickY,
+  //       },
+  //     },
+  //   });
+  //   sendMessage(body);
+  // }, [clickX, clickY]);
+
   return (
     <div className={S.page}>
-      <ArrowKeys />
       <div className={S.zoombar}>
         {zoom * zoomScale < 1.7 && <button onClick={() => setZoom(zoom * zoomScale)}>+</button>}
         {zoom / zoomScale > 0.2 && <button onClick={() => setZoom(zoom / zoomScale)}>-</button>}
@@ -341,6 +373,7 @@ export default function Play() {
         {!isMonitoringDisabled && (
           <>
             <h2>Monitoring Tools</h2>
+            <ArrowKeys />
             <p>
               Clicked XY ({clickX}, {clickY}) : {clickContent}
             </p>

@@ -4,9 +4,8 @@ import React, { useRef, useEffect, useState } from 'react';
 
 import useScreenSize from '@/hooks/useScreenSize';
 import useClickStore from '@/store/clickStore';
-import useCursorStore from '@/store/cursorStore';
+import { useCursorStore } from '@/store/cursorStore';
 import useWebSocketStore from '@/store/websocketStore';
-import useColorStore from '@/store/colorStore';
 
 class TileNode {
   x: number;
@@ -44,12 +43,11 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   startPoint,
 }) => {
   /** constants */
-  const animationSpeed = 500;
+  const animationSpeed = 150;
   const tilePaddingWidth = ((paddingTiles - 1) * (cursorOriginX - startPoint.x)) / paddingTiles;
   const tilePaddingHeight = ((paddingTiles - 1) * (cursorOriginY - startPoint.y)) / paddingTiles;
 
   /** stores */
-  const { color } = useColorStore();
   const { windowHeight, windowWidth } = useScreenSize();
   const {
     x: cursorX,
@@ -63,6 +61,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     goUpLeft,
     goUpRight,
     zoom,
+    color,
+    setColor,
     setPosition: setCusorPosition,
   } = useCursorStore();
   const { setPosition, x: clickX, y: clickY, setMovecost } = useClickStore();
@@ -140,6 +140,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     setCusorPosition(tileArrayX + startPoint.x, tileArrayY + startPoint.y);
     movementInterval.current = setInterval(() => {
       if (index++ >= paths.length) {
+        setVectors([]);
         cancelCurrentMovement();
       }
       const path = paths[index];
@@ -193,6 +194,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     return neighbors;
   }
 
+  /** 커서 그리기 */
   const drawCursor = (ctx: CanvasRenderingContext2D, x: number, y: number, color: string, scale: number = 1) => {
     const adjustedScale = (zoom / 3.5) * scale;
     ctx.fillStyle = color;
@@ -258,6 +260,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         let ycount = 0;
         while (temp) {
           path.unshift(temp);
+          /** 목표와의 거리 계산 */
           if (temp?.parent) {
             xcount += temp.x - temp.parent.x;
             ycount += temp.y - temp.parent.y;
@@ -529,7 +532,9 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           default:
             break;
         }
+
         /** 이동 경로 표현 */
+        /** 오차 거리 + 경로 위치 조정 */
         const vectorTile = vectors.filter(
           vector =>
             vector.x === leftXVector + colIndex + cursorOriginX - cursorX &&
@@ -538,7 +543,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
         if (vectorTile.length > 0) {
           ctx.beginPath();
-          ctx.fillStyle = 'yellow';
+          ctx.fillStyle = 'black';
           ctx.arc(x + tileSize / 2, y + tileSize / 2, tileSize / 4, 0, Math.PI * 2);
           ctx.fill();
         }
@@ -552,7 +557,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     if (color === 'purple') cursorColor = '#BC3FDC';
     const cursorCanvasX = ((cursorOriginX - startPoint.x) / paddingTiles) * tileSize;
     const cursorCanvasY = ((cursorOriginY - startPoint.y) / paddingTiles) * tileSize;
-
     drawCursor(ctx, cursorCanvasX, cursorCanvasY, cursorColor);
 
     // 클릭한 타일 표시
