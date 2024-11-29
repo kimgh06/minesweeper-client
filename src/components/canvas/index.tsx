@@ -151,7 +151,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     color,
     setPosition: setCusorPosition,
   } = useCursorStore();
-  const { setPosition, x: clickX, y: clickY, setMovecost } = useClickStore();
+  const { setPosition: setClickPosition, x: clickX, y: clickY, setMovecost } = useClickStore();
   const { message } = useWebSocketStore();
 
   /** references */
@@ -171,7 +171,15 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   };
 
   useEffect(() => {
-    return () => cancelCurrentMovement();
+    const preventContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('contextmenu', preventContextMenu);
+
+    return () => {
+      window.removeEventListener('contextmenu', preventContextMenu);
+      cancelCurrentMovement();
+    };
   }, []);
 
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -203,8 +211,12 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
     // 클릭한 타일의 내용 가져오기
     const clickedTileContent = tiles[tileArrayY]?.[tileArrayX] ?? 'Out of bounds';
-    setPosition(tileX, tileY, clickedTileContent);
+    setClickPosition(tileX, tileY, clickedTileContent);
 
+    if (event.buttons === 2) {
+      console.log(tileX, tileY);
+      return;
+    }
     /** 기존 이동 멈춤 */
     cancelCurrentMovement();
 
@@ -578,6 +590,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       height={windowHeight}
       style={{ border: '1px solid black' }}
       onClick={handleClick}
+      onMouseDown={handleClick}
     />
   );
 };
