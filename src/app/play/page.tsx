@@ -52,9 +52,9 @@ export default function Play() {
   const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
   const [endPoint, setEndPoint] = useState<Point>({ x: 0, y: 0 });
   const [renderStartPoint, setRenderStartPoint] = useState<Point>({ x: 0, y: 0 });
-  const [renderEndPoint, setRenderEndPoint] = useState<Point>({ x: 0, y: 0 });
+  // const [renderEndPoint, setRenderEndPoint] = useState<Point>({ x: 0, y: 0 });
+  // const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
   const [paddingTiles, setPaddingTiles] = useState<number>(2);
-  const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
   const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(false);
   const [tileSize, setTileSize] = useState<number>(0); //px
   const [cachingTiles, setCachingTiles] = useState<string[][]>([
@@ -186,21 +186,21 @@ export default function Play() {
         setColor(color);
         /** 다른 유저들의 정보를 가지고 옴. */
       } else if (event === 'cursors') {
-        setUserCursors(payload);
+        // setUserCursors(payload);
         /** 다른 유저들의 이동 이벤트를 받아옴. */
       } else if (event === 'moved') {
         const { origin_position, new_position, color } = payload;
         const { x: originX, y: originY } = origin_position;
         const { x: newX, y: newY } = new_position;
-        setUserCursors(cursors => {
-          const newCursors = [...cursors];
-          let index = newCursors.findIndex(cursor => cursor.position.x === originX && cursor.position.y === originY);
-          if (index === -1) {
-            index = newCursors.length;
-          }
-          newCursors[index] = { position: { x: newX, y: newY }, pointer: { x: newX, y: newY }, color };
-          return newCursors;
-        });
+        // setUserCursors(cursors => {
+        //   const newCursors = [...cursors];
+        //   let index = newCursors.findIndex(cursor => cursor.position.x === originX && cursor.position.y === originY);
+        //   if (index === -1) {
+        //     index = newCursors.length;
+        //   }
+        //   newCursors[index] = { position: { x: newX, y: newY }, pointer: { x: newX, y: newY }, color };
+        //   return newCursors;
+        // });
       }
     } catch (e) {
       console.error(e);
@@ -247,10 +247,10 @@ export default function Play() {
       x: cursorOriginX - tilePaddingWidth,
       y: cursorOriginY - tilePaddingHeight,
     });
-    setRenderEndPoint({
-      x: cursorOriginX + tilePaddingWidth,
-      y: cursorOriginY + tilePaddingHeight,
-    });
+    // setRenderEndPoint({
+    //   x: cursorOriginX + tilePaddingWidth,
+    //   y: cursorOriginY + tilePaddingHeight,
+    // });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, cursorOriginX, cursorOriginY, cursorX, cursorY, paddingTiles, isOpen]);
 

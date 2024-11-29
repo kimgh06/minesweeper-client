@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useState } from 'react';
 
 import useScreenSize from '@/hooks/useScreenSize';
 import useClickStore from '@/store/clickStore';
-import { useCursorStore, useOtherUserCursorsStore } from '@/store/cursorStore';
+import { useCursorStore } from '@/store/cursorStore';
 import useWebSocketStore from '@/store/websocketStore';
 
 class TileNode {
@@ -157,7 +157,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     setPosition: setCusorPosition,
   } = useCursorStore();
   const { setPosition, x: clickX, y: clickY, setMovecost } = useClickStore();
-  const { message, sendMessage, isOpen } = useWebSocketStore();
+  const { message } = useWebSocketStore();
 
   /** references */
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -309,7 +309,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   useEffect(() => {
     if (!message) return;
     try {
-      const { event, payload } = JSON.parse(message);
+      const { event } = JSON.parse(message);
       switch (event) {
         default:
           break;
@@ -346,10 +346,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       if (current.x === target.x && current.y === target.y) {
         const path = [];
         let temp = current;
-        let xcount = temp.x - startX;
-        let ycount = temp.y - startY;
-        setLeftXVector(xcount);
-        setLeftYVector(ycount);
+        setLeftXVector(temp.x - startX);
+        setLeftYVector(temp.y - startY);
         while (temp) {
           path.unshift(temp);
           /** 목표와의 거리 계산 */
