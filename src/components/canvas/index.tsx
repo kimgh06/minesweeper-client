@@ -214,6 +214,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     setClickPosition(tileX, tileY, clickedTileContent);
 
     if (event.buttons === 2) {
+      console.log('right');
       return;
     }
     /** 기존 이동 멈춤 */
