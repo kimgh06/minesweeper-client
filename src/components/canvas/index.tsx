@@ -43,7 +43,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   startPoint,
 }) => {
   /** constants */
-  const animationSpeed = 500; // milliseconds
+  const animationSpeed = 300; // milliseconds
   const tilePaddingWidth = ((paddingTiles - 1) * (cursorOriginX - startPoint.x)) / paddingTiles;
   const tilePaddingHeight = ((paddingTiles - 1) * (cursorOriginY - startPoint.y)) / paddingTiles;
   const tileColors = {
@@ -411,7 +411,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     // 타일 그리기
     tiles?.forEach((row, rowIndex) => {
       row?.forEach((content, colIndex) => {
-        // if (renderedTiles && renderedTiles[rowIndex][colIndex] === content) return;
         const x = (colIndex - tilePaddingWidth) * tileSize;
         const y = (rowIndex - tilePaddingHeight) * tileSize;
         const innerGradient = ctx.createLinearGradient(
@@ -426,7 +425,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           /** 잠긴 타일 */
           case 'C':
           case 'F':
-            const isEven = (rowIndex + colIndex - startPoint.x - startPoint.y) % 2;
+            const isEven = Math.abs(rowIndex + colIndex - startPoint.x - startPoint.y) % 2;
             innerGradient.addColorStop(0, tileColors.locked.inner[isEven][0]);
             innerGradient.addColorStop(1, tileColors.locked.inner[isEven][1]);
 
@@ -489,13 +488,13 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           case '8':
           case 'B':
             ctx.lineWidth = 1;
-            innerGradient.addColorStop(0, '#F1FAD1');
-            innerGradient.addColorStop(1, '#E9F6B9');
+            innerGradient.addColorStop(0, tileColors.open.inner[0]);
+            innerGradient.addColorStop(1, tileColors.open.inner[1]);
 
-            outerGradient.addColorStop(0, '#E9FAAA');
-            outerGradient.addColorStop(0.4, '#E9FAAA');
-            outerGradient.addColorStop(0.6, '#F5FDD8');
-            outerGradient.addColorStop(1, '#F5FDD8');
+            outerGradient.addColorStop(0, tileColors.open.outer[0]);
+            outerGradient.addColorStop(0.4, tileColors.open.outer[0]);
+            outerGradient.addColorStop(0.6, tileColors.open.outer[1]);
+            outerGradient.addColorStop(1, tileColors.open.outer[1]);
 
             ctx.fillStyle = outerGradient;
             ctx.fillRect(x, y, tileSize, tileSize);

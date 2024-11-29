@@ -140,6 +140,7 @@ export default function Play() {
     if (!message) return;
     try {
       const { event, payload } = JSON.parse(message as string);
+      /** 타일 요청한 것이 온 경우 */
       if (event === 'tiles') {
         const { end_x, end_y, start_x, start_y, tiles: unsortedTiles } = payload;
 
@@ -166,6 +167,7 @@ export default function Play() {
           }
           return newTiles;
         });
+        /** 요청하지 않은 타일이 올 경우 & 타일 여는 이벤트를 보냈을 경우 */
       } else if (event === 'flag-set' || event === 'tile-opened') {
         setCachingTiles(tiles => {
           const {
@@ -176,14 +178,16 @@ export default function Play() {
           newTiles[y - startPoint.y][x - startPoint.x] = state;
           return newTiles;
         });
+        /** 연결될 때 단 한 번만 자신의 정보를 가지고 옴. */
       } else if (event === 'my-cursor') {
-        /** 연결될 때 단 한 번만 받음. */
         const { position, pointer, color } = payload;
         setCursorPosition(position.x, position.y);
         setClickPosition(pointer.x, pointer.y, '');
         setColor(color);
+        /** 다른 유저들의 정보를 가지고 옴. */
       } else if (event === 'cursors') {
         setUserCursors(payload);
+        /** 다른 유저들의 이동 이벤트를 받아옴. */
       } else if (event === 'moved') {
         const { origin_position, new_position, color } = payload;
         const { x: originX, y: originY } = origin_position;
@@ -204,7 +208,7 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message]);
 
-  /** 타일 콘텐츠, 위치 변경 감지 */
+  /** 캐싱 타일 콘텐츠, 위치 변경 감지 */
   useEffect(() => {
     setRenderTiles(() => {
       const newTiles = [...cachingTiles.map(row => [...row.map(() => '?')])];
