@@ -4,9 +4,9 @@
   .row {
     display: flex;
     button {
-      width: 40px;
-      height: 40px;
-      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      font-size: 10px;
       border: 1px solid darken($button-color, 30%);
       background-color: $button-color;
       cursor: pointer;
