@@ -162,7 +162,11 @@ export default function Play() {
               if (!newTiles[rowIndex]) {
                 newTiles[rowIndex] = [];
               }
-              newTiles[rowIndex][j + start_x - startPoint.x] = sortedTiles[i][j];
+              let tile = sortedTiles[i][j];
+              if (tile === 'C' || tile === 'F') {
+                tile += (i + j) % 2 === 0 ? '0' : '1';
+              }
+              newTiles[rowIndex][j + start_x - startPoint.x] = tile;
             }
           }
           return newTiles;

@@ -34,6 +34,12 @@ interface CanvasRendererProps {
   paddingTiles: number;
   startPoint: { x: number; y: number };
 }
+
+interface Vector {
+  x: number;
+  y: number;
+}
+
 const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   paddingTiles,
   tiles,
@@ -155,13 +161,15 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const { message } = useWebSocketStore();
 
   /** references */
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const tileCanvasRef = useRef<HTMLCanvasElement>(null);
+  const interactionCanvasRef = useRef<HTMLCanvasElement>(null);
   const movementInterval = useRef<NodeJS.Timeout | null>(null);
 
   /** states */
-  const [vectors, setVectors] = useState<{ x: number; y: number }[]>([]);
+  const [vectors, setVectors] = useState<Vector[]>([]);
   const [leftXVector, setLeftXVector] = useState<number>(0);
   const [leftYVector, setLeftYVector] = useState<number>(0);
+  const [renderedTiles, setRenderedTiles] = useState<string[][]>([]);
 
   const cancelCurrentMovement = () => {
     if (movementInterval.current) {
@@ -183,7 +191,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   }, []);
 
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
+    const canvas = tileCanvasRef.current;
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
@@ -334,7 +342,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const grid = [...tiles.map(row => [...row.map(() => null)])] as (TileNode | null)[][];
     for (let i = 0; i < tiles.length; i++) {
       for (let j = 0; j < tiles[i].length; j++) {
-        if (tiles[i][j] !== 'F') {
+        if (tiles[i][j] !== 'F0' && tiles[i][j] !== 'F1') {
           grid[i][j] = new TileNode(j, i);
         } else {
           grid[i][j] = null;
@@ -353,11 +361,11 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       if (current.x === target.x && current.y === target.y) {
         const path = [];
         let temp = current;
+        /** 목표와의 거리 계산 */
         setLeftXVector(temp.x - startX);
         setLeftYVector(temp.y - startY);
         while (temp) {
           path.unshift(temp);
-          /** 목표와의 거리 계산 */
           temp = temp.parent as TileNode;
         }
         return path;
@@ -392,15 +400,18 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   };
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || tileSize === 0) return;
+    const tileCanvas = tileCanvasRef.current;
+    const interactionCanvas = interactionCanvasRef.current;
+    if (!tileCanvas || tileSize === 0 || !interactionCanvas) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const tileCtx = tileCanvas.getContext('2d');
+    const interactionCtx = interactionCanvas.getContext('2d');
+    if (!tileCtx || !interactionCtx) return;
 
     // 캔버스 초기화
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.lineWidth = 1;
+    // ctx.clearRect(0, 0, canvas.width, canvas.height);
+    interactionCtx.clearRect(0, 0, windowWidth, windowHeight);
+    tileCtx.lineWidth = 1;
     const borderPixel = 5 * zoom;
     const cursorCanvasX = ((cursorOriginX - startPoint.x) / paddingTiles) * tileSize;
     const cursorCanvasY = ((cursorOriginY - startPoint.y) / paddingTiles) * tileSize;
@@ -412,6 +423,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
     const boomPath1 = new Path2D(boomPaths[0]);
     const boomPath2 = new Path2D(boomPaths[1]);
+    const flagGradient = tileCtx.createLinearGradient(36.5, 212.5, 36.5, 259);
 
     // 커서 색상 설정
     let cursorColor = '#FF4D00';
@@ -419,72 +431,87 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     if (color === 'yellow') cursorColor = '#F0C800';
     if (color === 'purple') cursorColor = '#BC3FDC';
 
+    const compenX = cursorX - cursorOriginX - tilePaddingWidth - leftXVector;
+    const compenY = cursorY - cursorOriginY - tilePaddingHeight - leftYVector;
+
     // 타일 그리기
     tiles?.forEach((row, rowIndex) => {
       row?.forEach((content, colIndex) => {
         const x = (colIndex - tilePaddingWidth) * tileSize;
         const y = (rowIndex - tilePaddingHeight) * tileSize;
-        const innerGradient = ctx.createLinearGradient(
+        if (x < -tileSize || y < -tileSize || x > windowWidth + tileSize || y > windowHeight + tileSize) return;
+        if (renderedTiles[rowIndex]?.[colIndex] === content) {
+          return;
+        }
+        const innerGradient = tileCtx.createLinearGradient(
           x + borderPixel,
           y + borderPixel,
           x + tileSize - borderPixel * 2,
           y + tileSize - borderPixel * 2,
         );
-        const outerGradient = ctx.createLinearGradient(x, y, x + tileSize, y + tileSize);
+        const outerGradient = tileCtx.createLinearGradient(x, y, x + tileSize, y + tileSize);
 
         switch (content) {
           /** 잠긴 타일 */
-          case 'C':
-          case 'F':
-            const isEven = Math.abs(rowIndex + colIndex - startPoint.x - startPoint.y) % 2;
-            innerGradient.addColorStop(0, tileColors.locked.inner[isEven][0]);
-            innerGradient.addColorStop(1, tileColors.locked.inner[isEven][1]);
+          case 'C0':
+          case 'C1':
+          case 'F0':
+          case 'F1':
+            const isEven = content[1] === '0' ? 0 : 1;
+            const lockedInner = tileColors.locked.inner[isEven];
+            const lockedOuter = tileColors.locked.outer[isEven];
+            innerGradient.addColorStop(0, lockedInner[0]);
+            innerGradient.addColorStop(1, lockedInner[1]);
 
-            outerGradient.addColorStop(0, tileColors.locked.outer[isEven][0]);
-            outerGradient.addColorStop(0.4, tileColors.locked.outer[isEven][0]);
-            outerGradient.addColorStop(0.6, tileColors.locked.outer[isEven][1]);
-            outerGradient.addColorStop(1, tileColors.locked.outer[isEven][1]);
+            outerGradient.addColorStop(0, lockedOuter[0]);
+            outerGradient.addColorStop(0.4, lockedOuter[0]);
+            outerGradient.addColorStop(0.6, lockedOuter[1]);
+            outerGradient.addColorStop(1, lockedOuter[1]);
 
             // 바깥 타일 먼저 그리기
-            ctx.fillStyle = outerGradient;
-            ctx.fillRect(x, y, tileSize, tileSize);
+            tileCtx.fillStyle = outerGradient;
+            tileCtx.fillRect(x, y, tileSize, tileSize);
 
             // 안쪽 타일 그리기
-            ctx.fillStyle = innerGradient;
-            ctx.fillRect(x + borderPixel, y + borderPixel, tileSize - borderPixel * 2, tileSize - borderPixel * 2); // Adjust dimensions for inner rect
+            tileCtx.fillStyle = innerGradient;
+            tileCtx.fillRect(x + borderPixel, y + borderPixel, tileSize - borderPixel * 2, tileSize - borderPixel * 2); // Adjust dimensions for inner rect
 
             // 깃발이 꽂혀있을 경우에는 깃발 그리기
-            if (content === 'F') {
-              ctx.save();
-              ctx.translate(x + tileSize / 6, y + tileSize / 6);
+            if (content.includes('F')) {
+              tileCtx.save();
+              tileCtx.translate(x + tileSize / 6, y + tileSize / 6);
               const scale = zoom / 4.5;
-              ctx.scale(scale, scale);
+              tileCtx.scale(scale, scale);
 
               /** 깃발 자체 색상은 커서 색상을 따라감 */
-              ctx.fillStyle = cursorColor;
-              ctx.fill(flagPath1);
+              tileCtx.fillStyle = cursorColor;
+              tileCtx.fill(flagPath1);
 
               // 깃대 그리기
-              const gradient = ctx.createLinearGradient(36.5, 212.5, 36.5, 259);
-              gradient.addColorStop(0, '#E8E8E8');
-              gradient.addColorStop(1, 'transparent');
-              ctx.fillStyle = gradient;
-              ctx.fill(flagPath2);
+              flagGradient.addColorStop(0, '#E8E8E8');
+              flagGradient.addColorStop(1, 'transparent');
+              tileCtx.fillStyle = flagGradient;
+              tileCtx.fill(flagPath2);
 
-              ctx.restore();
+              tileCtx.restore();
             }
             // 특수 클릭이 가능한 타일만 외곽선 그리기
             if (
               Math.abs(rowIndex - (cursorOriginY - startPoint.y)) <= 1 &&
               Math.abs(colIndex - (cursorOriginX - startPoint.x)) <= 1 &&
               !(colIndex === cursorOriginX - startPoint.x && rowIndex === cursorOriginY - startPoint.y) &&
-              content === 'C'
+              (content === 'C0' || content === 'C1')
             ) {
-              ctx.strokeStyle = 'white';
-              ctx.lineWidth = borderPixel;
-              ctx.strokeRect(x + borderPixel / 2, y + borderPixel / 2, tileSize - borderPixel, tileSize - borderPixel);
+              tileCtx.strokeStyle = 'white';
+              tileCtx.lineWidth = borderPixel;
+              tileCtx.strokeRect(
+                x + borderPixel / 2,
+                y + borderPixel / 2,
+                tileSize - borderPixel,
+                tileSize - borderPixel,
+              );
               /** 커서 모양 그리기 */
-              drawCursor(ctx, x, y, '#0000002f', 0.5);
+              drawCursor(tileCtx, x, y, '#0000002f', 0.5);
             }
             break;
           /** 열린 타일 */
@@ -498,47 +525,49 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           case '7':
           case '8':
           case 'B':
-            ctx.lineWidth = 1;
-            innerGradient.addColorStop(0, tileColors.open.inner[0]);
-            innerGradient.addColorStop(1, tileColors.open.inner[1]);
+            tileCtx.lineWidth = 1;
+            const openInner = tileColors.open.inner;
+            const openOuter = tileColors.open.outer;
+            innerGradient.addColorStop(0, openInner[0]);
+            innerGradient.addColorStop(1, openInner[1]);
 
-            outerGradient.addColorStop(0, tileColors.open.outer[0]);
-            outerGradient.addColorStop(0.4, tileColors.open.outer[0]);
-            outerGradient.addColorStop(0.6, tileColors.open.outer[1]);
-            outerGradient.addColorStop(1, tileColors.open.outer[1]);
+            outerGradient.addColorStop(0, openOuter[0]);
+            outerGradient.addColorStop(0.4, openOuter[0]);
+            outerGradient.addColorStop(0.6, openOuter[1]);
+            outerGradient.addColorStop(1, openOuter[1]);
 
-            ctx.fillStyle = outerGradient;
-            ctx.fillRect(x, y, tileSize, tileSize);
+            tileCtx.fillStyle = outerGradient;
+            tileCtx.fillRect(x, y, tileSize, tileSize);
 
-            ctx.fillStyle = innerGradient;
-            ctx.fillRect(x + borderPixel, y + borderPixel, tileSize - borderPixel * 2, tileSize - borderPixel * 2); // Adjust dimensions for inner rect
+            tileCtx.fillStyle = innerGradient;
+            tileCtx.fillRect(x + borderPixel, y + borderPixel, tileSize - borderPixel * 2, tileSize - borderPixel * 2); // Adjust dimensions for inner rect
 
             /** 글자 새기기 */
             if (parseInt(content) > 0) {
               const index = parseInt(content) - 1;
-              ctx.fillStyle = countColors[index];
-              ctx.font = 50 * zoom + 'px LOTTERIACHAB';
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillText((index + 1).toString(), x + tileSize / 2, y + tileSize / 2);
+              tileCtx.fillStyle = countColors[index];
+              tileCtx.font = 50 * zoom + 'px LOTTERIACHAB';
+              tileCtx.textAlign = 'center';
+              tileCtx.textBaseline = 'middle';
+              tileCtx.fillText(content, x + tileSize / 2, y + tileSize / 2);
             }
 
             /** 터짐 표현 */
             if (content === 'B') {
               // Path2D 객체로 변환
-              ctx.save();
-              ctx.translate(x, y);
+              tileCtx.save();
+              tileCtx.translate(x, y);
               const scale = zoom / 3.5;
-              ctx.scale(scale, scale);
+              tileCtx.scale(scale, scale);
 
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; // 첫 번째 경로 색상
-              ctx.fill(boomPath1);
+              tileCtx.fillStyle = 'rgba(0, 0, 0, 0.6)'; // 첫 번째 경로 색상
+              tileCtx.fill(boomPath1);
 
               // 두 번째 경로 그리기
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // 두 번째 경로 색상
-              ctx.fill(boomPath2);
+              tileCtx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // 두 번째 경로 색상
+              tileCtx.fill(boomPath2);
 
-              ctx.restore();
+              tileCtx.restore();
             }
             break;
           default:
@@ -546,52 +575,66 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         }
       });
     });
-
-    // 이동경로 그리기
-    if (vectors.length > 0) {
-      ctx.beginPath();
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = tileSize / 6;
-      const compenX = cursorX - cursorOriginX - tilePaddingWidth - leftXVector;
-      const compenY = cursorY - cursorOriginY - tilePaddingHeight - leftYVector;
-      const x = vectors[0].x + compenX;
-      const y = vectors[0].y + compenY;
-      ctx.moveTo(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2); // 시작점
-      vectors.forEach(vector => {
-        const x = vector.x + compenX;
-        const y = vector.y + compenY;
-        ctx.lineTo(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2);
-      });
-      ctx.stroke();
-    }
+    // 커서 그리기
 
     // 내 커서 그리기
-    drawCursor(ctx, cursorCanvasX, cursorCanvasY, cursorColor);
+    drawCursor(interactionCtx, cursorCanvasX, cursorCanvasY, cursorColor);
 
     // 클릭한 타일을 테두리로 표시하기
-    ctx.beginPath();
-    ctx.strokeStyle = cursorColor; // 테두리 색상
-    ctx.lineWidth = borderPixel; // 테두리 두께
-    ctx.strokeRect(
+    interactionCtx.beginPath();
+    interactionCtx.strokeStyle = cursorColor; // 테두리 색상
+    interactionCtx.lineWidth = borderPixel; // 테두리 두께
+    interactionCtx.strokeRect(
       clickCanvasX + borderPixel / 2,
       clickCanvasY + borderPixel / 2,
       tileSize - borderPixel,
       tileSize - borderPixel,
     );
-    ctx.closePath();
+    interactionCtx.closePath();
+    // 이동경로 그리기
+    if (vectors.length > 0) {
+      interactionCtx.beginPath();
+      interactionCtx.strokeStyle = 'black';
+      interactionCtx.lineWidth = tileSize / 6;
+      const x = vectors[0].x + compenX;
+      const y = vectors[0].y + compenY;
+      interactionCtx.moveTo(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2); // 시작점
+
+      vectors.forEach(vector => {
+        const x = vector.x + compenX;
+        const y = vector.y + compenY;
+        interactionCtx.lineTo(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2);
+      });
+      interactionCtx.stroke();
+    }
+    setRenderedTiles(tiles);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tiles, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color]);
 
   return (
-    <canvas
-      className={S.canvas}
-      ref={canvasRef}
-      width={windowWidth}
-      height={windowHeight}
-      style={{ border: '1px solid black' }}
-      onClick={handleClick}
-      onMouseDown={handleClick}
-    />
+    <>
+      <canvas
+        className={S.canvas}
+        id="TileCanvas"
+        ref={tileCanvasRef}
+        width={windowWidth}
+        height={windowHeight}
+        style={{ border: '1px solid black' }}
+        onClick={handleClick}
+        onMouseDown={handleClick}
+      />
+      <canvas
+        className={S.canvas}
+        id="TileCanvas"
+        ref={interactionCanvasRef}
+        width={windowWidth}
+        height={windowHeight}
+        style={{ border: '1px solid black' }}
+        onClick={handleClick}
+        onMouseDown={handleClick}
+      />
+    </>
   );
 };
 

@@ -16,7 +16,7 @@ const useWebSocketStore = create<WebSocketState>(set => ({
   connect: (url: string) => {
     const socket = new WebSocket(url);
     socket.onopen = () => set({ socket, isOpen: true });
-    socket.onclose = () => console.log('WebSocket disconnected');
+    socket.onclose = () => set({ socket: null, isOpen: false });
     socket.onmessage = event => set({ message: event.data });
   },
   disconnect: () => {
