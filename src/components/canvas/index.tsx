@@ -40,6 +40,16 @@ interface Vector {
   y: number;
 }
 
+interface Stamp {
+  flag: {
+    red: HTMLCanvasElement;
+    blue: HTMLCanvasElement;
+    yellow: HTMLCanvasElement;
+    purple: HTMLCanvasElement;
+  };
+  boom: HTMLCanvasElement;
+}
+
 const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   paddingTiles,
   tiles,
@@ -139,6 +149,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     '#B2000080',
     '#7700B280',
   ];
+  const cursorColors = { red: '#FF4D00', blue: '#0094FF', yellow: '#F0C800', purple: '#BC3FDC' };
 
   /** stores */
   const { windowHeight, windowWidth } = useScreenSize();
@@ -183,7 +194,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       event.preventDefault();
     };
     window.addEventListener('contextmenu', preventContextMenu);
-
     return () => {
       window.removeEventListener('contextmenu', preventContextMenu);
       cancelCurrentMovement();
@@ -399,7 +409,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     return [];
   };
 
-  useEffect(() => {
+  const render = () => {
     const tileCanvas = tileCanvasRef.current;
     const interactionCanvas = interactionCanvasRef.current;
     if (!tileCanvas || tileSize === 0 || !interactionCanvas) return;
@@ -408,10 +418,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const interactionCtx = interactionCanvas.getContext('2d');
     if (!tileCtx || !interactionCtx) return;
 
-    // 캔버스 초기화
-    // ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 상호 작용 캔버스 초기화
     interactionCtx.clearRect(0, 0, windowWidth, windowHeight);
-    tileCtx.lineWidth = 1;
     const borderPixel = 5 * zoom;
     const cursorCanvasX = ((cursorOriginX - startPoint.x) / paddingTiles) * tileSize;
     const cursorCanvasY = ((cursorOriginY - startPoint.y) / paddingTiles) * tileSize;
@@ -423,58 +431,95 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
     const boomPath1 = new Path2D(boomPaths[0]);
     const boomPath2 = new Path2D(boomPaths[1]);
+
+    const tilePath1 = new Path2D(`
+      M0 0
+      L${tileSize} 0
+      L${tileSize} ${tileSize}
+      L0 ${tileSize}
+      L0 0
+      `);
+    const tilePath2 = new Path2D(`
+      M${borderPixel} ${borderPixel}
+      L${tileSize - borderPixel} ${borderPixel}
+      L${tileSize - borderPixel} ${tileSize - borderPixel}
+      L${borderPixel} ${tileSize - borderPixel}
+      L${borderPixel} ${borderPixel}
+      `);
     const flagGradient = tileCtx.createLinearGradient(36.5, 212.5, 36.5, 259);
 
     // 커서 색상 설정
-    let cursorColor = '#FF4D00';
-    if (color === 'blue') cursorColor = '#0094FF';
-    if (color === 'yellow') cursorColor = '#F0C800';
-    if (color === 'purple') cursorColor = '#BC3FDC';
+    const cursorColor = cursorColors[color];
 
     const compenX = cursorX - cursorOriginX - tilePaddingWidth - leftXVector;
     const compenY = cursorY - cursorOriginY - tilePaddingHeight - leftYVector;
 
+    const innerGradientValues: [number, number, number, number] = [
+      borderPixel,
+      borderPixel,
+      tileSize - borderPixel * 2,
+      tileSize - borderPixel * 2,
+    ];
+
+    const outerGradientValues: [number, number, number, number] = [0, 0, tileSize, tileSize];
+
+    const innerClosed0Gradient = tileCtx.createLinearGradient(...innerGradientValues);
+    const innerClosed1Gradient = tileCtx.createLinearGradient(...innerGradientValues);
+    const innerOpenGradient = tileCtx.createLinearGradient(...innerGradientValues);
+    const lockedInner = tileColors.locked.inner;
+    const openInner = tileColors.open.inner;
+
+    innerClosed0Gradient.addColorStop(0, lockedInner[0][0]);
+    innerClosed0Gradient.addColorStop(1, lockedInner[0][1]);
+    innerClosed1Gradient.addColorStop(0, lockedInner[1][0]);
+    innerClosed1Gradient.addColorStop(1, lockedInner[1][1]);
+    innerOpenGradient.addColorStop(0, openInner[0]);
+    innerOpenGradient.addColorStop(1, openInner[1]);
+
+    const outerClosed0Gradient = tileCtx.createLinearGradient(...outerGradientValues);
+    const outerClosed1Gradient = tileCtx.createLinearGradient(...outerGradientValues);
+    const outerOpenGradient = tileCtx.createLinearGradient(...outerGradientValues);
+    const lockedOuter = tileColors.locked.outer;
+    const openOuter = tileColors.open.outer;
+    outerClosed0Gradient.addColorStop(0, lockedOuter[0][0]);
+    outerClosed0Gradient.addColorStop(0.4, lockedOuter[0][0]);
+    outerClosed0Gradient.addColorStop(0.6, lockedOuter[0][1]);
+    outerClosed0Gradient.addColorStop(1, lockedOuter[0][1]);
+    outerClosed1Gradient.addColorStop(0, lockedOuter[1][0]);
+    outerClosed1Gradient.addColorStop(0.4, lockedOuter[1][0]);
+    outerClosed1Gradient.addColorStop(0.6, lockedOuter[1][1]);
+    outerClosed1Gradient.addColorStop(1, lockedOuter[1][1]);
+    outerOpenGradient.addColorStop(0, openOuter[0]);
+    outerOpenGradient.addColorStop(0.4, openOuter[0]);
+    outerOpenGradient.addColorStop(0.6, openOuter[1]);
+    outerOpenGradient.addColorStop(1, openOuter[1]);
     // 타일 그리기
     tiles?.forEach((row, rowIndex) => {
       row?.forEach((content, colIndex) => {
-        const x = (colIndex - tilePaddingWidth) * tileSize;
-        const y = (rowIndex - tilePaddingHeight) * tileSize;
-        if (x < -tileSize || y < -tileSize || x > windowWidth + tileSize || y > windowHeight + tileSize) return;
         if (renderedTiles[rowIndex]?.[colIndex] === content) {
           return;
         }
-        const innerGradient = tileCtx.createLinearGradient(
-          x + borderPixel,
-          y + borderPixel,
-          x + tileSize - borderPixel * 2,
-          y + tileSize - borderPixel * 2,
-        );
-        const outerGradient = tileCtx.createLinearGradient(x, y, x + tileSize, y + tileSize);
+        const x = (colIndex - tilePaddingWidth) * tileSize;
+        const y = (rowIndex - tilePaddingHeight) * tileSize;
+        if (x < -tileSize || y < -tileSize || x > windowWidth + tileSize || y > windowHeight + tileSize) return;
 
         switch (content) {
           /** 잠긴 타일 */
           case 'C0':
           case 'C1':
           case 'F0':
-          case 'F1':
-            const isEven = content[1] === '0' ? 0 : 1;
-            const lockedInner = tileColors.locked.inner[isEven];
-            const lockedOuter = tileColors.locked.outer[isEven];
-            innerGradient.addColorStop(0, lockedInner[0]);
-            innerGradient.addColorStop(1, lockedInner[1]);
-
-            outerGradient.addColorStop(0, lockedOuter[0]);
-            outerGradient.addColorStop(0.4, lockedOuter[0]);
-            outerGradient.addColorStop(0.6, lockedOuter[1]);
-            outerGradient.addColorStop(1, lockedOuter[1]);
-
+          case 'F1': {
+            const isEven = content[1] === '0';
+            tileCtx.save();
+            tileCtx.translate(x, y);
             // 바깥 타일 먼저 그리기
-            tileCtx.fillStyle = outerGradient;
-            tileCtx.fillRect(x, y, tileSize, tileSize);
+            tileCtx.fillStyle = isEven ? outerClosed1Gradient : outerClosed0Gradient;
+            tileCtx.fill(tilePath1);
 
             // 안쪽 타일 그리기
-            tileCtx.fillStyle = innerGradient;
-            tileCtx.fillRect(x + borderPixel, y + borderPixel, tileSize - borderPixel * 2, tileSize - borderPixel * 2); // Adjust dimensions for inner rect
+            tileCtx.fillStyle = isEven ? innerClosed1Gradient : innerClosed0Gradient;
+            tileCtx.fill(tilePath2);
+            tileCtx.restore();
 
             // 깃발이 꽂혀있을 경우에는 깃발 그리기
             if (content.includes('F')) {
@@ -514,6 +559,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               drawCursor(tileCtx, x, y, '#0000002f', 0.5);
             }
             break;
+          }
           /** 열린 타일 */
           case 'O':
           case '1':
@@ -524,23 +570,15 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           case '6':
           case '7':
           case '8':
-          case 'B':
-            tileCtx.lineWidth = 1;
-            const openInner = tileColors.open.inner;
-            const openOuter = tileColors.open.outer;
-            innerGradient.addColorStop(0, openInner[0]);
-            innerGradient.addColorStop(1, openInner[1]);
+          case 'B': {
+            tileCtx.save();
+            tileCtx.translate(x, y);
+            tileCtx.fillStyle = outerOpenGradient;
+            tileCtx.fill(tilePath1);
 
-            outerGradient.addColorStop(0, openOuter[0]);
-            outerGradient.addColorStop(0.4, openOuter[0]);
-            outerGradient.addColorStop(0.6, openOuter[1]);
-            outerGradient.addColorStop(1, openOuter[1]);
-
-            tileCtx.fillStyle = outerGradient;
-            tileCtx.fillRect(x, y, tileSize, tileSize);
-
-            tileCtx.fillStyle = innerGradient;
-            tileCtx.fillRect(x + borderPixel, y + borderPixel, tileSize - borderPixel * 2, tileSize - borderPixel * 2); // Adjust dimensions for inner rect
+            tileCtx.fillStyle = innerOpenGradient;
+            tileCtx.fill(tilePath2);
+            tileCtx.restore();
 
             /** 글자 새기기 */
             if (parseInt(content) > 0) {
@@ -570,6 +608,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               tileCtx.restore();
             }
             break;
+          }
           default:
             break;
         }
@@ -608,7 +647,11 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       interactionCtx.stroke();
     }
     setRenderedTiles(tiles);
+  };
 
+  /** 렌더링 */
+  useEffect(() => {
+    render();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tiles, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color]);
 
@@ -626,7 +669,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       />
       <canvas
         className={S.canvas}
-        id="TileCanvas"
+        id="InteractionCanvas"
         ref={interactionCanvasRef}
         width={windowWidth}
         height={windowHeight}
