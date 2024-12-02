@@ -40,16 +40,6 @@ interface Vector {
   y: number;
 }
 
-interface Stamp {
-  flag: {
-    red: HTMLCanvasElement;
-    blue: HTMLCanvasElement;
-    yellow: HTMLCanvasElement;
-    purple: HTMLCanvasElement;
-  };
-  boom: HTMLCanvasElement;
-}
-
 const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   paddingTiles,
   tiles,
