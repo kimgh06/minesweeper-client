@@ -64,7 +64,7 @@ export default function Play() {
     start_y: number,
     end_x: number,
     end_y: number,
-    type: 'R' | 'L' | 'U' | 'D' | 'UL' | 'UR' | 'DL' | 'DR' | 'A' | '',
+    type: 'R' | 'L' | 'U' | 'D' | 'A' | '',
   ) => {
     if (!isOpen) return;
     /** add Dummy data to originTiles */
@@ -73,14 +73,10 @@ export default function Play() {
 
     setCachingTiles(tiles => {
       const newTiles = [...tiles];
-      if (type.includes('R')) {
+      if (type.includes('U')) {
         for (let i = 0; i < columnlength; i++) {
-          newTiles[i] = [...newTiles[i].slice(rowlength, newTiles[0].length), ...Array(rowlength).fill('?')];
-        }
-      }
-      if (type.includes('L')) {
-        for (let i = 0; i < columnlength; i++) {
-          newTiles[i] = [...Array(rowlength).fill('?'), ...newTiles[i].slice(0, -1)];
+          newTiles.unshift([...Array(rowlength).fill('?')]);
+          newTiles.pop();
         }
       }
       if (type.includes('D')) {
@@ -89,24 +85,23 @@ export default function Play() {
           newTiles.shift();
         }
       }
-      if (type.includes('U')) {
+      if (type.includes('L')) {
         for (let i = 0; i < columnlength; i++) {
-          newTiles.unshift([...Array(rowlength).fill('?')]);
-          newTiles.pop();
+          newTiles[i] = [...Array(rowlength).fill('?'), ...newTiles[i].slice(0, -1)];
         }
+      }
+      if (type.includes('R')) {
+        for (let i = 0; i < columnlength; i++) {
+          newTiles[i] = [...newTiles[i].slice(rowlength, newTiles[0].length), ...Array(rowlength).fill('?')];
+        }
+      }
+      if (type.includes('A')) {
+        const newTiles = Array.from({ length: columnlength }, () => Array.from({ length: rowlength }, () => '?'));
+        return newTiles;
       }
       return newTiles;
     });
-    if (type.includes('A')) {
-      /** 크기에 맞게 생성 */
-      setCachingTiles(() => {
-        const newTiles = Array.from({ length: columnlength }, () => Array.from({ length: rowlength }, () => '?'));
-        return newTiles;
-      });
-    }
-    if (type.length > 1) {
-      return;
-    }
+
     const body = JSON.stringify({
       event: 'fetch-tiles',
       payload: {
@@ -120,12 +115,43 @@ export default function Play() {
     return;
   };
 
+  /** ws 연결 담당 */
   useEffect(() => {
     if (!isOpen) {
       connect(webSocketUrl);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  const replaceTiles = (end_x: number, end_y: number, start_x: number, start_y: number, unsortedTiles: string) => {
+    const rowlength = Math.abs(end_x - start_x) + 1;
+    const columnlength = Math.abs(start_y - end_y) + 1;
+    const sortedTiles = [] as string[];
+    if (unsortedTiles.length === 0) return;
+    for (let i = 0; i < columnlength; i++) {
+      sortedTiles[i] = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
+    }
+    sortedTiles.reverse();
+    /** 좌표에 맞게 더미 데이터를 갈아끼우기 */
+    setCachingTiles(() => {
+      const newTiles = [...cachingTiles];
+      for (let i = 0; i < columnlength; i++) {
+        /** 아래쪽을 받아 올 때에만 아래로 옮긴다. */
+        const rowIndex = i + (cursorY < end_y ? endPoint.y - startPoint.y - columnlength + 1 : 0);
+        for (let j = 0; j < rowlength; j++) {
+          if (!newTiles[rowIndex]) {
+            newTiles[rowIndex] = [];
+          }
+          let tile = sortedTiles[i][j];
+          if (tile === 'C' || tile === 'F') {
+            tile += (i + j) % 2 === 0 ? '0' : '1';
+          }
+          newTiles[rowIndex][j + start_x - startPoint.x] = tile;
+        }
+      }
+      return newTiles;
+    });
+  };
 
   /** ws 메시지 처리 */
   useEffect(() => {
@@ -135,34 +161,7 @@ export default function Play() {
       /** 타일 요청한 것이 온 경우 */
       if (event === 'tiles') {
         const { end_x, end_y, start_x, start_y, tiles: unsortedTiles } = payload;
-
-        const rowlength = Math.abs(end_x - start_x) + 1;
-        const columnlength = Math.abs(start_y - end_y) + 1;
-        const sortedTiles = [] as string[][];
-        if (unsortedTiles.length === 0) return;
-        for (let i = 0; i < columnlength; i++) {
-          sortedTiles[i] = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
-        }
-        sortedTiles.reverse();
-        /** 좌표에 맞게 더미 데이터를 갈아끼우기 */
-        setCachingTiles(() => {
-          const newTiles = [...cachingTiles];
-          for (let i = 0; i < columnlength; i++) {
-            /** 아래쪽을 받아 올 때에만 아래로 옮긴다. */
-            const rowIndex = i + (cursorY < end_y ? endPoint.y - startPoint.y - columnlength + 1 : 0);
-            for (let j = 0; j < rowlength; j++) {
-              if (!newTiles[rowIndex]) {
-                newTiles[rowIndex] = [];
-              }
-              let tile = sortedTiles[i][j];
-              if (tile === 'C' || tile === 'F') {
-                tile += (i + j) % 2 === 0 ? '0' : '1';
-              }
-              newTiles[rowIndex][j + start_x - startPoint.x] = tile;
-            }
-          }
-          return newTiles;
-        });
+        replaceTiles(end_x, end_y, start_x, start_y, unsortedTiles);
         /** 요청하지 않은 타일이 올 경우 & 타일 여는 이벤트를 보냈을 경우 */
       } else if (event === 'flag-set' || event === 'tile-opened') {
         setCachingTiles(tiles => {
@@ -244,10 +243,6 @@ export default function Play() {
       x: cursorOriginX - tilePaddingWidth,
       y: cursorOriginY - tilePaddingHeight,
     });
-    // setRenderEndPoint({
-    //   x: cursorOriginX + tilePaddingWidth,
-    //   y: cursorOriginY + tilePaddingHeight,
-    // });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, cursorOriginX, cursorOriginY, cursorX, cursorY, paddingTiles, isOpen]);
 
@@ -259,27 +254,24 @@ export default function Play() {
 
     const tilePaddingWidth = Math.floor(tileVisibleWidth / 2);
     const tilePaddingHeight = Math.floor(tileVisibleHeight / 2);
+    let heightReductionLength = 0;
+    let widthReductionLength = 0;
     if (tileVisibleWidth > endPoint.x - startPoint.x + 1 || tileVisibleHeight > endPoint.y - startPoint.y + 1) {
       /** 확장된 전체 타일 요청 */
-      appendTask(
-        startPoint.x - Math.round(tilePaddingWidth - (endPoint.x - startPoint.x) / 2),
-        endPoint.y + Math.floor(tilePaddingHeight - (endPoint.y - startPoint.y) / 2),
-        endPoint.x + Math.round(tilePaddingWidth - (endPoint.x - startPoint.x) / 2),
-        startPoint.y - Math.floor(tilePaddingHeight - (endPoint.y - startPoint.y) / 2),
-        'A',
-      );
+      heightReductionLength = Math.floor(tilePaddingHeight - (endPoint.y - startPoint.y) / 2);
+      widthReductionLength = Math.round(tilePaddingWidth - (endPoint.x - startPoint.x) / 2);
     } else {
       /** 축소된 전체 타일 요청 */
-      const heightReductionLength = Math.round((endPoint.y - startPoint.y - tileVisibleHeight) / 2);
-      const widthReductionLength = Math.round((endPoint.x - startPoint.x - tileVisibleWidth) / 2);
-      appendTask(
-        startPoint.x + widthReductionLength,
-        endPoint.y - heightReductionLength,
-        endPoint.x - widthReductionLength,
-        startPoint.y + heightReductionLength,
-        'A',
-      );
+      heightReductionLength = -Math.round((endPoint.y - startPoint.y - tileVisibleHeight) / 2);
+      widthReductionLength = -Math.round((endPoint.x - startPoint.x - tileVisibleWidth) / 2);
     }
+    appendTask(
+      startPoint.x - widthReductionLength,
+      endPoint.y + heightReductionLength,
+      endPoint.x + widthReductionLength,
+      startPoint.y - heightReductionLength,
+      'A',
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, paddingTiles, isOpen]);
 
@@ -313,18 +305,17 @@ export default function Play() {
     } else if (widthExtendLength < 0 && heightExtendLength < 0) {
       appendTask(leftfrom, downfrom, leftto, upto, 'L');
       appendTask(leftfrom, upfrom, rightto, upto, 'U');
-    } else if (widthExtendLength > 0) {
       /** 우측 이동 */
+    } else if (widthExtendLength > 0) {
       appendTask(rightfrom, endPoint.y, rightto, startPoint.y, 'R');
-      /** 아래 이동 */
-    } else if (widthExtendLength < 0) {
       /** 좌측 이동 */
+    } else if (widthExtendLength < 0) {
       appendTask(leftfrom, endPoint.y, leftto, startPoint.y, 'L');
-    } else if (heightExtendLength > 0) {
       /** 아래 이동 */
+    } else if (heightExtendLength > 0) {
       appendTask(startPoint.x, downfrom, endPoint.x, downto, 'D');
-    } else if (heightExtendLength < 0) {
       /** 위 이동 */
+    } else if (heightExtendLength < 0) {
       appendTask(startPoint.x, upfrom, endPoint.x, upto, 'U');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
