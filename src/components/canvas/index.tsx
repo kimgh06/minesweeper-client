@@ -174,7 +174,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const [leftXVector, setLeftXVector] = useState<number>(0);
   const [leftYVector, setLeftYVector] = useState<number>(0);
   const [renderedTiles, setRenderedTiles] = useState<string[][]>([]);
-  const [animationName, setAnimationName] = useState<string>('');
 
   const cancelCurrentMovement = () => {
     if (movementInterval.current) {
