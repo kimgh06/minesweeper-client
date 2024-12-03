@@ -5,6 +5,55 @@
   font-style: normal;
 }
 
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  color: #fff;
+  z-index: 100;
+  h1 {
+    margin-bottom: 10px;
+  }
+  .loadingBar {
+    animation: loadingAnimation 0.5s;
+
+    @keyframes loadingAnimation {
+      0% {
+        width: 0;
+        background-color: gray;
+      }
+      100% {
+        width: 50%;
+        background-color: lightgray;
+      }
+    }
+    width: 50%;
+    background-color: lightgray;
+    height: 10px;
+    border-radius: 100px;
+  }
+  .loadComplete {
+    animation: loadingAnimation 0.3s;
+
+    @keyframes loadingAnimation {
+      0% {
+        width: 50%;
+        background-color: lightgray;
+      }
+      100% {
+        width: 100%;
+        background-color: white;
+      }
+    }
+    width: 100%;
+    background-color: white;
+    height: 10px;
+    border-radius: 100px;
+  }
+}
+
 .canvas {
   top: 0;
   left: 0;

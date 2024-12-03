@@ -167,6 +167,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const movementInterval = useRef<NodeJS.Timeout | null>(null);
 
   /** states */
+  const [loading, setLoading] = useState<boolean>(true);
   const [vectors, setVectors] = useState<Vector[]>([]);
   const [leftXVector, setLeftXVector] = useState<number>(0);
   const [leftYVector, setLeftYVector] = useState<number>(0);
@@ -400,6 +401,12 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   };
 
   const render = () => {
+    if (loading) {
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
+      return;
+    }
     const tileCanvas = tileCanvasRef.current;
     const interactionCanvas = interactionCanvasRef.current;
     if (!tileCanvas || tileSize === 0 || !interactionCanvas) return;
@@ -643,30 +650,39 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   useEffect(() => {
     render();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tiles, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color]);
+  }, [tiles, loading, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color]);
 
   return (
     <>
-      <canvas
-        className={S.canvas}
-        id="TileCanvas"
-        ref={tileCanvasRef}
-        width={windowWidth}
-        height={windowHeight}
-        style={{ border: '1px solid black' }}
-        onClick={handleClick}
-        onMouseDown={handleClick}
-      />
-      <canvas
-        className={S.canvas}
-        id="InteractionCanvas"
-        ref={interactionCanvasRef}
-        width={windowWidth}
-        height={windowHeight}
-        style={{ border: '1px solid black' }}
-        onClick={handleClick}
-        onMouseDown={handleClick}
-      />
+      {loading ? (
+        <div className={S.loading}>
+          <h1>Loading...</h1>
+          <div className={`${tiles.length < 1 ? S.loadingBar : S.loadComplete}`} />
+        </div>
+      ) : (
+        <>
+          <canvas
+            className={S.canvas}
+            id="TileCanvas"
+            ref={tileCanvasRef}
+            width={windowWidth}
+            height={windowHeight}
+            style={{ border: '1px solid black' }}
+            onClick={handleClick}
+            onMouseDown={handleClick}
+          />
+          <canvas
+            className={S.canvas}
+            id="InteractionCanvas"
+            ref={interactionCanvasRef}
+            width={windowWidth}
+            height={windowHeight}
+            style={{ border: '1px solid black' }}
+            onClick={handleClick}
+            onMouseDown={handleClick}
+          />
+        </>
+      )}
     </>
   );
 };

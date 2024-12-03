@@ -52,20 +52,11 @@ export default function Play() {
   const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
   const [endPoint, setEndPoint] = useState<Point>({ x: 0, y: 0 });
   const [renderStartPoint, setRenderStartPoint] = useState<Point>({ x: 0, y: 0 });
-  // const [renderEndPoint, setRenderEndPoint] = useState<Point>({ x: 0, y: 0 });
   // const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
   const [paddingTiles, setPaddingTiles] = useState<number>(2);
   const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(true);
   const [tileSize, setTileSize] = useState<number>(0); //px
-  const [cachingTiles, setCachingTiles] = useState<string[][]>([
-    ['1', '1', '1', 'O', 'O', 'C', 'C', 'C', 'O'],
-    ['2', 'F', '2', 'O', 'O', 'C', 'C', 'C', 'O'],
-    ['2', 'F', '2', 'O', 'O', 'C', 'C', 'C', 'O'],
-    ['1', '1', '1', 'O', 'O', '1', '1', '1', 'O'],
-    ['C', 'C', 'C', 'O', 'O', '1', 'F', '1', 'O'],
-    ['C', 'C', 'C', 'O', 'O', '1', '1', '1', 'O'],
-    ['C', 'C', 'C', 'O', 'O', 'C', 'C', 'C', 'O'],
-  ]);
+  const [cachingTiles, setCachingTiles] = useState<string[][]>([]);
   const [renderTiles, setRenderTiles] = useState<string[][]>([...cachingTiles.map(row => [...row])]);
   /** 타일 요청 */
   const appendTask = (
