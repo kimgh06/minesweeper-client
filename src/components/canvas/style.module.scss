@@ -18,6 +18,10 @@
   }
   .loadingBar {
     animation: loadingAnimation 0.5s;
+    width: 50%;
+    background-color: lightgray;
+    height: 10px;
+    border-radius: 100px;
 
     @keyframes loadingAnimation {
       0% {
@@ -29,13 +33,13 @@
         background-color: lightgray;
       }
     }
-    width: 50%;
-    background-color: lightgray;
-    height: 10px;
-    border-radius: 100px;
   }
   .loadComplete {
     animation: loadingAnimation 0.3s;
+    width: 100%;
+    background-color: white;
+    height: 10px;
+    border-radius: 100px;
 
     @keyframes loadingAnimation {
       0% {
@@ -47,10 +51,6 @@
         background-color: white;
       }
     }
-    width: 100%;
-    background-color: white;
-    height: 10px;
-    border-radius: 100px;
   }
 }
 

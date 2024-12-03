@@ -479,6 +479,14 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       L${borderPixel} ${tileSize - borderPixel}
       L${borderPixel} ${borderPixel}
       `);
+    const tileEgdePath = new Path2D(`
+      M0 0
+      L${tileSize} 0
+      L${tileSize} ${tileSize}
+      L0 ${tileSize}
+      L0 0
+      `);
+
     const flagGradient = tileCtx.createLinearGradient(36.5, 212.5, 36.5, 259);
 
     // 커서 색상 설정
@@ -580,14 +588,12 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               !(colIndex === cursorOriginX - startPoint.x && rowIndex === cursorOriginY - startPoint.y) &&
               (content === 'C0' || content === 'C1')
             ) {
+              tileCtx.save();
+              tileCtx.translate(x, y);
               tileCtx.strokeStyle = 'white';
               tileCtx.lineWidth = borderPixel;
-              tileCtx.strokeRect(
-                x + borderPixel / 2,
-                y + borderPixel / 2,
-                tileSize - borderPixel,
-                tileSize - borderPixel,
-              );
+              tileCtx.stroke(tileEgdePath);
+              tileCtx.restore();
               /** 커서 모양 그리기 */
               drawCursor(tileCtx, x, y, '#0000002f', 0.5);
             }

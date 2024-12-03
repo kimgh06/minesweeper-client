@@ -1,5 +1,5 @@
 .buttons {
-  $button-color: darkgray;
+  $button-color: gray;
 
   .row {
     display: flex;
@@ -7,19 +7,19 @@
       width: 20px;
       height: 20px;
       font-size: 10px;
-      border: 1px solid darken($button-color, 30%);
+      border: 1px solid darkgray;
       background-color: $button-color;
       cursor: pointer;
 
       &:hover {
-        background-color: lighten($button-color, 10%);
+        background-color: lightgray;
       }
       .text {
         color: white;
       }
     }
     .active {
-      background-color: darken(white, 10%);
+      background-color: lightgray;
     }
   }
 }
