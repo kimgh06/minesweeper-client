@@ -575,9 +575,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               !(colIndex === cursorOriginX - startPoint.x && rowIndex === cursorOriginY - startPoint.y) &&
               (content === 'C0' || content === 'C1')
             ) {
-              tileCtx.strokeStyle = 'white';
-              tileCtx.lineWidth = borderPixel;
-              tileCtx.stroke(tileEdgeVector);
+              tileCtx.fillStyle = 'white';
+              tileCtx.fill(tileEdgeVector);
               /** 커서 모양 그리기 */
               drawCursor(tileCtx, x, y, '#0000002f', 0.5);
             } else {
@@ -656,7 +655,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         }
         tileCtx.restore();
       });
-      if (rowIndex === Math.floor(tiles.length / 3)) {
+      if (rowIndex === Math.floor((tiles.length * 3) / 10)) {
         // 다른 사람 커서 그리기
 
         // 내 커서 그리기
@@ -696,9 +695,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
   /** 렌더링 */
   useEffect(() => {
-    if (canvasContainerRef.current) {
-      canvasContainerRef.current.style.setProperty('$tile-size', `${tileSize}px`);
-    }
     render();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tiles, loading, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color]);

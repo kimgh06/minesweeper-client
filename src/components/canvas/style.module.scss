@@ -58,12 +58,12 @@
   $tile-size: 20px;
   $animation-duration: 0.2s;
   .canvas {
-    top: 0;
-    left: 0;
+    top: -5svh;
+    left: -5svw;
     overflow: hidden;
     position: absolute;
-    width: 100svw;
-    height: 100svh;
+    width: 110svw;
+    height: 110svh;
     cursor: pointer;
   }
 }

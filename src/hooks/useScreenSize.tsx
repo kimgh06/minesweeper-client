@@ -12,6 +12,7 @@ export default function useScreenSize() {
     windowWidth: 0,
     windowHeight: 0,
   });
+  const magnification = 1.1;
 
   useEffect(() => {
     // 윈도우 리사이즈 이벤트 핸들러
@@ -19,14 +20,14 @@ export default function useScreenSize() {
       return;
     }
     setWindowSize({
-      windowWidth: window.innerWidth,
-      windowHeight: window.innerHeight,
+      windowWidth: window.innerWidth * magnification,
+      windowHeight: window.innerHeight * magnification,
     });
 
     const handleResize = () => {
       setWindowSize({
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight,
+        windowWidth: window.innerWidth * magnification,
+        windowHeight: window.innerHeight * magnification,
       });
     };
 

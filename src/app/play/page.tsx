@@ -124,6 +124,7 @@ export default function Play() {
     if (!isOpen) {
       connect(webSocketUrl);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   /** ws 메시지 처리 */
@@ -219,6 +220,7 @@ export default function Play() {
       }
       return newTiles;
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cachingTiles, cursorOriginX, cursorOriginY]);
 
   /** 커서 위치나 화면 크기가 바뀌면 화면 범위 재설정 */
