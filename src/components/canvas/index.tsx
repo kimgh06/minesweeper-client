@@ -50,6 +50,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 }) => {
   /** constants */
   const animationSpeed = 200; // milliseconds
+  const animationFrames = 10;
   const tilePaddingWidth = ((paddingTiles - 1) * (cursorOriginX - startPoint.x)) / paddingTiles;
   const tilePaddingHeight = ((paddingTiles - 1) * (cursorOriginY - startPoint.y)) / paddingTiles;
   const tileColors = {
@@ -164,6 +165,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   /** references */
   const tileCanvasRef = useRef<HTMLCanvasElement>(null);
   const interactionCanvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
   const movementInterval = useRef<NodeJS.Timeout | null>(null);
 
   /** states */
@@ -172,6 +174,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const [leftXVector, setLeftXVector] = useState<number>(0);
   const [leftYVector, setLeftYVector] = useState<number>(0);
   const [renderedTiles, setRenderedTiles] = useState<string[][]>([]);
+  const [animationName, setAnimationName] = useState<string>('');
 
   const cancelCurrentMovement = () => {
     if (movementInterval.current) {
@@ -245,30 +248,64 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     let currentPath = paths[index];
     if (currentPath?.x === undefined || currentPath?.y === undefined) return;
     setCusorPosition(tileArrayX + startPoint.x, tileArrayY + startPoint.y);
+    const animateTile = (dx: number, dy: number) => {
+      let countFrame = 0.1;
+      const animation = setInterval(() => {
+        if (!tileCanvasRef.current || !interactionCanvasRef.current) return;
+        const translateX = dx * (tileSize - countFrame * tileSize);
+        const translateY = dy * (tileSize - countFrame * tileSize);
+        tileCanvasRef.current.style.transform = `translate(${translateX}px, ${translateY}px)`;
+        interactionCanvasRef.current.style.transform = `translate(${translateX}px, ${translateY}px)`;
+
+        if (countFrame >= 1) {
+          clearInterval(animation);
+          tileCanvasRef.current.style.transform = '';
+          interactionCanvasRef.current.style.transform = '';
+          countFrame = 1;
+        }
+        countFrame += 0.1;
+      }, animationSpeed / animationFrames);
+    };
+
     movementInterval.current = setInterval(() => {
-      if (index++ >= paths.length) {
+      if (++index >= paths.length) {
         setVectors([]);
         cancelCurrentMovement();
+        return;
       }
+
       const path = paths[index];
       if (!path) return;
-      if (currentPath.x < path.x && currentPath.y < path.y) {
+
+      const dx = Math.sign(path.x - currentPath.x);
+      const dy = Math.sign(path.y - currentPath.y);
+
+      if (dx === 1 && dy === 1) {
         goDownRight();
-      } else if (currentPath.x < path.x && currentPath.y > path.y) {
+        animateTile(1, 1);
+      } else if (dx === 1 && dy === -1) {
         goUpRight();
-      } else if (currentPath.x < path.x && currentPath.y === path.y) {
+        animateTile(1, -1);
+      } else if (dx === 1 && dy === 0) {
         goright();
-      } else if (currentPath.x > path.x && currentPath.y < path.y) {
+        animateTile(1, 0);
+      } else if (dx === -1 && dy === 1) {
         goDownLeft();
-      } else if (currentPath.x > path.x && currentPath.y > path.y) {
+        animateTile(-1, 1);
+      } else if (dx === -1 && dy === -1) {
         goUpLeft();
-      } else if (currentPath.x > path.x && currentPath.y === path.y) {
+        animateTile(-1, -1);
+      } else if (dx === -1 && dy === 0) {
         goleft();
-      } else if (currentPath.x === path.x && currentPath.y < path.y) {
+        animateTile(-1, 0);
+      } else if (dx === 0 && dy === 1) {
         godown();
-      } else if (currentPath.x === path.x && currentPath.y > path.y) {
+        animateTile(0, 1);
+      } else if (dx === 0 && dy === -1) {
         goup();
+        animateTile(0, -1);
       }
+
       setVectors(paths.slice(index));
       currentPath = path;
     }, animationSpeed);
@@ -648,6 +685,9 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
   /** 렌더링 */
   useEffect(() => {
+    if (canvasContainerRef.current) {
+      canvasContainerRef.current.style.setProperty('$tile-size', `${tileSize}px`);
+    }
     render();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tiles, loading, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color]);
@@ -660,9 +700,9 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           <div className={`${tiles.length < 1 ? S.loadingBar : S.loadComplete}`} />
         </div>
       ) : (
-        <>
+        <div ref={canvasContainerRef} className={S.canvasContainer}>
           <canvas
-            className={S.canvas}
+            className={`${S.canvas}`}
             id="TileCanvas"
             ref={tileCanvasRef}
             width={windowWidth}
@@ -672,7 +712,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             onMouseDown={handleClick}
           />
           <canvas
-            className={S.canvas}
+            className={`${S.canvas} `}
             id="InteractionCanvas"
             ref={interactionCanvasRef}
             width={windowWidth}
@@ -681,7 +721,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             onClick={handleClick}
             onMouseDown={handleClick}
           />
-        </>
+        </div>
       )}
     </>
   );
