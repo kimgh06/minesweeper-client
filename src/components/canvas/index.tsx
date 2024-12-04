@@ -195,7 +195,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     }
   };
 
-  /** 우클릭 막기 */
+  /** 우클릭 이벤트 막기 */
   useEffect(() => {
     const preventContextMenu = (event: MouseEvent) => {
       event.preventDefault();
