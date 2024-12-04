@@ -63,7 +63,7 @@ export default function Play() {
    * @param start_y {number} - start y position
    * @param end_x {number} - end x position
    * @param end_y {number} - end y position
-   * @param type {string} - Request type (R: Right tile, L: Left tile, U: Up tile, D: Down tile, A: All tile)
+   * @param type {string} - Request type (R: Right tiles, L: Left tiles, U: Up tiles, D: Down tiles, A: All tiles)
    *  */
   const appendTask = (
     start_x: number,
@@ -121,7 +121,7 @@ export default function Play() {
     return;
   };
 
-  /** ws 연결 담당 */
+  /** Re-connect websocket when websocket is closed state. */
   useEffect(() => {
     if (!isOpen) {
       connect(webSocketUrl);
@@ -138,11 +138,11 @@ export default function Play() {
       sortedTiles[i] = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
     }
     sortedTiles.reverse();
-    /** 좌표에 맞게 더미 데이터를 갈아끼우기 */
+    /** Replace dummy data according to coordinates */
     setCachingTiles(() => {
       const newTiles = [...cachingTiles];
       for (let i = 0; i < columnlength; i++) {
-        /** 아래쪽을 받아 올 때에만 아래로 옮긴다. */
+        /** Move down only when receiving tiles from below. */
         const rowIndex = i + (cursorY < end_y ? endPoint.y - startPoint.y - columnlength + 1 : 0);
         for (let j = 0; j < rowlength; j++) {
           if (!newTiles[rowIndex]) {
