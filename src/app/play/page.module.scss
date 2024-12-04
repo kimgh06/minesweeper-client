@@ -1,51 +1,74 @@
+@font-face {
+  font-family: 'Geekble';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/GeekbleMalang2WOFF2.woff2')
+    format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
 .page {
   width: 100svw;
   height: 100svh;
   overflow: hidden;
   background-color: lightslategray;
+}
 
-  .zoombar {
+.dashboard {
+  position: absolute;
+  bottom: 50px;
+  right: 50px;
+  z-index: 1;
+  font-family: 'Geekble';
+  color: white;
+  font-size: 24px;
+  width: 200px;
+  .coordinates {
+    padding: 18px 30px;
+    border-radius: 24px;
     display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    background-color: rgba(0, 0, 0, 35%);
+    margin-bottom: 16px;
+  }
+  svg {
+    position: absolute;
+    margin-left: -30px;
+  }
+  p {
+    margin-left: 20px;
+    width: 70%;
+    text-align: left;
+  }
+  .zoom {
+    padding: 18px;
+    border-radius: 24px;
+    background-color: rgba(0, 0, 0, 35%);
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    position: absolute;
-    right: 50px;
-    bottom: 50px;
-    z-index: 1;
-    border-radius: 50px;
-    button {
-      width: 50px;
-      height: 50px;
-      font-size: 40px;
-    }
-  }
+    gap: 16px;
 
-  .monitoringFrame {
-    position: absolute;
-    top: 50px;
-    right: 50px;
-    z-index: 1;
-    background-color: grey;
-    border-radius: 20px;
-    padding: 10px 30px;
-    button {
-      cursor: pointer;
-    }
-  }
+    .buttons {
+      width: 60%;
+      border-radius: 24px;
+      display: flex;
+      justify-content: center;
+      button {
+        background-color: rgba(0, 0, 0, 25%);
+        width: 50%;
+        font-size: 30px;
+        border: none;
+        cursor: pointer;
+        font-family: 'Geekble';
 
-  .monitoringFrameDisabled {
-    width: 50px;
-    transition: 0.5s ease;
-    padding: 5px;
-    height: 20px;
-    & > * {
-      display: none;
-    }
-    &:hover {
-      width: 100px;
-      height: auto;
-      & > * {
-        display: block;
+        &:hover {
+          background-color: rgba(0, 0, 0, 35%);
+        }
+        &:active {
+          background-color: rgba(0, 0, 0, 50%);
+        }
       }
     }
   }
