@@ -20,7 +20,7 @@ jobs:
           git remote add upstream https://github.com/gamultong/minesweeper-client.git
           git fetch upstream
           git checkout main
-          git merge upstream/main
+          git merge upstream/main --allow-unrelated-histories
         env:
           GITHUB_TOKEN: ${{ secrets.access_token }}
 
