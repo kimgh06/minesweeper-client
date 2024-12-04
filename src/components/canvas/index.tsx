@@ -195,6 +195,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     }
   };
 
+  /** 우클릭 막기 */
   useEffect(() => {
     const preventContextMenu = (event: MouseEvent) => {
       event.preventDefault();
@@ -206,41 +207,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     };
   }, []);
 
-  const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = tileCanvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const clickY = event.clientY - rect.top;
-
-    // 캔버스 좌표를 상대 좌표로 변환
-    const tileArrayX = Math.floor(clickX / tileSize + tilePaddingWidth);
-    const tileArrayY = Math.floor(clickY / tileSize + tilePaddingHeight);
-
-    // 캔버스 좌표를 절대 좌표로 변환
-    const tileX = Math.round(tileArrayX + startPoint.x);
-    const tileY = Math.round(tileArrayY + startPoint.y);
-
-    /** 추후 웹 소켓 통신 추가 예정 */
-    // const body = JSON.stringify({
-    //  event: 'pointing',
-    //  payload: {
-    //  position: {
-    //    x: tileX, y: tileY
-    //  },
-    //    click_type:"GENERAL_CLICK"
-    //  });
-    // sendMessage(body);
-
-    // 클릭한 타일의 내용 가져오기
-    const clickedTileContent = tiles[tileArrayY]?.[tileArrayX] ?? 'Out of bounds';
-    setClickPosition(tileX, tileY, clickedTileContent);
-
-    if (event.buttons === 2) {
-      console.log('right');
-      return;
-    }
+  /** General Click Event Handler */
+  const generalClick = (tileArrayX: number, tileArrayY: number) => {
     /** 기존 이동 멈춤 */
     cancelCurrentMovement();
 
@@ -321,6 +289,45 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       setPaths(paths.slice(index));
       currentPath = path;
     }, animationSpeed);
+  };
+
+  const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = tileCanvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+
+    // 캔버스 좌표를 상대 좌표로 변환
+    const tileArrayX = Math.floor(clickX / tileSize + tilePaddingWidth);
+    const tileArrayY = Math.floor(clickY / tileSize + tilePaddingHeight);
+
+    // 캔버스 좌표를 절대 좌표로 변환
+    const tileX = Math.round(tileArrayX + startPoint.x);
+    const tileY = Math.round(tileArrayY + startPoint.y);
+
+    /** 추후 웹 소켓 통신 추가 예정 */
+    // const body = JSON.stringify({
+    //  event: 'pointing',
+    //  payload: {
+    //  position: {
+    //    x: tileX, y: tileY
+    //  },
+    //    click_type:"GENERAL_CLICK"
+    //  });
+    // sendMessage(body);
+
+    // 클릭한 타일의 내용 가져오기
+    const clickedTileContent = tiles[tileArrayY]?.[tileArrayX] ?? 'Out of bounds';
+    setClickPosition(tileX, tileY, clickedTileContent);
+
+    if (event.buttons === 2) {
+      console.log('right');
+      return;
+    }
+
+    generalClick(tileArrayX, tileArrayY);
   };
 
   // Function to get neighbors of a node
