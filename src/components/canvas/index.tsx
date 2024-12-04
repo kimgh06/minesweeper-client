@@ -197,6 +197,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const [renderedTiles, setRenderedTiles] = useState<string[][]>([]);
   const [vectorImages, setVectorImages] = useState<VectorImages>();
 
+  /** Cancel interval function for animation. */
   const cancelCurrentMovement = () => {
     if (movementInterval.current) {
       clearInterval(movementInterval.current);
@@ -204,7 +205,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     }
   };
 
-  /** 우클릭 이벤트 막기 */
+  /** Prevent default right click event */
   useEffect(() => {
     const preventContextMenu = (event: MouseEvent) => {
       event.preventDefault();
@@ -216,22 +217,26 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     };
   }, []);
 
-  /** General Click Event Handler */
-  const generalClick = (tileArrayX: number, tileArrayY: number) => {
+  /**
+   * General Click Event Handler
+   * @param relativeTileX x position of clicked tile
+   * @param relativetileY y position of clicked tile
+   * @returns void
+   * */
+  const generalClick = (relativeTileX: number, relativetileY: number) => {
     /** 기존 이동 멈춤 */
     cancelCurrentMovement();
 
     /** astar를 사용한 길 찾기 */
-    const paths = findPathUsingAStar(relativeX, relativeY, tileArrayX, tileArrayY);
+    const paths = findPathUsingAStar(relativeX, relativeY, relativeTileX, relativetileY);
 
     /** 비용 계산 (자신의 위치는 제외) */
     setMovecost(paths.length - 1);
 
-    /** 8방향 이동 */
     let index = 0;
     let currentPath = paths[index];
     if (currentPath?.x === undefined || currentPath?.y === undefined) return;
-    setCusorPosition(tileArrayX + startPoint.x, tileArrayY + startPoint.y);
+    setCusorPosition(relativeTileX + startPoint.x, relativetileY + startPoint.y);
     const animateTile = (dx: number, dy: number) => {
       let countFrame = 0.1;
       const animation = setInterval(() => {
@@ -288,6 +293,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     }, animationSpeed);
   };
 
+  /** Click Event Handler */
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = tileCanvasRef.current;
     if (!canvas) return;
@@ -296,15 +302,14 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const clickX = event.clientX - rect.left;
     const clickY = event.clientY - rect.top;
 
-    // 캔버스 좌표를 상대 좌표로 변환
+    // Transform canvas coordinate to relative coordinate
     const tileArrayX = Math.floor(clickX / tileSize + tilePaddingWidth);
     const tileArrayY = Math.floor(clickY / tileSize + tilePaddingHeight);
 
-    // 캔버스 좌표를 절대 좌표로 변환
+    // Transform canvas coordinate to absolute coordinate
     const tileX = Math.round(tileArrayX + startPoint.x);
     const tileY = Math.round(tileArrayY + startPoint.y);
 
-    /** 추후 웹 소켓 통신 추가 예정 */
     // const body = JSON.stringify({
     //  event: 'pointing',
     //  payload: {
@@ -315,7 +320,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     //  });
     // sendMessage(body);
 
-    // 클릭한 타일의 내용 가져오기
+    // Getting content of clicked tile
     const clickedTileContent = tiles[tileArrayY]?.[tileArrayX] ?? 'Out of bounds';
     setClickPosition(tileX, tileY, clickedTileContent);
 
@@ -327,7 +332,12 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     generalClick(tileArrayX, tileArrayY);
   };
 
-  /** 커서 그리기 */
+  /**
+   * Draw cursor
+   * @param ctx CanvasRenderingContext2D
+   * @param x x position
+   * @param y y position
+   */
   const drawCursor = (ctx: CanvasRenderingContext2D, x: number, y: number, color: string, scale: number = 1) => {
     const adjustedScale = (zoom / 3.5) * scale;
     ctx.fillStyle = color;
@@ -338,7 +348,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     ctx.restore();
   };
 
-  /** 웹 소켓 메시지 처리 */
+  /** Handing Websocket message */
   useEffect(() => {
     if (!message) return;
     try {
@@ -352,7 +362,13 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     }
   }, [message]);
 
-  /** Flag를 피해서 astar 알고리즘으로 길찾고 커서를 8방향으로 이동하기 */
+  /**
+   * Find path using A* algorithm avoiding flags and move cursor in 8 directions
+   * @param startX x position of start point
+   * @param startY y position of start point
+   * @param targetX x position of target point
+   * @param targetY y position of target point
+   * */
   const findPathUsingAStar = (startX: number, startY: number, targetX: number, targetY: number) => {
     // Function to get neighbors of a node
     function getNeighbors(grid: (TileNode | null)[][], node: TileNode) {
@@ -405,7 +421,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       if (current.x === target.x && current.y === target.y) {
         const path = [];
         let temp = current;
-        /** 목표와의 거리 계산 */
+        /** calculate distance from target */
         setLeftXPaths(temp.x - startX);
         setLeftYPaths(temp.y - startY);
         while (temp) {
@@ -417,7 +433,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       openList = openList.filter(node => node !== current);
       closedList.push(current);
 
-      /** 주변 노드 탐색 */
+      /** Find neighbor nodes from current node. */
       const neighbors = getNeighbors(grid, current);
       for (const neighbor of neighbors) {
         if (closedList.includes(neighbor)) {
@@ -443,8 +459,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     return [];
   };
 
+  /** start render */
   const render = () => {
-    /** 렌더링 시작. */
     const tileCanvas = tileCanvasRef.current;
     const interactionCanvas = interactionCanvasRef.current;
     if (!tileCanvas || tileSize === 0 || !interactionCanvas) return;
@@ -453,7 +469,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const interactionCtx = interactionCanvas.getContext('2d');
     if (!tileCtx || !interactionCtx) return;
 
-    // 상호 작용 캔버스 초기화
+    // initialize interaction canvas
     interactionCtx.clearRect(0, 0, windowWidth, windowHeight);
     const borderPixel = 5 * zoom;
     const cursorCanvasX = (relativeX / paddingTiles) * tileSize;
@@ -475,7 +491,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       L${borderPixel} ${borderPixel}
       `);
 
-    // 커서 색상 설정
+    // setting cursor color
     const cursorColor = cursorColors[color];
     const compenX = cursorX - cursorOriginX - tilePaddingWidth - leftXPaths;
     const compenY = cursorY - cursorOriginY - tilePaddingHeight - leftYPaths;
@@ -515,7 +531,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       gradient.addColorStop(0.6, tileColors.outer[index][1]);
       gradient.addColorStop(1, tileColors.outer[index][1]);
     });
-    // 타일 그리기
+    // draw tiles
     tiles?.forEach((row, rowIndex) => {
       row?.forEach((content, colIndex) => {
         if (renderedTiles[rowIndex]?.[colIndex] === content) {
@@ -528,14 +544,14 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         tileCtx.save();
         tileCtx.translate(x, y);
         switch (content) {
-          /** 잠긴 타일 */
+          /** Locked tiles */
           case 'C0':
           case 'C1':
           case 'F0':
           case 'F1': {
             const isEven = content[1] === '0' ? 0 : 1;
 
-            // 특수 클릭이 가능한 타일만 외곽선 그리기
+            // draw outline only for special clickable tile
             if (
               Math.abs(rowIndex - relativeY) <= 1 &&
               Math.abs(colIndex - relativeX) <= 1 &&
@@ -545,26 +561,26 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               drawCursor(interactionCtx, x, y, '#0000002f', 0.5);
               tileCtx.fillStyle = 'white';
             } else {
-              // 바깥 타일 먼저 그리기
+              // draw outline only for special clickable tile
               tileCtx.fillStyle = gradientObject.outer[isEven];
             }
             tileCtx.fill(tileEdgeVector);
 
-            // 안쪽 타일 그리기
+            // draw inner tile
             tileCtx.fillStyle = gradientObject.inner[isEven];
             tileCtx.fill(tileVector);
-            // 깃발이 꽂혀있을 경우에는 깃발 그리기
+            // draw flag when flag is on the tile
             if (content.includes('F')) {
               tileCtx.restore();
               tileCtx.save();
               tileCtx.translate(x + tileSize / 6, y + tileSize / 6);
               tileCtx.scale(zoom / 4.5, zoom / 4.5);
 
-              /** 깃발 자체 색상은 커서 색상을 따라감 */
+              /** flag color follows cursor color. */
               tileCtx.fillStyle = cursorColor;
               tileCtx.fill(vectorImages?.flag.flag as Path2D);
 
-              // 깃대 그리기
+              // draw pole
               tileCtx.fillStyle = gradientObject.flag;
               tileCtx.fill(vectorImages?.flag.pole as Path2D);
 
@@ -572,7 +588,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             }
             break;
           }
-          /** 열린 타일 */
+          /** opened tile */
           case 'O':
           case '1':
           case '2':
@@ -589,21 +605,19 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             tileCtx.fillStyle = gradientObject.inner[2];
             tileCtx.fill(tileVector);
 
-            /** 터짐 표현 */
+            /** describe ash */
             if (content === 'B') {
-              // Path2D 객체로 변환
               tileCtx.scale(zoom / 3.5, zoom / 3.5);
 
-              tileCtx.fillStyle = 'rgba(0, 0, 0, 0.6)'; // 첫 번째 경로 색상
-              tileCtx.fill(vectorImages?.boom.inner as Path2D); // 첫 번째 경로 그리기
+              tileCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+              tileCtx.fill(vectorImages?.boom.inner as Path2D); // draw inner path
 
-              // 두 번째 경로 그리기
-              tileCtx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // 두 번째 경로 색상
-              tileCtx.fill(vectorImages?.boom.outer as Path2D); // 두 번째 경로 그리기
+              tileCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+              tileCtx.fill(vectorImages?.boom.outer as Path2D); // draw outer path
             }
             tileCtx.restore();
 
-            /** 글자 새기기 */
+            /** describe number of neighbor bombs. */
             if (parseInt(content) > 0) {
               const index = parseInt(content) - 1;
               tileCtx.fillStyle = countColors[index];
@@ -619,17 +633,17 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         }
         tileCtx.restore();
       });
-      /** 중간에 길을 표시해야 밀리지 않게 보임 */
+      /** Display the path in the middle to prevent it from appearing displaced */
       if (rowIndex === Math.floor((tiles.length * 3) / 10)) {
-        // 다른 사람 커서 그리기
+        // draw other user's cursor
 
-        // 내 커서 그리기
+        // draw my cursor
         drawCursor(interactionCtx, cursorCanvasX, cursorCanvasY, cursorColor);
 
-        // 클릭한 타일을 테두리로 표시하기
+        // describe clicked tile using border
         interactionCtx.beginPath();
-        interactionCtx.strokeStyle = cursorColor; // 테두리 색상
-        interactionCtx.lineWidth = borderPixel; // 테두리 두께
+        interactionCtx.strokeStyle = cursorColor;
+        interactionCtx.lineWidth = borderPixel;
         interactionCtx.strokeRect(
           clickCanvasX + borderPixel / 2,
           clickCanvasY + borderPixel / 2,
@@ -637,7 +651,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           tileSize - borderPixel,
         );
         interactionCtx.closePath();
-        // 이동경로 그리기
+        // draw path
         if (paths.length > 0) {
           interactionCtx.beginPath();
           interactionCtx.strokeStyle = 'black';
@@ -658,7 +672,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     });
   };
 
-  /** 렌더링 */
+  /** Render */
   useEffect(() => {
     if (loading) {
       // set vector images
