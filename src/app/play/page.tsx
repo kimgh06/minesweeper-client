@@ -26,8 +26,9 @@ interface Point {
 
 export default function Play() {
   /** constants */
-  const originTileSize = 80;
   const zoomScale = 1.5;
+  const renderRange = 2;
+  const originTileSize = 80;
   const webSocketUrl = `${process.env.NEXT_PUBLIC_WS_HOST}/session`;
 
   /** stores */
@@ -48,21 +49,28 @@ export default function Play() {
   const { windowWidth, windowHeight } = useScreenSize();
 
   /** states */
+  const [tileSize, setTileSize] = useState<number>(0); //px
   const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
   const [endPoint, setEndPoint] = useState<Point>({ x: 0, y: 0 });
   const [renderStartPoint, setRenderStartPoint] = useState<Point>({ x: 0, y: 0 });
   // const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
-  const paddingTiles = 2;
-  const [tileSize, setTileSize] = useState<number>(0); //px
   const [cachingTiles, setCachingTiles] = useState<string[][]>([]);
   const [renderTiles, setRenderTiles] = useState<string[][]>([...cachingTiles.map(row => [...row])]);
-  /** 타일 요청 */
+
+  /**
+   * Request Tiles
+   * @param start_x {number} - start x position
+   * @param start_y {number} - start y position
+   * @param end_x {number} - end x position
+   * @param end_y {number} - end y position
+   * @param type {string} - Request type (R: Right tile, L: Left tile, U: Up tile, D: Down tile, A: All tile)
+   *  */
   const appendTask = (
     start_x: number,
     start_y: number,
     end_x: number,
     end_y: number,
-    type: 'R' | 'L' | 'U' | 'D' | 'A' | '',
+    type: 'R' | 'L' | 'U' | 'D' | 'A',
   ) => {
     if (!isOpen) return;
     /** add Dummy data to originTiles */
@@ -225,8 +233,8 @@ export default function Play() {
     const newTileSize = originTileSize * zoom;
     setTileSize(newTileSize);
 
-    const tilePaddingWidth = Math.floor(Math.floor((windowWidth * paddingTiles) / newTileSize) / 2);
-    const tilePaddingHeight = Math.floor(Math.floor((windowHeight * paddingTiles) / newTileSize) / 2);
+    const tilePaddingWidth = Math.floor(Math.floor((windowWidth * renderRange) / newTileSize) / 2);
+    const tilePaddingHeight = Math.floor(Math.floor((windowHeight * renderRange) / newTileSize) / 2);
 
     setStartPoint({
       x: cursorX - tilePaddingWidth,
@@ -242,13 +250,13 @@ export default function Play() {
       y: cursorOriginY - tilePaddingHeight,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowWidth, windowHeight, zoom, cursorOriginX, cursorOriginY, cursorX, cursorY, paddingTiles, isOpen]);
+  }, [windowWidth, windowHeight, zoom, cursorOriginX, cursorOriginY, cursorX, cursorY, renderRange, isOpen]);
 
   /** zoom event */
   useEffect(() => {
     const newTileSize = originTileSize * zoom;
-    const tileVisibleWidth = Math.floor((windowWidth * paddingTiles) / newTileSize);
-    const tileVisibleHeight = Math.floor((windowHeight * paddingTiles) / newTileSize);
+    const tileVisibleWidth = Math.floor((windowWidth * renderRange) / newTileSize);
+    const tileVisibleHeight = Math.floor((windowHeight * renderRange) / newTileSize);
 
     const tilePaddingWidth = Math.floor(tileVisibleWidth / 2);
     const tilePaddingHeight = Math.floor(tileVisibleHeight / 2);
@@ -271,7 +279,7 @@ export default function Play() {
       'A',
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowWidth, windowHeight, zoom, paddingTiles, isOpen]);
+  }, [windowWidth, windowHeight, zoom, renderRange, isOpen]);
 
   /** When cursor position has changed. */
   useEffect(() => {
@@ -409,7 +417,7 @@ export default function Play() {
       </div>
       <div className={S.canvas}>
         <CanvasRenderer
-          paddingTiles={paddingTiles}
+          paddingTiles={renderRange}
           tiles={renderTiles}
           tileSize={tileSize}
           startPoint={renderStartPoint}
