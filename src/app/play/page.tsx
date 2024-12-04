@@ -151,16 +151,16 @@ export default function Play() {
     });
   };
 
-  /** ws 메시지 처리 */
+  /** Handling Websocket Message */
   useEffect(() => {
     if (!message) return;
     try {
       const { event, payload } = JSON.parse(message as string);
-      /** 타일 요청한 것이 온 경우 */
+      /** When receiving requested tiles */
       if (event === 'tiles') {
         const { end_x, end_y, start_x, start_y, tiles: unsortedTiles } = payload;
         replaceTiles(end_x, end_y, start_x, start_y, unsortedTiles);
-        /** 요청하지 않은 타일이 올 경우 & 타일 여는 이벤트를 보냈을 경우 */
+        /** When receiving unrequested tiles & when sending tile open event */
       } else if (event === 'flag-set' || event === 'tile-opened') {
         setCachingTiles(tiles => {
           const {
@@ -171,16 +171,16 @@ export default function Play() {
           newTiles[y - startPoint.y][x - startPoint.x] = state;
           return newTiles;
         });
-        /** 연결될 때 단 한 번만 자신의 정보를 가지고 옴. */
+        /** Fetches own information only once when connected. */
       } else if (event === 'my-cursor') {
         const { position, pointer, color } = payload;
         setCursorPosition(position.x, position.y);
         setClickPosition(pointer.x, pointer.y, '');
         setColor(color);
-        /** 다른 유저들의 정보를 가지고 옴. */
+        /** Fetches information of other users. */
       } else if (event === 'cursors') {
         // setUserCursors(payload);
-        /** 다른 유저들의 이동 이벤트를 받아옴. */
+        /** Receives movement events from other users. */
       } else if (event === 'moved') {
         // const { origin_position, new_position, color } = payload;
         // const { x: originX, y: originY } = origin_position;
@@ -201,7 +201,7 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [message]);
 
-  /** 캐싱 타일 콘텐츠, 위치 변경 감지 */
+  /** Detect changes in cached tile content and position */
   useEffect(() => {
     setRenderTiles(() => {
       const newTiles = [...cachingTiles.map(row => [...row.map(() => '?')])];
@@ -220,7 +220,7 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cachingTiles, cursorOriginX, cursorOriginY]);
 
-  /** 커서 위치나 화면 크기가 바뀌면 화면 범위 재설정 */
+  /** Reset screen range when cursor position or screen size changes */
   useEffect(() => {
     const newTileSize = originTileSize * zoom;
     setTileSize(newTileSize);
@@ -255,11 +255,11 @@ export default function Play() {
     let heightReductionLength = 0;
     let widthReductionLength = 0;
     if (tileVisibleWidth > endPoint.x - startPoint.x + 1 || tileVisibleHeight > endPoint.y - startPoint.y + 1) {
-      /** 확장된 전체 타일 요청 */
+      /** Request for expanded entire tiles */
       heightReductionLength = Math.floor(tilePaddingHeight - (endPoint.y - startPoint.y) / 2);
       widthReductionLength = Math.round(tilePaddingWidth - (endPoint.x - startPoint.x) / 2);
     } else {
-      /** 축소된 전체 타일 요청 */
+      /** Request for reduced entire tiles */
       heightReductionLength = -Math.round((endPoint.y - startPoint.y - tileVisibleHeight) / 2);
       widthReductionLength = -Math.round((endPoint.x - startPoint.x - tileVisibleWidth) / 2);
     }
@@ -273,7 +273,7 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, paddingTiles, isOpen]);
 
-  /** 커서 위치가 바뀌었을 때 */
+  /** When cursor position has changed. */
   useEffect(() => {
     const widthExtendLength = cursorX - cursorOriginX;
     const heightExtendLength = cursorY - cursorOriginY;
@@ -287,39 +287,39 @@ export default function Play() {
     const rightfrom = endPoint.x + 1;
     const rightto = endPoint.x + widthExtendLength;
 
-    /** 우측 아래 */
+    /** Bottom right */
     if (widthExtendLength > 0 && heightExtendLength > 0) {
       appendTask(rightfrom, downfrom, rightto, upto, 'R');
       appendTask(leftfrom, downfrom, rightto, downto, 'D');
-      /** 좌측 아래 */
+      /** Bottom left */
     } else if (widthExtendLength < 0 && heightExtendLength > 0) {
       appendTask(leftfrom, downfrom, leftto, upto, 'L');
       appendTask(leftfrom, downfrom, rightto, downto, 'D');
-      /** 우측 위 */
+      /** Top right */
     } else if (widthExtendLength > 0 && heightExtendLength < 0) {
       appendTask(rightfrom, downfrom, rightto, upto, 'R');
       appendTask(leftfrom, upfrom, rightto, upto, 'U');
-      /** 좌측 위 */
+      /** Top left */
     } else if (widthExtendLength < 0 && heightExtendLength < 0) {
       appendTask(leftfrom, downfrom, leftto, upto, 'L');
       appendTask(leftfrom, upfrom, rightto, upto, 'U');
-      /** 우측 이동 */
+      /** Right move */
     } else if (widthExtendLength > 0) {
       appendTask(rightfrom, endPoint.y, rightto, startPoint.y, 'R');
-      /** 좌측 이동 */
+      /** Left move */
     } else if (widthExtendLength < 0) {
       appendTask(leftfrom, endPoint.y, leftto, startPoint.y, 'L');
-      /** 아래 이동 */
+      /** Down move */
     } else if (heightExtendLength > 0) {
       appendTask(startPoint.x, downfrom, endPoint.x, downto, 'D');
-      /** 위 이동 */
+      /** Up move */
     } else if (heightExtendLength < 0) {
       appendTask(startPoint.x, upfrom, endPoint.x, upto, 'U');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursorX, cursorY]);
 
-  /** 유저 이동 이벤트 전송 */
+  /** Send user move event */
   // useEffect(() => {
   //   if (!isOpen) {
   //     return;
@@ -336,7 +336,7 @@ export default function Play() {
   //   sendMessage(body);
   // }, [cursorOriginX, cursorOriginY]);
 
-  // /** 유저 클릭 이벤트 전송 */
+  // /** Send User click envet */
   // useEffect(() => {
   //   if (!isOpen) {
   //     return;
@@ -355,10 +355,6 @@ export default function Play() {
 
   return (
     <div className={S.page}>
-      {/* <div className={S.zoombar}>
-        {zoom * zoomScale < 1.7 && <button onClick={() => setZoom(zoom * zoomScale)}>+</button>}
-        {zoom / zoomScale > 0.2 && <button onClick={() => setZoom(zoom / zoomScale)}>-</button>}
-      </div> */}
       <div className={S.dashboard}>
         <div className={S.coordinates}>
           <p>
