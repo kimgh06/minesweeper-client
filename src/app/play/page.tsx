@@ -1,5 +1,6 @@
 'use client';
 /** style */
+import './globals.css';
 import S from './page.module.scss';
 
 /** hooks */
