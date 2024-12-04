@@ -35,7 +35,6 @@ export default function Play() {
   const {
     x: cursorX,
     y: cursorY,
-    color,
     setColor,
     setPosition: setCursorPosition,
     zoom,
@@ -43,7 +42,7 @@ export default function Play() {
     originX: cursorOriginX,
     originY: cursorOriginY,
   } = useCursorStore();
-  const { x: clickX, y: clickY, setPosition: setClickPosition, content: clickContent, movecost } = useClickStore();
+  const { x: clickX, y: clickY, setPosition: setClickPosition } = useClickStore();
 
   /** hooks */
   const { windowWidth, windowHeight } = useScreenSize();
@@ -53,8 +52,7 @@ export default function Play() {
   const [endPoint, setEndPoint] = useState<Point>({ x: 0, y: 0 });
   const [renderStartPoint, setRenderStartPoint] = useState<Point>({ x: 0, y: 0 });
   // const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
-  const [paddingTiles, setPaddingTiles] = useState<number>(2);
-  const [isMonitoringDisabled, setIsMonitoringDisabled] = useState<boolean>(true);
+  const paddingTiles = 2;
   const [tileSize, setTileSize] = useState<number>(0); //px
   const [cachingTiles, setCachingTiles] = useState<string[][]>([]);
   const [renderTiles, setRenderTiles] = useState<string[][]>([...cachingTiles.map(row => [...row])]);
