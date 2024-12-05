@@ -132,40 +132,40 @@ export default function Play() {
   /** decode Hex using two charactors
    * @param hex {string} - Hex string
    */
-  const decodeHex = (hex: string) => {
-    const hexArray = hex.match(/.{1,2}/g);
-    if (!hexArray) return '';
-    // hex to byte
-    const byte = hexArray.map(hex => parseInt(hex, 16).toString(2).padStart(8, '0')).join('');
-    // byte 0 - IsOpen, 1 - IsMine, 2 - IsFlag, 3 ~ 4 color, 5 ~ 7 number of mines
-    const isOpen = byte[0] === '1';
-    if (isOpen) {
-      const isMine = byte[1] === '1';
-      const number = parseInt(byte.slice(5), 2);
-      return isMine ? 'B' : number === 0 ? 'O' : number.toString();
-    }
-    const isFlag = byte[2] === '1';
-    let color = '';
-    switch (byte.slice(3, 5)) {
-      case '00':
-        color = '0';
-        break;
-      case '01':
-        color = '1';
-        break;
-      case '10':
-        color = '2';
-        break;
-      case '11':
-        color = '3';
-        break;
-      default:
-        color = '';
-    }
-    if (isFlag) {
-      return 'F' + color;
-    }
-  };
+  // const decodeHex = (hex: string) => {
+  //   const hexArray = hex.match(/.{1,2}/g);
+  //   if (!hexArray) return '';
+  //   // hex to byte
+  //   const byte = hexArray.map(hex => parseInt(hex, 16).toString(2).padStart(8, '0')).join('');
+  //   // byte 0 - IsOpen, 1 - IsMine, 2 - IsFlag, 3 ~ 4 color, 5 ~ 7 number of mines
+  //   const isOpen = byte[0] === '1';
+  //   if (isOpen) {
+  //     const isMine = byte[1] === '1';
+  //     const number = parseInt(byte.slice(5), 2);
+  //     return isMine ? 'B' : number === 0 ? 'O' : number.toString();
+  //   }
+  //   const isFlag = byte[2] === '1';
+  //   let color = '';
+  //   switch (byte.slice(3, 5)) {
+  //     case '00':
+  //       color = '0';
+  //       break;
+  //     case '01':
+  //       color = '1';
+  //       break;
+  //     case '10':
+  //       color = '2';
+  //       break;
+  //     case '11':
+  //       color = '3';
+  //       break;
+  //     default:
+  //       color = '';
+  //   }
+  //   if (isFlag) {
+  //     return 'F' + color;
+  //   }
+  // };
 
   const replaceTiles = (end_x: number, end_y: number, start_x: number, start_y: number, unsortedTiles: string) => {
     const rowlength = Math.abs(end_x - start_x) + 1;
