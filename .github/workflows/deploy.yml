@@ -38,7 +38,7 @@ jobs:
         run: npm run build
 
       - name: Export static site
-        run: npm run export
+        run: next export
 
       - name: Upload to GitHub Pages
         uses: jamesIves/github-pages-deploy-action@v4
