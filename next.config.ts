@@ -6,8 +6,8 @@ const nextConfig: NextConfig = {
     silenceDeprecations: ['legacy-js-api'],
   },
   output: 'export',
-  basePath: './minesweeper-client', // GitHub Pages에서 사용하는 경로로 설정
-  assetPrefix: './minesweeper-client/', // GitHub Pages에서 사용하는 경로로 설정
+  basePath: '/minesweeper-client', // GitHub Pages에서 사용하는 경로로 설정
+  assetPrefix: 'https://gamultong.github.io/minesweeper-client/', // GitHub Pages에서 사용하는 경로로 설정
   trailingSlash: true, // 슬래시로 끝나게 설정
 };
 
