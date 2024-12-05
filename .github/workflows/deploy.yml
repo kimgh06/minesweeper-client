@@ -42,6 +42,7 @@ jobs:
         with:
           branch: gh-pages
           folder: out
+          token: ${{ secrets.SECRET }}
 
   deploy:
     runs-on: ubuntu-latest
