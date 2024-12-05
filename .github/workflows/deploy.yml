@@ -36,6 +36,9 @@ jobs:
 
       - name: Build Next.js app and Export static site
         run: npm run build
+        
+      - name: Add .nojekyll file
+        run: touch out/.nojekyll
 
       - name: Upload to GitHub Pages
         uses: jamesIves/github-pages-deploy-action@v4
