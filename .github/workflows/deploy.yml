@@ -32,7 +32,7 @@ jobs:
           echo "NEXT_PUBLIC_WS_HOST=${{ secrets.NEXT_PUBLIC_WS_HOST }}" >> .env.
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --force
 
       - name: Build Next.js app
         run: npm run build
