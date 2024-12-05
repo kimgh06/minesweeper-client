@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     silenceDeprecations: ['legacy-js-api'],
   },
   output: 'export',
+  basePath: '/',
 };
 
 export default nextConfig;
