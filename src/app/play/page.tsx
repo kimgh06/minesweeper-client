@@ -189,7 +189,7 @@ export default function Play() {
             newTiles[rowIndex] = [];
           }
           let tile = sortedTiles[i][j];
-          if (tile === 'C' || tile?.includes('F')) {
+          if (tile?.includes('C') || tile?.includes('F')) {
             tile += (i + j) % 2 === 0 ? '0' : '1';
           }
           newTiles[rowIndex][j + start_x - startPoint.x] = tile;
@@ -224,22 +224,22 @@ export default function Play() {
             if (is_mine) {
               newTiles[y - startPoint.y][x - startPoint.x] = 'B';
             } else {
-              newTiles[y - startPoint.y][x - startPoint.x] = number === null ? 'O' : number;
+              newTiles[y - startPoint.y][x - startPoint.x] = number.toString() ?? 'O';
             }
           } else {
-            newTiles[y - startPoint.y][x - startPoint.x] = (is_flag ? 'F' + color : 'C') + ((x + y) % 2);
+            newTiles[y - startPoint.y][x - startPoint.x] = (is_flag ? 'F' + color : 'C') + ((x + y + 1) % 2);
           }
           return newTiles;
         });
         /** Fetches own information only once when connected. */
       } else if (event === 'my-cursor') {
         const { position, pointer, color } = payload;
-        setCursorPosition(position.x, position.y);
         setOringinPosition(position.x, position.y);
+        setCursorPosition(position.x, position.y);
+        setColor(color.toLowerCase());
         if (pointer) {
           setClickPosition(pointer.x, pointer.y, '');
         }
-        setColor(color.toLowerCase());
         /** Fetches information of other users. */
       } else if (event === 'you-died') {
         const { revive_at } = payload;

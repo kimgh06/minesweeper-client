@@ -344,11 +344,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       return;
     }
 
-    if (
-      clickType === 'GENERAL_CLICK' &&
-      clickedTileContent &&
-      !(clickedTileContent.includes('F') || clickedTileContent.includes('C'))
-    ) {
+    if (clickType === 'GENERAL_CLICK' && !(clickedTileContent?.includes('F') || clickedTileContent?.includes('C'))) {
       moveCursor(tileArrayX, tileArrayY);
     }
     clickEvent(tileX, tileY, clickType);
@@ -652,6 +648,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             break;
           }
           default:
+            console.log(content);
             break;
         }
         tileCtx.restore();
