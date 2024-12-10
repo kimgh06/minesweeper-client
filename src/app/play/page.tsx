@@ -142,16 +142,16 @@ export default function Play() {
     const isFlag = byte[2] === '1';
     let color = '';
     switch (byte.slice(3, 5)) {
-      case '00':
+      case '00' /** red */:
         color = '0';
         break;
-      case '01':
+      case '01' /** yellow */:
         color = '1';
         break;
-      case '10':
+      case '10' /** blue */:
         color = '2';
         break;
-      case '11':
+      case '11' /** purple */:
         color = '3';
         break;
       default:
@@ -224,7 +224,7 @@ export default function Play() {
             if (is_mine) {
               newTiles[y - startPoint.y][x - startPoint.x] = 'B';
             } else {
-              newTiles[y - startPoint.y][x - startPoint.x] = number.toString() ?? 'O';
+              newTiles[y - startPoint.y][x - startPoint.x] = number?.toString() ?? 'O';
             }
           } else {
             newTiles[y - startPoint.y][x - startPoint.x] = (is_flag ? 'F' + color : 'C') + ((x + y + 1) % 2);

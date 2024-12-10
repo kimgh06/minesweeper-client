@@ -152,7 +152,16 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     '#B2000080',
     '#7700B280',
   ];
-  const cursorColors = { red: '#FF4D00', blue: '#0094FF', yellow: '#F0C800', purple: '#BC3FDC' };
+  const cursorColors = {
+    red: '#FF4D00',
+    blue: '#0094FF',
+    yellow: '#F0C800',
+    purple: '#BC3FDC',
+    0: '#FF4D00',
+    1: '#F0C800',
+    2: '#0094FF',
+    3: '#BC3FDC',
+  };
   const cursorPaths = ` 
     M12.2719 13.6437 
     C11.4141 6.37712 19.6676 1.61197 25.5317 5.9881 
@@ -324,16 +333,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const tileX = Math.round(tileArrayX + startPoint.x);
     const tileY = Math.round(tileArrayY + startPoint.y);
 
-    // const body = JSON.stringify({
-    //  event: 'pointing',
-    //  payload: {
-    //  position: {
-    //    x: tileX, y: tileY
-    //  },
-    //    click_type:"GENERAL_CLICK"
-    //  });
-    // sendMessage(body);
-
     // Getting content of clicked tile
     const clickedTileContent = tiles[tileArrayY]?.[tileArrayX] ?? 'Out of bounds';
     setClickPosition(tileX, tileY, clickedTileContent);
@@ -341,7 +340,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     let clickType: 'GENERAL_CLICK' | 'SPECIAL_CLICK' = 'GENERAL_CLICK';
     if (event.buttons === 2) {
       clickType = 'SPECIAL_CLICK';
-      return;
     }
 
     if (clickType === 'GENERAL_CLICK' && !(clickedTileContent?.includes('F') || clickedTileContent?.includes('C'))) {
@@ -566,8 +564,16 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           /** Locked tiles */
           case 'C0':
           case 'C1':
-          case 'F0':
-          case 'F1': {
+          case 'F00':
+          case 'F01':
+          case 'F10':
+          case 'F11':
+          case 'F20':
+          case 'F21':
+          case 'F30':
+          case 'F31':
+          case 'F40':
+          case 'F41': {
             const isEven = content[1] === '0' ? 0 : 1;
 
             // draw outline only for special clickable tile
@@ -596,7 +602,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               tileCtx.scale(zoom / 4.5, zoom / 4.5);
 
               /** flag color follows cursor color. */
-              tileCtx.fillStyle = cursorColor;
+              tileCtx.fillStyle = cursorColors[content[1] as keyof typeof cursorColors];
               tileCtx.fill(vectorImages?.flag.flag as Path2D);
 
               // draw pole
