@@ -18,11 +18,11 @@ interface Point {
   y: number;
 }
 
-// interface UserCursor {
-//   position: { x: number; y: number };
-//   pointer: { x: number; y: number };
-//   color: string;
-// }
+interface UserCursor {
+  position: { x: number; y: number };
+  pointer: { x: number; y: number };
+  color: string;
+}
 
 export default function Play() {
   /** constants */
@@ -53,7 +53,7 @@ export default function Play() {
   const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
   const [endPoint, setEndPoint] = useState<Point>({ x: 0, y: 0 });
   const [renderStartPoint, setRenderStartPoint] = useState<Point>({ x: 0, y: 0 });
-  // const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
+  const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
   const [cachingTiles, setCachingTiles] = useState<string[][]>([]);
   const [renderTiles, setRenderTiles] = useState<string[][]>([...cachingTiles.map(row => [...row])]);
 
@@ -111,10 +111,8 @@ export default function Play() {
     const body = JSON.stringify({
       event: 'fetch-tiles',
       payload: {
-        start_x,
-        start_y,
-        end_x,
-        end_y,
+        start_p: { x: start_x, y: start_y },
+        end_p: { x: end_x, y: end_y },
       },
     });
     sendMessage(body);
@@ -123,57 +121,68 @@ export default function Play() {
 
   /** Re-connect websocket when websocket is closed state. */
   useEffect(() => {
-    if (!isOpen) {
-      connect(webSocketUrl);
+    if (!isOpen && startPoint.x !== 0 && startPoint.y !== 0 && endPoint.x !== 0 && endPoint.y) {
+      connect(
+        webSocketUrl + `?view_width=${endPoint.x - startPoint.x + 1}&view_height=${endPoint.y - startPoint.y + 1}`,
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, startPoint, endPoint]);
 
   /** decode Hex using two charactors
    * @param hex {string} - Hex string
    */
-  // const decodeHex = (hex: string) => {
-  //   const hexArray = hex.match(/.{1,2}/g);
-  //   if (!hexArray) return '';
-  //   // hex to byte
-  //   const byte = hexArray.map(hex => parseInt(hex, 16).toString(2).padStart(8, '0')).join('');
-  //   // byte 0 - IsOpen, 1 - IsMine, 2 - IsFlag, 3 ~ 4 color, 5 ~ 7 number of mines
-  //   const isOpen = byte[0] === '1';
-  //   if (isOpen) {
-  //     const isMine = byte[1] === '1';
-  //     const number = parseInt(byte.slice(5), 2);
-  //     return isMine ? 'B' : number === 0 ? 'O' : number.toString();
-  //   }
-  //   const isFlag = byte[2] === '1';
-  //   let color = '';
-  //   switch (byte.slice(3, 5)) {
-  //     case '00':
-  //       color = '0';
-  //       break;
-  //     case '01':
-  //       color = '1';
-  //       break;
-  //     case '10':
-  //       color = '2';
-  //       break;
-  //     case '11':
-  //       color = '3';
-  //       break;
-  //     default:
-  //       color = '';
-  //   }
-  //   if (isFlag) {
-  //     return 'F' + color;
-  //   }
-  // };
+  const decodeHex = (hex: string) => {
+    const hexArray = hex.match(/.{1,2}/g);
+    if (!hexArray) return '';
+    // hex to byte
+    const byte = hexArray.map(hex => parseInt(hex, 16).toString(2).padStart(8, '0')).join('');
+    if (byte !== '00000000') {
+      console.log(byte);
+    }
+    // byte 0 - IsOpen, 1 - IsMine, 2 - IsFlag, 3 ~ 4 color, 5 ~ 7 number of mines
+    const isOpen = byte[0] === '1';
+    if (isOpen) {
+      const isMine = byte[1] === '1';
+      const number = parseInt(byte.slice(5), 2);
+      return isMine ? 'B' : number === 0 ? 'O' : number.toString();
+    }
+    const isFlag = byte[2] === '1';
+    let color = '';
+    switch (byte.slice(3, 5)) {
+      case '00':
+        color = '0';
+        break;
+      case '01':
+        color = '1';
+        break;
+      case '10':
+        color = '2';
+        break;
+      case '11':
+        color = '3';
+        break;
+      default:
+        color = '';
+    }
+    if (isFlag) {
+      return 'F' + color;
+    }
+    return 'C';
+  };
 
   const replaceTiles = (end_x: number, end_y: number, start_x: number, start_y: number, unsortedTiles: string) => {
-    const rowlength = Math.abs(end_x - start_x) + 1;
+    const rowlength = Math.abs(end_x - start_x) * 2 + 1;
     const columnlength = Math.abs(start_y - end_y) + 1;
-    const sortedTiles = [] as string[];
+    const sortedTiles: string[][] = [];
     if (unsortedTiles.length === 0) return;
     for (let i = 0; i < columnlength; i++) {
-      sortedTiles[i] = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
+      const sortedlist = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
+      const tempTilelist = [] as string[];
+      for (let j = 0; j < rowlength / 2; j++) {
+        tempTilelist[j] = decodeHex(sortedlist.slice(j * 2, j * 2 + 1));
+      }
+      sortedTiles[i] = tempTilelist;
     }
     sortedTiles.reverse();
     /** Replace dummy data according to coordinates */
@@ -187,7 +196,7 @@ export default function Play() {
             newTiles[rowIndex] = [];
           }
           let tile = sortedTiles[i][j];
-          if (tile === 'C' || tile === 'F') {
+          if (tile === 'C' || tile?.includes('F')) {
             tile += (i + j) % 2 === 0 ? '0' : '1';
           }
           newTiles[rowIndex][j + start_x - startPoint.x] = tile;
@@ -204,28 +213,45 @@ export default function Play() {
       const { event, payload } = JSON.parse(message as string);
       /** When receiving requested tiles */
       if (event === 'tiles') {
-        const { end_x, end_y, start_x, start_y, tiles: unsortedTiles } = payload;
+        const {
+          end_p: { x: end_x, y: end_y },
+          start_p: { x: start_x, y: start_y },
+          tiles: unsortedTiles,
+        } = payload;
         replaceTiles(end_x, end_y, start_x, start_y, unsortedTiles);
         /** When receiving unrequested tiles & when sending tile open event */
-      } else if (event === 'flag-set' || event === 'tile-opened') {
+      } else if (event === 'flag-set' || event === 'tile-updated') {
         setCachingTiles(tiles => {
           const {
             position: { x, y },
-            state,
+            tile: { color, is_flag, is_mine, is_open: is_tile_open, number },
           } = payload;
           const newTiles = [...tiles];
-          newTiles[y - startPoint.y][x - startPoint.x] = state;
+          if (is_tile_open) {
+            if (is_mine) {
+              newTiles[y - startPoint.y][x - startPoint.x] = 'B';
+            } else {
+              newTiles[y - startPoint.y][x - startPoint.x] = number === null ? 'O' : number;
+            }
+          } else {
+            newTiles[y - startPoint.y][x - startPoint.x] = (is_flag ? 'F' + color : 'C') + ((x + y) % 2);
+          }
           return newTiles;
         });
         /** Fetches own information only once when connected. */
       } else if (event === 'my-cursor') {
         const { position, pointer, color } = payload;
         setCursorPosition(position.x, position.y);
-        setClickPosition(pointer.x, pointer.y, '');
-        setColor(color);
+        if (pointer) {
+          setClickPosition(pointer.x, pointer.y, '');
+        }
+        setColor(color.toLowerCase());
         /** Fetches information of other users. */
+      } else if (event === 'you-died') {
+        const { revive_at } = payload;
+        console.log(revive_at);
       } else if (event === 'cursors') {
-        // setUserCursors(payload);
+        setUserCursors(payload);
         /** Receives movement events from other users. */
       } else if (event === 'moved') {
         // const { origin_position, new_position, color } = payload;

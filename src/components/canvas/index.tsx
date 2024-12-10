@@ -181,7 +181,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     setPosition: setCusorPosition,
   } = useCursorStore();
   const { setPosition: setClickPosition, x: clickX, y: clickY, setMovecost } = useClickStore();
-  const { message } = useWebSocketStore();
+  const { message, sendMessage } = useWebSocketStore();
 
   /** references */
   const tileCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -196,6 +196,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const [leftYPaths, setLeftYPaths] = useState<number>(0);
   const [renderedTiles, setRenderedTiles] = useState<string[][]>([]);
   const [vectorImages, setVectorImages] = useState<VectorImages>();
+  const [interactableCursors, setInteractableCursors] = useState<{ x: number; y: number }[]>([]);
 
   /** Cancel interval function for animation. */
   const cancelCurrentMovement = () => {
@@ -223,7 +224,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
    * @param relativetileY y position of clicked tile
    * @returns void
    * */
-  const generalClick = (relativeTileX: number, relativetileY: number) => {
+  const moveCursor = (relativeTileX: number, relativetileY: number) => {
     /** 기존 이동 멈춤 */
     cancelCurrentMovement();
 
@@ -293,6 +294,20 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     }, animationSpeed);
   };
 
+  const clickEvent = (x: number, y: number, click_type: 'GENERAL_CLICK' | 'SPECIAL_CLICK') => {
+    const body = JSON.stringify({
+      event: 'pointing',
+      payload: {
+        position: {
+          x: x,
+          y: y,
+        },
+        click_type,
+      },
+    });
+    sendMessage(body);
+  };
+
   /** Click Event Handler */
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = tileCanvasRef.current;
@@ -324,12 +339,29 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const clickedTileContent = tiles[tileArrayY]?.[tileArrayX] ?? 'Out of bounds';
     setClickPosition(tileX, tileY, clickedTileContent);
 
+    let clickType: 'GENERAL_CLICK' | 'SPECIAL_CLICK' = 'GENERAL_CLICK';
     if (event.buttons === 2) {
-      console.log('right');
+      clickType = 'SPECIAL_CLICK';
       return;
     }
 
-    generalClick(tileArrayX, tileArrayY);
+    clickEvent(tileX, tileY, clickType);
+    if (
+      clickType === 'GENERAL_CLICK' &&
+      clickedTileContent &&
+      clickedTileContent?.includes('O') &&
+      clickedTileContent?.includes('1') &&
+      clickedTileContent?.includes('2') &&
+      clickedTileContent?.includes('3') &&
+      clickedTileContent?.includes('4') &&
+      clickedTileContent?.includes('5') &&
+      clickedTileContent?.includes('6') &&
+      clickedTileContent?.includes('7') &&
+      clickedTileContent?.includes('8')
+    ) {
+      moveCursor(tileArrayX, tileArrayY);
+    }
+    return;
   };
 
   /**
@@ -467,6 +499,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
     const tileCtx = tileCanvas.getContext('2d');
     const interactionCtx = interactionCanvas.getContext('2d');
+    const newInteractableCursors = [] as { x: number; y: number }[];
     if (!tileCtx || !interactionCtx) return;
 
     // initialize interaction canvas
@@ -558,7 +591,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               !(colIndex === relativeX && rowIndex === relativeY) &&
               content.includes('C')
             ) {
-              drawCursor(interactionCtx, x, y, '#0000002f', 0.5);
+              newInteractableCursors.push({ x: x, y: y });
               tileCtx.fillStyle = 'white';
             } else {
               // draw outline only for special clickable tile
@@ -651,6 +684,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           tileSize - borderPixel,
         );
         interactionCtx.closePath();
+
         // draw path
         if (paths.length > 0) {
           interactionCtx.beginPath();
@@ -669,6 +703,11 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         }
         setRenderedTiles(tiles);
       }
+    });
+    setInteractableCursors(cursors => {
+      const result = newInteractableCursors.length < 1 ? cursors : newInteractableCursors;
+      result.forEach(({ x, y }) => drawCursor(interactionCtx, x, y, '#0000002f', 0.5));
+      return result;
     });
   };
 

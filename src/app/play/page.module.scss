@@ -1,11 +1,10 @@
 @font-face {
-  font-family: 'GeekbleFont';
-  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/GeekbleFontMalang2WOFF2.woff2')
+  font-family: 'GeekbleMalang2WOFF2';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/GeekbleMalang2WOFF2.woff2')
     format('woff2');
   font-weight: normal;
   font-style: normal;
 }
-
 .page {
   width: 100svw;
   height: 100svh;
@@ -18,7 +17,7 @@
   bottom: 50px;
   right: 50px;
   z-index: 1;
-  font-family: 'GeekbleFont';
+  font-family: 'GeekbleMalang2WOFF2';
   color: white;
   font-size: 24px;
   width: 200px;
@@ -61,7 +60,7 @@
         font-size: 30px;
         border: none;
         cursor: pointer;
-        font-family: 'GeekbleFont';
+        font-family: 'GeekbleMalang2WOFF2';
 
         &:first-child {
           border-top-left-radius: 24px;
