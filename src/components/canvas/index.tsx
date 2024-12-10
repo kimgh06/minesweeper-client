@@ -196,7 +196,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const [leftYPaths, setLeftYPaths] = useState<number>(0);
   const [renderedTiles, setRenderedTiles] = useState<string[][]>([]);
   const [vectorImages, setVectorImages] = useState<VectorImages>();
-  const [interactableCursors, setInteractableCursors] = useState<{ x: number; y: number }[]>([]);
 
   /** Cancel interval function for animation. */
   const cancelCurrentMovement = () => {
@@ -345,22 +344,14 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       return;
     }
 
-    clickEvent(tileX, tileY, clickType);
     if (
       clickType === 'GENERAL_CLICK' &&
       clickedTileContent &&
-      clickedTileContent?.includes('O') &&
-      clickedTileContent?.includes('1') &&
-      clickedTileContent?.includes('2') &&
-      clickedTileContent?.includes('3') &&
-      clickedTileContent?.includes('4') &&
-      clickedTileContent?.includes('5') &&
-      clickedTileContent?.includes('6') &&
-      clickedTileContent?.includes('7') &&
-      clickedTileContent?.includes('8')
+      !(clickedTileContent.includes('F') || clickedTileContent.includes('C'))
     ) {
       moveCursor(tileArrayX, tileArrayY);
     }
+    clickEvent(tileX, tileY, clickType);
     return;
   };
 
@@ -499,7 +490,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
     const tileCtx = tileCanvas.getContext('2d');
     const interactionCtx = interactionCanvas.getContext('2d');
-    const newInteractableCursors = [] as { x: number; y: number }[];
     if (!tileCtx || !interactionCtx) return;
 
     // initialize interaction canvas
@@ -591,7 +581,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               !(colIndex === relativeX && rowIndex === relativeY) &&
               content.includes('C')
             ) {
-              newInteractableCursors.push({ x: x, y: y });
+              drawCursor(interactionCtx, x, y, '#0000002f', 0.5);
               tileCtx.fillStyle = 'white';
             } else {
               // draw outline only for special clickable tile
@@ -703,11 +693,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         }
         setRenderedTiles(tiles);
       }
-    });
-    setInteractableCursors(cursors => {
-      const result = newInteractableCursors.length < 1 ? cursors : newInteractableCursors;
-      result.forEach(({ x, y }) => drawCursor(interactionCtx, x, y, '#0000002f', 0.5));
-      return result;
     });
   };
 

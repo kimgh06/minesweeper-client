@@ -6,7 +6,7 @@ import S from './page.module.scss';
 /** hooks */
 import { useEffect, useState } from 'react';
 import useScreenSize from '@/hooks/useScreenSize';
-import { useCursorStore } from '../../store/cursorStore';
+import { useCursorStore, useOtherUserCursorsStore } from '../../store/cursorStore';
 
 /** components */
 import CanvasRenderer from '@/components/canvas';
@@ -16,12 +16,6 @@ import useWebSocketStore from '@/store/websocketStore';
 interface Point {
   x: number;
   y: number;
-}
-
-interface UserCursor {
-  position: { x: number; y: number };
-  pointer: { x: number; y: number };
-  color: string;
 }
 
 export default function Play() {
@@ -42,7 +36,9 @@ export default function Play() {
     setZoom,
     originX: cursorOriginX,
     originY: cursorOriginY,
+    setOringinPosition,
   } = useCursorStore();
+  const { setCursors } = useOtherUserCursorsStore();
   const { x: clickX, y: clickY, setPosition: setClickPosition } = useClickStore();
 
   /** hooks */
@@ -53,7 +49,6 @@ export default function Play() {
   const [startPoint, setStartPoint] = useState<Point>({ x: 0, y: 0 });
   const [endPoint, setEndPoint] = useState<Point>({ x: 0, y: 0 });
   const [renderStartPoint, setRenderStartPoint] = useState<Point>({ x: 0, y: 0 });
-  const [userCursors, setUserCursors] = useState<UserCursor[]>([]);
   const [cachingTiles, setCachingTiles] = useState<string[][]>([]);
   const [renderTiles, setRenderTiles] = useState<string[][]>([...cachingTiles.map(row => [...row])]);
 
@@ -137,9 +132,6 @@ export default function Play() {
     if (!hexArray) return '';
     // hex to byte
     const byte = hexArray.map(hex => parseInt(hex, 16).toString(2).padStart(8, '0')).join('');
-    if (byte !== '00000000') {
-      console.log(byte);
-    }
     // byte 0 - IsOpen, 1 - IsMine, 2 - IsFlag, 3 ~ 4 color, 5 ~ 7 number of mines
     const isOpen = byte[0] === '1';
     if (isOpen) {
@@ -172,15 +164,16 @@ export default function Play() {
   };
 
   const replaceTiles = (end_x: number, end_y: number, start_x: number, start_y: number, unsortedTiles: string) => {
-    const rowlength = Math.abs(end_x - start_x) * 2 + 1;
-    const columnlength = Math.abs(start_y - end_y) + 1;
+    const rowlength = Math.abs(end_x - start_x + 1) * 2;
+    const columnlength = Math.abs(start_y - end_y + 1);
     const sortedTiles: string[][] = [];
     if (unsortedTiles.length === 0) return;
     for (let i = 0; i < columnlength; i++) {
       const sortedlist = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
       const tempTilelist = [] as string[];
       for (let j = 0; j < rowlength / 2; j++) {
-        tempTilelist[j] = decodeHex(sortedlist.slice(j * 2, j * 2 + 1));
+        const hex = sortedlist.slice(j * 2, j * 2 + 2);
+        tempTilelist[j] = decodeHex(hex);
       }
       sortedTiles[i] = tempTilelist;
     }
@@ -242,6 +235,7 @@ export default function Play() {
       } else if (event === 'my-cursor') {
         const { position, pointer, color } = payload;
         setCursorPosition(position.x, position.y);
+        setOringinPosition(position.x, position.y);
         if (pointer) {
           setClickPosition(pointer.x, pointer.y, '');
         }
@@ -251,7 +245,7 @@ export default function Play() {
         const { revive_at } = payload;
         console.log(revive_at);
       } else if (event === 'cursors') {
-        setUserCursors(payload);
+        setCursors(payload);
         /** Receives movement events from other users. */
       } else if (event === 'moved') {
         // const { origin_position, new_position, color } = payload;
