@@ -152,7 +152,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     '#B2000080',
     '#7700B280',
   ];
-  const cursorColors = {
+  const cursorColors: { [key: string]: string } = {
     red: '#FF4D00',
     blue: '#0094FF',
     yellow: '#F0C800',
@@ -419,7 +419,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const grid = [...tiles.map(row => [...row.map(() => null)])] as (TileNode | null)[][];
     for (let i = 0; i < tiles.length; i++) {
       for (let j = 0; j < tiles[i].length; j++) {
-        if (tiles[i][j] !== 'F0' && tiles[i][j] !== 'F1') {
+        if (!tiles[i][j]?.includes('F') && !tiles[i][j]?.includes('C')) {
           grid[i][j] = new TileNode(j, i);
         } else {
           grid[i][j] = null;
@@ -564,17 +564,23 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           /** Locked tiles */
           case 'C0':
           case 'C1':
-          case 'F00':
+          case 'F00': /** red */
           case 'F01':
-          case 'F10':
+          case 'FRED0':
+          case 'FRED1':
+          case 'F10': /** yellow */
           case 'F11':
-          case 'F20':
+          case 'FYELLOW0':
+          case 'FYELLOW1':
+          case 'F20': /** blue */
           case 'F21':
-          case 'F30':
+          case 'FBLUE0':
+          case 'FBLUE1':
+          case 'F30': /** purple */
           case 'F31':
-          case 'F40':
-          case 'F41': {
-            const isEven = content[1] === '0' ? 0 : 1;
+          case 'FPURPLE0':
+          case 'FPURPLE1': {
+            const isEven = content.slice(-1) === '0' ? 0 : 1;
 
             // draw outline only for special clickable tile
             if (
@@ -602,7 +608,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               tileCtx.scale(zoom / 4.5, zoom / 4.5);
 
               /** flag color follows cursor color. */
-              tileCtx.fillStyle = cursorColors[content[1] as keyof typeof cursorColors];
+              console.log(content.slice(1, -1).toLowerCase());
+              tileCtx.fillStyle = cursorColors[content.slice(1, -1).toLowerCase() as keyof typeof cursorColors];
               tileCtx.fill(vectorImages?.flag.flag as Path2D);
 
               // draw pole

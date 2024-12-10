@@ -227,7 +227,8 @@ export default function Play() {
               newTiles[y - startPoint.y][x - startPoint.x] = number?.toString() ?? 'O';
             }
           } else {
-            newTiles[y - startPoint.y][x - startPoint.x] = (is_flag ? 'F' + color : 'C') + ((x + y + 1) % 2);
+            newTiles[y - startPoint.y][x - startPoint.x] =
+              (is_flag ? 'F' + color : 'C') + ((x + y + 1) % 2 === 0 ? '0' : '1');
           }
           return newTiles;
         });
