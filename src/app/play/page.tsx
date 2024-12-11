@@ -52,7 +52,7 @@ export default function Play() {
   const [renderStartPoint, setRenderStartPoint] = useState<Point>({ x: 0, y: 0 });
   const [cachingTiles, setCachingTiles] = useState<string[][]>([]);
   const [renderTiles, setRenderTiles] = useState<string[][]>([...cachingTiles.map(row => [...row])]);
-  const [reviveTime, setReviveTime] = useState<Date>();
+  const [reviveTime, setReviveTime] = useState<number>(-1);
 
   /**
    * Request Tiles
@@ -250,7 +250,8 @@ export default function Play() {
         /** Fetches information of other users. */
       } else if (event === 'you-died') {
         const { revive_at } = payload;
-        setReviveTime(new Date(revive_at));
+        const leftTime = new Date(revive_at)?.getTime() - new Date().getTime();
+        setReviveTime(Math.floor(leftTime / 1000));
       } else if (event === 'cursors') {
         setCursors(payload);
         /** Receives movement events from other users. */
@@ -411,17 +412,16 @@ export default function Play() {
   }, [cursorOriginX, cursorOriginY]);
 
   useEffect(() => {
-    if (!reviveTime) return;
-    const leftTime = reviveTime?.getTime() - new Date().getTime();
+    if (reviveTime < 1) return;
     setTimeout(() => {
-      setReviveTime(undefined);
-    }, leftTime);
+      setReviveTime(e => e - 1);
+    }, 1000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reviveTime]);
 
   return (
     <div className={S.page}>
-      {reviveTime && <Inactive time={reviveTime?.toLocaleTimeString()} />}
+      {reviveTime > 0 && <Inactive time={reviveTime} />}
       <div className={S.dashboard}>
         <div className={S.coordinates}>
           <p>
