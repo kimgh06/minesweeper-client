@@ -12,6 +12,7 @@ import { useCursorStore, useOtherUserCursorsStore } from '../../store/cursorStor
 import CanvasRenderer from '@/components/canvas';
 import useClickStore from '@/store/clickStore';
 import useWebSocketStore from '@/store/websocketStore';
+import Inactive from '@/components/inactive';
 
 interface Point {
   x: number;
@@ -51,6 +52,7 @@ export default function Play() {
   const [renderStartPoint, setRenderStartPoint] = useState<Point>({ x: 0, y: 0 });
   const [cachingTiles, setCachingTiles] = useState<string[][]>([]);
   const [renderTiles, setRenderTiles] = useState<string[][]>([...cachingTiles.map(row => [...row])]);
+  const [reviveTime, setReviveTime] = useState<Date>();
 
   /**
    * Request Tiles
@@ -248,7 +250,7 @@ export default function Play() {
         /** Fetches information of other users. */
       } else if (event === 'you-died') {
         const { revive_at } = payload;
-        console.log(revive_at);
+        setReviveTime(new Date(revive_at));
       } else if (event === 'cursors') {
         setCursors(payload);
         /** Receives movement events from other users. */
@@ -408,8 +410,18 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursorOriginX, cursorOriginY]);
 
+  useEffect(() => {
+    if (!reviveTime) return;
+    const leftTime = reviveTime?.getTime() - new Date().getTime();
+    setTimeout(() => {
+      setReviveTime(undefined);
+    }, leftTime);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviveTime]);
+
   return (
     <div className={S.page}>
+      {reviveTime && <Inactive time={reviveTime?.toLocaleTimeString()} />}
       <div className={S.dashboard}>
         <div className={S.coordinates}>
           <p>

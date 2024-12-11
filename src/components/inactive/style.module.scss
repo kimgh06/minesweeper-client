@@ -1,0 +1,35 @@
+@font-face {
+  font-family: 'GeekbleMalang2WOFF2';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/GeekbleMalang2WOFF2.woff2')
+    format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+.inactive {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100svw;
+  height: 100svh;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 2;
+  .alert {
+    font-family: 'GeekbleMalang2WOFF2';
+    position: absolute;
+    font-size: 20px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.35);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.35);
+    z-index: 3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+    padding: 30px;
+  }
+}
