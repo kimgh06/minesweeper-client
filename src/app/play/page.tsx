@@ -76,28 +76,28 @@ export default function Play() {
       const newTiles = [...tiles];
       if (type.includes('U')) {
         for (let i = 0; i < columnlength; i++) {
-          newTiles.unshift([...Array(rowlength).fill('?')]);
+          newTiles.unshift([...Array(rowlength).fill('??')]);
           newTiles.pop();
         }
       }
       if (type.includes('D')) {
         for (let i = 0; i < columnlength; i++) {
-          newTiles.push([...Array(rowlength).fill('?')]);
+          newTiles.push([...Array(rowlength).fill('??')]);
           newTiles.shift();
         }
       }
       if (type.includes('L')) {
         for (let i = 0; i < columnlength; i++) {
-          newTiles[i] = [...Array(rowlength).fill('?'), ...newTiles[i].slice(0, -1)];
+          newTiles[i] = [...Array(rowlength).fill('??'), ...newTiles[i].slice(0, -1)];
         }
       }
       if (type.includes('R')) {
         for (let i = 0; i < columnlength; i++) {
-          newTiles[i] = [...newTiles[i].slice(rowlength, newTiles[0].length), ...Array(rowlength).fill('?')];
+          newTiles[i] = [...newTiles[i].slice(rowlength, newTiles[0].length), ...Array(rowlength).fill('??')];
         }
       }
       if (type.includes('A')) {
-        const newTiles = Array.from({ length: columnlength }, () => Array.from({ length: rowlength }, () => '?'));
+        const newTiles = Array.from({ length: columnlength }, () => Array.from({ length: rowlength }, () => '??'));
         return newTiles;
       }
       return newTiles;
@@ -192,7 +192,9 @@ export default function Play() {
           if (tile?.includes('C') || tile?.includes('F')) {
             tile += (i + j) % 2 === 0 ? '0' : '1';
           }
-          newTiles[rowIndex][j + start_x - startPoint.x] = tile;
+          if (tile) {
+            newTiles[rowIndex][j + start_x - startPoint.x] = tile;
+          }
         }
       }
       return newTiles;
@@ -228,7 +230,7 @@ export default function Play() {
             }
           } else {
             newTiles[y - startPoint.y][x - startPoint.x] =
-              (is_flag ? 'F' + color : 'C') + ((x + y + 1) % 2 === 0 ? '0' : '1');
+              (is_flag ? 'F' + color : 'C') + ((x + y) % 2 === 0 ? '0' : '1');
           }
           return newTiles;
         });
@@ -271,7 +273,7 @@ export default function Play() {
   /** Detect changes in cached tile content and position */
   useEffect(() => {
     setRenderTiles(() => {
-      const newTiles = [...cachingTiles.map(row => [...row.map(() => '?')])];
+      const newTiles = [...cachingTiles.map(row => [...row.map(() => '??')])];
       for (let i = 0; i < cachingTiles.length; i++) {
         const rowIndex = i + cursorOriginY - cursorY;
         for (let j = 0; j < cachingTiles[i].length; j++) {
@@ -279,7 +281,7 @@ export default function Play() {
           if (!cachingTiles[rowIndex]?.[columnIndex]) {
             continue;
           }
-          newTiles[i][j] = cachingTiles[rowIndex]?.[columnIndex] || '?';
+          newTiles[i][j] = cachingTiles[rowIndex]?.[columnIndex] || '??';
         }
       }
       return newTiles;
@@ -311,7 +313,7 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, cursorOriginX, cursorOriginY, cursorX, cursorY, renderRange, isOpen]);
 
-  /** zoom event */
+  /** Handling zoom event */
   useEffect(() => {
     const newTileSize = originTileSize * zoom;
     const tileVisibleWidth = Math.floor((windowWidth * renderRange) / newTileSize);
@@ -387,21 +389,22 @@ export default function Play() {
   }, [cursorX, cursorY]);
 
   /** Send user move event */
-  // useEffect(() => {
-  //   if (!isOpen) {
-  //     return;
-  //   }
-  //   const body = JSON.stringify({
-  //     event: 'moving',
-  //     payload: {
-  //       position: {
-  //         x: cursorOriginX,
-  //         y: cursorOriginY,
-  //       },
-  //     },
-  //   });
-  //   sendMessage(body);
-  // }, [cursorOriginX, cursorOriginY]);
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    const body = JSON.stringify({
+      event: 'moving',
+      payload: {
+        position: {
+          x: cursorOriginX,
+          y: cursorOriginY,
+        },
+      },
+    });
+    sendMessage(body);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cursorOriginX, cursorOriginY]);
 
   // /** Send User click envet */
   // useEffect(() => {

@@ -608,7 +608,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               tileCtx.scale(zoom / 4.5, zoom / 4.5);
 
               /** flag color follows cursor color. */
-              console.log(content.slice(1, -1).toLowerCase());
               tileCtx.fillStyle = cursorColors[content.slice(1, -1).toLowerCase() as keyof typeof cursorColors];
               tileCtx.fill(vectorImages?.flag.flag as Path2D);
 
@@ -661,7 +660,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             break;
           }
           default:
-            console.log(content);
             break;
         }
         tileCtx.restore();
