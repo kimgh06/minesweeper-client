@@ -54,6 +54,7 @@ export default function Play() {
 
   /**
    * Request Tiles
+   * Please send start y and end y coordinates are reversed because the y-axis is reversed.
    * @param start_x {number} - start x position
    * @param start_y {number} - start y position
    * @param end_x {number} - end x position
@@ -177,6 +178,7 @@ export default function Play() {
       }
       sortedTiles[i] = tempTilelist;
     }
+    /** The y-axis is reversed.*/
     sortedTiles.reverse();
     /** Replace dummy data according to coordinates */
     setCachingTiles(() => {
@@ -405,23 +407,6 @@ export default function Play() {
     sendMessage(body);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursorOriginX, cursorOriginY]);
-
-  // /** Send User click envet */
-  // useEffect(() => {
-  //   if (!isOpen) {
-  //     return;
-  //   }
-  //   const body = JSON.stringify({
-  //     event: 'moving',
-  //     payload: {
-  //       position: {
-  //         x: clickX,
-  //         y: clickY,
-  //       },
-  //     },
-  //   });
-  //   sendMessage(body);
-  // }, [clickX, clickY]);
 
   return (
     <div className={S.page}>

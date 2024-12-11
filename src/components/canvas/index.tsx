@@ -1,6 +1,7 @@
 'use client';
 import S from './style.module.scss';
 import React, { useRef, useEffect, useState } from 'react';
+import Paths from '@/datas/paths.json';
 
 import useScreenSize from '@/hooks/useScreenSize';
 import useClickStore from '@/store/clickStore';
@@ -67,91 +68,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const relativeY = cursorOriginY - startPoint.y;
   const tilePaddingWidth = ((paddingTiles - 1) * relativeX) / paddingTiles;
   const tilePaddingHeight = ((paddingTiles - 1) * relativeY) / paddingTiles;
-  const tileColors = {
-    inner: [
-      ['#8fe340', '#A4E863'],
-      ['#62B628', '#71C637'],
-      //open
-      ['#F1FAD1', '#E9F6B9'],
-    ],
-    outer: [
-      ['#A8EC67', '#81D92C'],
-      ['#74C63C', '#5BB31F'],
-      //open
-      ['#E9FAAA', '#F5FDD8'],
-    ],
-  };
-  const flagPaths = [
-    `
-      M219.428 109.389 
-      C226.519 114.964 223.188 126.337 214.21 127.205 
-      L79.8702 140.188 
-      L115.929 28.0267 
-      L219.428 109.389 Z
-    `,
-    `
-      M79.9801 8.51632 
-      C75.8798 9.72627 73.972 13.8825 73.0599 18.0591 
-      L25.8244 234.356 
-      C30.5707 235.401 36.0988 236 42 236 
-      C45.1362 236 48.1671 235.831 51.0311 235.515 
-      L116.451 28.5289 
-      C117.573 24.9766 117.96 21.0358 115.39 18.3387 
-      C112.87 15.6942 108.055 12.4097 98.862 9.69397 
-      C89.7757 7.00975 83.7643 7.39963 79.9801 8.51632 Z
-    `,
-  ];
-  const boomPaths = [
-    `
-      M77.85 145.025
-      L0.899994 54.5752
-      L103.5 92.3752
-      L117 0.575195
-      L164.25 74.8252
-      L219.6 38.3752
-      L202.05 103.175
-      L276.3 108.575
-      L219.6 153.125
-      L287.1 223.325
-      L198 230.075
-      L177.75 312.425
-      L130.5 236.825
-      L67.05 284.075
-      L75.15 196.325
-      L11.7 177.425
-      L77.85 145.025
-    `,
-    `
-      M67.05 104.525
-      L104.85 150.425
-      L71.1 169.325
-      L104.85 178.775
-      L100.8 226.025
-      L133.2 200.375
-      L158.85 239.525
-      L168.3 196.325
-      L218.25 192.275
-      L181.8 154.475
-      L212.85 131.525
-      L171 128.825
-      L181.8 93.7251
-      L152.1 113.975
-      L126.45 73.4751
-      L118.35 122.075
-      L67.05 104.525
-    `,
-  ];
 
-  const countColors = [
-    '#0059B280',
-    '#0095B280',
-    '#00B20080',
-    '#77B20080',
-    '#B2950080',
-    '#B24A0080',
-    '#B2000080',
-    '#7700B280',
-  ];
+  const { boomPaths, cursorPaths, flagPaths, tileColors, countColors } = Paths;
   const cursorColors: { [key: string]: string } = {
     red: '#FF4D00',
     blue: '#0094FF',
@@ -162,16 +80,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     2: '#0094FF',
     3: '#BC3FDC',
   };
-  const cursorPaths = ` 
-    M12.2719 13.6437 
-    C11.4141 6.37712 19.6676 1.61197 25.5317 5.9881 
-    L165.217 110.229 
-    C171.554 114.958 168.358 125.029 160.453 125.238 
-    L100.228 126.83 
-    C91.7695 127.053 83.9984 131.54 79.5756 138.753 
-    L48.0844 190.114 
-    C43.9511 196.855 33.6313 194.587 32.7043 186.735 
-    L12.2719 13.6437 Z`;
   /** stores */
   const { windowHeight, windowWidth } = useScreenSize();
   const {
@@ -192,13 +100,13 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const { setPosition: setClickPosition, x: clickX, y: clickY, setMovecost } = useClickStore();
   const { message, sendMessage } = useWebSocketStore();
 
-  /** references */
+  /** References */
   const tileCanvasRef = useRef<HTMLCanvasElement>(null);
   const interactionCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const movementInterval = useRef<NodeJS.Timeout | null>(null);
 
-  /** states */
+  /** States */
   const [loading, setLoading] = useState<boolean>(true);
   const [paths, setPaths] = useState<Path[]>([]);
   const [leftXPaths, setLeftXPaths] = useState<number>(0);
@@ -581,7 +489,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           case 'FPURPLE0':
           case 'FPURPLE1': {
             const isEven = content.slice(-1) === '0' ? 0 : 1;
-
             // draw outline only for special clickable tile
             if (
               Math.abs(rowIndex - relativeY) <= 1 &&
@@ -619,7 +526,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             }
             break;
           }
-          /** opened tile */
+          /** Tile has been opend. */
           case 'O':
           case '1':
           case '2':
@@ -666,12 +573,12 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       });
       /** Display the path in the middle to prevent it from appearing displaced */
       if (rowIndex === Math.floor((tiles.length * 3) / 10)) {
-        // draw other user's cursor
+        // Draw other user's cursor
 
-        // draw my cursor
+        // Draw my cursor
         drawCursor(interactionCtx, cursorCanvasX, cursorCanvasY, cursorColor);
 
-        // describe clicked tile using border
+        // Describe clicked tile border
         interactionCtx.beginPath();
         interactionCtx.strokeStyle = cursorColor;
         interactionCtx.lineWidth = borderPixel;
@@ -683,7 +590,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         );
         interactionCtx.closePath();
 
-        // draw path
+        // Draw path
         if (paths.length > 0) {
           interactionCtx.beginPath();
           interactionCtx.strokeStyle = 'black';
@@ -707,7 +614,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   /** Render */
   useEffect(() => {
     if (loading) {
-      // set vector images
+      // Set vector images
       setVectorImages({
         cursor: new Path2D(cursorPaths),
         flag: {
