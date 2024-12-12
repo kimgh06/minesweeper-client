@@ -588,6 +588,9 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         // Draw my cursor
         drawCursor(interactionCtx, cursorCanvasX, cursorCanvasY, cursorColor);
 
+        // Draw other users' cursor
+        drawOtherUserCursors();
+
         // Describe clicked tile border
         interactionCtx.beginPath();
         interactionCtx.strokeStyle = cursorColor;
@@ -619,8 +622,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         setRenderedTiles(tiles);
       }
     });
-    // Draw other user's cursor
-    drawOtherUserCursors();
   };
 
   /** Render */
