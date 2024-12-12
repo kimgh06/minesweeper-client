@@ -142,15 +142,10 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
    * @returns void
    * */
   const moveCursor = (relativeTileX: number, relativetileY: number) => {
-    /** 기존 이동 멈춤 */
-    cancelCurrentMovement();
+    if (movementInterval.current) return;
 
-    /** astar를 사용한 길 찾기 */
     const paths = findPathUsingAStar(relativeX, relativeY, relativeTileX, relativetileY);
-
-    /** 비용 계산 (자신의 위치는 제외) */
     setMovecost(paths.length - 1);
-
     let index = 0;
     let currentPath = paths[index];
     if (currentPath?.x === undefined || currentPath?.y === undefined) return;
@@ -639,7 +634,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     }
     render();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tiles, loading, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color, cursors]);
+  }, [tiles, loading, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color, cursors, zoom]);
 
   return (
     <>
