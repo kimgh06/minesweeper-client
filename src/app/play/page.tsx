@@ -39,7 +39,7 @@ export default function Play() {
     originY: cursorOriginY,
     setOringinPosition,
   } = useCursorStore();
-  const { setCursors, cursors } = useOtherUserCursorsStore();
+  const { setCursors, addCursors, cursors } = useOtherUserCursorsStore();
   const { x: clickX, y: clickY, setPosition: setClickPosition } = useClickStore();
 
   /** hooks */
@@ -253,11 +253,11 @@ export default function Play() {
         const leftTime = new Date(revive_at)?.getTime() - new Date().getTime();
         setReviveTime(Math.floor(leftTime / 1000));
       } else if (event === 'cursors') {
-        const cursors = payload.cursors.map((cursor: { position: { x: number; y: number }; color: string }) => {
+        const newCursors = payload.cursors.map((cursor: { position: { x: number; y: number }; color: string }) => {
           const { position, color } = cursor;
           return { x: position.x, y: position.y, color: color.toLowerCase() };
         });
-        setCursors(cursors);
+        addCursors(newCursors);
         /** Receives movement events from other users. */
       } else if (event === 'moved') {
         const { origin_position, new_position, color } = payload;
@@ -336,8 +336,8 @@ export default function Play() {
     const body = JSON.stringify({
       event: 'set-view-size',
       payload: {
-        width: Math.floor((windowWidth * renderRange) / newTileSize),
-        height: Math.floor((windowHeight * renderRange) / newTileSize),
+        width: Math.floor(Math.floor((windowWidth * renderRange) / newTileSize)),
+        height: Math.floor(Math.floor((windowHeight * renderRange) / newTileSize)),
       },
     });
     sendMessage(body);

@@ -30,7 +30,7 @@ interface ClientCursorState extends CursorState {
 
 interface OtherUserCursorsState {
   cursors: CursorState[];
-  addCursor: (cursor: CursorState) => void;
+  addCursors: (cursor: CursorState[]) => void;
   removeCursor: (cursor: CursorState) => void;
   setCursors: (cursors: CursorState[]) => void;
 }
@@ -60,7 +60,7 @@ export const useCursorStore = create<ClientCursorState>(set => ({
 
 export const useOtherUserCursorsStore = create<OtherUserCursorsState>(set => ({
   cursors: [],
-  addCursor: cursor => set(state => ({ cursors: [...state.cursors, cursor] })),
+  addCursors: cursors => set(state => ({ cursors: [...state.cursors, ...cursors] })),
   removeCursor: cursor => set(state => ({ cursors: state.cursors.filter(c => c !== cursor) })),
   setCursors: cursors => set({ cursors }),
 }));
