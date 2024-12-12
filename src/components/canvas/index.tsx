@@ -647,9 +647,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
       Promise.all([lotteriaChabFont.load()]).then(() => {
         document.fonts.add(lotteriaChabFont);
-        setTimeout(() => {
-          setLoading(false);
-        }, 500);
+        setLoading(false);
       });
       return;
     }
