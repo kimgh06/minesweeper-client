@@ -194,7 +194,7 @@ export default function Play() {
           }
           let tile = sortedTiles[i][j];
           if (tile?.includes('C') || tile?.includes('F')) {
-            tile += (i + j) % 2 === 0 ? '0' : '1';
+            tile += (i - end_y + j - start_x) % 2 === 0 ? '0' : '1';
           }
           if (tile) {
             newTiles[rowIndex][j + start_x - startPoint.x] = tile;
