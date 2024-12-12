@@ -640,9 +640,17 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         },
       });
 
-      setTimeout(() => {
-        setLoading(false);
-      }, 500);
+      const lotteriaChabFont = new FontFace(
+        'LOTTERIACHAB',
+        "url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/LOTTERIACHAB.woff2') format('woff2')",
+      );
+
+      Promise.all([lotteriaChabFont.load()]).then(() => {
+        document.fonts.add(lotteriaChabFont);
+        setTimeout(() => {
+          setLoading(false);
+        }, 500);
+      });
       return;
     }
     render();
