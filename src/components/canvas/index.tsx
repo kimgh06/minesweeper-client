@@ -5,7 +5,7 @@ import Paths from '@/datas/paths.json';
 
 import useScreenSize from '@/hooks/useScreenSize';
 import useClickStore from '@/store/clickStore';
-import { useCursorStore } from '@/store/cursorStore';
+import { useCursorStore, useOtherUserCursorsStore } from '@/store/cursorStore';
 import useWebSocketStore from '@/store/websocketStore';
 
 class TileNode {
@@ -75,10 +75,10 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     blue: '#0094FF',
     yellow: '#F0C800',
     purple: '#BC3FDC',
-    0: '#FF4D00',
-    1: '#F0C800',
-    2: '#0094FF',
-    3: '#BC3FDC',
+    '0': '#FF4D00',
+    '1': '#F0C800',
+    '2': '#0094FF',
+    '3': '#BC3FDC',
   };
   /** stores */
   const { windowHeight, windowWidth } = useScreenSize();
@@ -98,6 +98,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     setPosition: setCusorPosition,
   } = useCursorStore();
   const { setPosition: setClickPosition, x: clickX, y: clickY, setMovecost } = useClickStore();
+  const { cursors } = useOtherUserCursorsStore();
   const { message, sendMessage } = useWebSocketStore();
 
   /** References */
@@ -574,7 +575,11 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       /** Display the path in the middle to prevent it from appearing displaced */
       if (rowIndex === Math.floor((tiles.length * 3) / 10)) {
         // Draw other user's cursor
-
+        cursors.forEach(cursor => {
+          const x = cursor.x - cursorOriginX + tilePaddingWidth;
+          const y = cursor.y - cursorOriginY + tilePaddingHeight;
+          drawCursor(interactionCtx, x * tileSize, y * tileSize, cursorColors[cursor.color]);
+        });
         // Draw my cursor
         drawCursor(interactionCtx, cursorCanvasX, cursorCanvasY, cursorColor);
 
@@ -634,7 +639,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     }
     render();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tiles, loading, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color]);
+  }, [tiles, loading, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color, cursors]);
 
   return (
     <>

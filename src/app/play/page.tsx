@@ -39,7 +39,7 @@ export default function Play() {
     originY: cursorOriginY,
     setOringinPosition,
   } = useCursorStore();
-  const { setCursors } = useOtherUserCursorsStore();
+  const { setCursors, cursors } = useOtherUserCursorsStore();
   const { x: clickX, y: clickY, setPosition: setClickPosition } = useClickStore();
 
   /** hooks */
@@ -253,21 +253,27 @@ export default function Play() {
         const leftTime = new Date(revive_at)?.getTime() - new Date().getTime();
         setReviveTime(Math.floor(leftTime / 1000));
       } else if (event === 'cursors') {
-        setCursors(payload);
+        const cursors = payload.cursors.map((cursor: { position: { x: number; y: number }; color: string }) => {
+          const { position, color } = cursor;
+          return { x: position.x, y: position.y, color: color.toLowerCase() };
+        });
+        setCursors(cursors);
         /** Receives movement events from other users. */
       } else if (event === 'moved') {
-        // const { origin_position, new_position, color } = payload;
-        // const { x: originX, y: originY } = origin_position;
-        // const { x: newX, y: newY } = new_position;
-        // setUserCursors(cursors => {
-        //   const newCursors = [...cursors];
-        //   let index = newCursors.findIndex(cursor => cursor.position.x === originX && cursor.position.y === originY);
-        //   if (index === -1) {
-        //     index = newCursors.length;
-        //   }
-        //   newCursors[index] = { position: { x: newX, y: newY }, pointer: { x: newX, y: newY }, color };
-        //   return newCursors;
-        // });
+        const { origin_position, new_position, color } = payload;
+        const { x: originX, y: originY } = origin_position;
+        const { x: newX, y: newY } = new_position;
+        const newCursors = [...cursors];
+        const index = newCursors.findIndex(
+          (cursor: { x: number; y: number; color: string }) =>
+            cursor.x === originX && cursor.y === originY && cursor.color === color.toLowerCase(),
+        );
+        console.log();
+        if (index !== -1) {
+          newCursors[index].x = newX;
+          newCursors[index].y = newY;
+        }
+        setCursors(newCursors);
       }
     } catch (e) {
       console.error(e);
