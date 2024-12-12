@@ -16,6 +16,18 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: 'Minesweeper',
   description: 'A simple Minesweeper game',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://gamultong.github.io/minesweeper-client/',
+    siteName: 'Minesweeper',
+    images: [
+      {
+        url: '/minesweeper-client/icon.png',
+        alt: 'Minesweeper',
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
