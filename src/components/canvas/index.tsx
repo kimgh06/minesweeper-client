@@ -104,6 +104,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   /** References */
   const tileCanvasRef = useRef<HTMLCanvasElement>(null);
   const interactionCanvasRef = useRef<HTMLCanvasElement>(null);
+  const otherCursorsRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const movementInterval = useRef<NodeJS.Timeout | null>(null);
 
@@ -153,16 +154,18 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const animateTile = (dx: number, dy: number) => {
       let countFrame = 0.1;
       const animation = setInterval(() => {
-        if (!tileCanvasRef.current || !interactionCanvasRef.current) return;
+        if (!tileCanvasRef.current || !interactionCanvasRef.current || !otherCursorsRef.current) return;
         const translateX = dx * (tileSize - countFrame * tileSize);
         const translateY = dy * (tileSize - countFrame * tileSize);
         tileCanvasRef.current.style.transform = `translate(${translateX}px, ${translateY}px)`;
         interactionCanvasRef.current.style.transform = `translate(${translateX}px, ${translateY}px)`;
+        otherCursorsRef.current.style.transform = `translate(${translateX}px, ${translateY}px)`;
 
         if (countFrame >= 1) {
           clearInterval(animation);
           tileCanvasRef.current.style.transform = '';
           interactionCanvasRef.current.style.transform = '';
+          otherCursorsRef.current.style.transform = '';
           countFrame = 1;
         }
         countFrame += 0.1;
@@ -267,6 +270,19 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     ctx.scale(adjustedScale, adjustedScale);
     ctx.fill(vectorImages?.cursor as Path2D);
     ctx.restore();
+  };
+
+  const drawOtherUserCursors = () => {
+    const otherCursorsCanvas = otherCursorsRef.current;
+    if (!otherCursorsCanvas) return;
+    const otherCursorsCtx = otherCursorsCanvas.getContext('2d');
+    if (!otherCursorsCtx) return;
+    otherCursorsCtx.clearRect(0, 0, windowWidth, windowHeight);
+    cursors.forEach(cursor => {
+      const x = cursor.x - cursorOriginX + tilePaddingWidth;
+      const y = cursor.y - cursorOriginY + tilePaddingHeight;
+      drawCursor(otherCursorsCtx, x * tileSize, y * tileSize, cursorColors[cursor.color]);
+    });
   };
 
   /** Handing Websocket message */
@@ -569,12 +585,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       });
       /** Display the path in the middle to prevent it from appearing displaced */
       if (rowIndex === Math.floor((tiles.length * 3) / 10)) {
-        // Draw other user's cursor
-        cursors.forEach(cursor => {
-          const x = cursor.x - cursorOriginX + tilePaddingWidth;
-          const y = cursor.y - cursorOriginY + tilePaddingHeight;
-          drawCursor(interactionCtx, x * tileSize, y * tileSize, cursorColors[cursor.color]);
-        });
         // Draw my cursor
         drawCursor(interactionCtx, cursorCanvasX, cursorCanvasY, cursorColor);
 
@@ -609,6 +619,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         setRenderedTiles(tiles);
       }
     });
+    // Draw other user's cursor
+    drawOtherUserCursors();
   };
 
   /** Render */
@@ -634,7 +646,13 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     }
     render();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tiles, loading, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color, cursors, zoom]);
+  }, [tiles, loading, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color, zoom]);
+
+  useEffect(() => {
+    if (cursors.length === 0) return;
+    drawOtherUserCursors();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cursors]);
 
   return (
     <>
@@ -651,9 +669,13 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             ref={tileCanvasRef}
             width={windowWidth}
             height={windowHeight}
-            style={{ border: '1px solid black' }}
-            onClick={handleClick}
-            onMouseDown={handleClick}
+          />
+          <canvas
+            className={S.canvas}
+            id="OtherCursors"
+            ref={otherCursorsRef}
+            width={windowWidth}
+            height={windowHeight}
           />
           <canvas
             className={`${S.canvas} `}
@@ -661,7 +683,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             ref={interactionCanvasRef}
             width={windowWidth}
             height={windowHeight}
-            style={{ border: '1px solid black' }}
             onClick={handleClick}
             onMouseDown={handleClick}
           />
