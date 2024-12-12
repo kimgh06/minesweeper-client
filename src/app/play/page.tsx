@@ -274,6 +274,17 @@ export default function Play() {
           newCursors[index].y = newY;
         }
         setCursors(newCursors);
+      } else if (event === 'cursor-quit') {
+        const { color, position } = payload;
+        const newCursors = [...cursors];
+        const index = newCursors.findIndex(
+          (cursor: { x: number; y: number; color: string }) =>
+            cursor.x === position.x && cursor.y === position.y && cursor.color === color.toLowerCase(),
+        );
+        if (index !== -1) {
+          newCursors.splice(index, 1);
+        }
+        setCursors(newCursors);
       }
     } catch (e) {
       console.error(e);
@@ -303,8 +314,6 @@ export default function Play() {
   /** Reset screen range when cursor position or screen size changes */
   useEffect(() => {
     const newTileSize = originTileSize * zoom;
-    setTileSize(newTileSize);
-
     const tilePaddingWidth = Math.floor(Math.floor((windowWidth * renderRange) / newTileSize) / 2);
     const tilePaddingHeight = Math.floor(Math.floor((windowHeight * renderRange) / newTileSize) / 2);
 
@@ -321,6 +330,17 @@ export default function Play() {
       x: cursorOriginX - tilePaddingWidth,
       y: cursorOriginY - tilePaddingHeight,
     });
+    setTileSize(newTileSize);
+
+    if (!isOpen) return;
+    const body = JSON.stringify({
+      event: 'set-view-size',
+      payload: {
+        width: Math.floor((windowWidth * renderRange) / newTileSize),
+        height: Math.floor((windowHeight * renderRange) / newTileSize),
+      },
+    });
+    sendMessage(body);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, cursorOriginX, cursorOriginY, cursorX, cursorY, renderRange, isOpen]);
 
