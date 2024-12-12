@@ -1,24 +1,29 @@
-# Welcome to Mine Finder Online
+# [Project Name]
+It follows the same rules as Minesweeper. However, the map expands infinitely, allowing you to perform as many actions as you want!
 
+## Play
+Let's play the game [here](https://gamultong.github.io/minesweeper-client/).
 
-## Collaboration Rules
+## Contribute
 
-We welcome contributions from the open-source community! To ensure a smooth collaboration, please follow these guidelines:
+### How to test 
+1. Setting Environments
+```
+node >= 20.10
+npm >= 10.9
+```
+2. Install Dependencies.
+```bash
+# Because React 19 does not support previous dependencies before version 19.
+npm install --force 
+```
 
-1. **Fork the Repository**: Start by forking the repository to your own GitHub account.
+3. Run Development Server.
+```bash
+npm run dev
+```
 
-2. **Create a Branch**: Create a new branch for your feature or bug fix. Use a descriptive name for your branch (e.g., `feature/add-new-feature` or `bugfix/fix-issue`).
-
-3. **Commit Changes**: Make your changes in the new branch. Ensure your commits are clear and concise. Use meaningful commit messages.
-
-4. **Pull Request**: Once your changes are ready, open a pull request (PR) against the `main` branch. Provide a detailed description of your changes and the problem they solve.
-
-5. **Code Review**: Be prepared to engage in the code review process. Address any feedback or requested changes promptly.
-
-6. **Testing**: Ensure your changes do not break existing functionality. Write tests for new features and ensure all tests pass before submitting your PR.
-
-7. **Documentation**: Update documentation as necessary to reflect your changes. This includes README files, inline comments, and any other relevant documentation.
-
-8. **Respect Guidelines**: Follow the project's code of conduct and contribution guidelines. Be respectful and considerate in all interactions.
-
-Thank you for contributing to our project!
+4. Test Linting Codes Before Building.
+```bash
+npm run lint
+```
