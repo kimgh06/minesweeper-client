@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 type Color = 'red' | 'blue' | 'yellow' | 'purple';
 
-interface CursorState {
+export interface CursorState {
   x: number;
   y: number;
   color: Color;

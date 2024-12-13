@@ -105,7 +105,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const tileCanvasRef = useRef<HTMLCanvasElement>(null);
   const interactionCanvasRef = useRef<HTMLCanvasElement>(null);
   const otherCursorsRef = useRef<HTMLCanvasElement>(null);
-  const canvasContainerRef = useRef<HTMLDivElement>(null);
   const movementInterval = useRef<NodeJS.Timeout | null>(null);
 
   /** States */
@@ -113,7 +112,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const [paths, setPaths] = useState<Path[]>([]);
   const [leftPaths, setLeftPaths] = useState<Path>({ x: 0, y: 0 });
   const [renderedTiles, setRenderedTiles] = useState<string[][]>([]);
-  const [vectorImages, setVectorImages] = useState<VectorImages>();
+  const [cachedVectorImages, setCachedVectorImages] = useState<VectorImages>();
 
   /** Cancel interval function for animation. */
   const cancelCurrentMovement = () => {
@@ -264,7 +263,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     ctx.save();
     ctx.translate(x + tileSize / 6 / scale, y + tileSize / 6 / scale);
     ctx.scale(adjustedScale, adjustedScale);
-    ctx.fill(vectorImages?.cursor as Path2D);
+    ctx.fill(cachedVectorImages?.cursor as Path2D);
     ctx.restore();
   };
 
@@ -519,11 +518,11 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
               /** flag color follows cursor color. */
               tileCtx.fillStyle = cursorColors[content.slice(1, -1).toLowerCase() as keyof typeof cursorColors];
-              tileCtx.fill(vectorImages?.flag.flag as Path2D);
+              tileCtx.fill(cachedVectorImages?.flag.flag as Path2D);
 
               // draw pole
               tileCtx.fillStyle = gradientObject.flag;
-              tileCtx.fill(vectorImages?.flag.pole as Path2D);
+              tileCtx.fill(cachedVectorImages?.flag.pole as Path2D);
 
               tileCtx.restore();
             }
@@ -551,10 +550,10 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               tileCtx.scale(zoom / 3.5, zoom / 3.5);
 
               tileCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-              tileCtx.fill(vectorImages?.boom.inner as Path2D); // draw inner path
+              tileCtx.fill(cachedVectorImages?.boom.inner as Path2D); // draw inner path
 
               tileCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-              tileCtx.fill(vectorImages?.boom.outer as Path2D); // draw outer path
+              tileCtx.fill(cachedVectorImages?.boom.outer as Path2D); // draw outer path
             }
             tileCtx.restore();
 
@@ -617,7 +616,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   useEffect(() => {
     if (loading) {
       // Set vector images
-      setVectorImages({
+      setCachedVectorImages({
         cursor: new Path2D(cursorPaths),
         flag: {
           flag: new Path2D(flagPaths[0]),
@@ -658,7 +657,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           <div className={`${tiles.length < 1 ? S.loadingBar : S.loadComplete}`} />
         </div>
       ) : (
-        <div ref={canvasContainerRef} className={S.canvasContainer}>
+        <div className={S.canvasContainer}>
           <canvas
             className={`${S.canvas}`}
             id="TileCanvas"
