@@ -205,82 +205,104 @@ export default function Play() {
     if (!message) return;
     try {
       const { event, payload } = JSON.parse(message as string);
-      /** When receiving requested tiles */
-      if (event === 'tiles') {
-        const {
-          end_p: { x: end_x, y: end_y },
-          start_p: { x: start_x, y: start_y },
-          tiles: unsortedTiles,
-        } = payload;
-        replaceTiles(end_x, end_y, start_x, start_y, unsortedTiles);
-        /** When receiving unrequested tiles & when sending tile open event */
-      } else if (event === 'flag-set' || event === 'tile-updated') {
-        setCachingTiles(tiles => {
+      switch (event) {
+        /** When receiving requested tiles */
+        case 'tiles': {
           const {
-            position: { x, y },
-            tile: { color, is_flag, is_mine, is_open: is_tile_open, number },
+            end_p: { x: end_x, y: end_y },
+            start_p: { x: start_x, y: start_y },
+            tiles: unsortedTiles,
           } = payload;
-          const newTiles = [...tiles];
-          if (is_tile_open) {
-            if (is_mine) {
-              newTiles[y - startPoint.y][x - startPoint.x] = 'B';
+          replaceTiles(end_x, end_y, start_x, start_y, unsortedTiles);
+          break;
+        }
+        /** When receiving unrequested tiles & when sending tile open event */
+        case 'flag-set':
+        case 'tile-updated': {
+          setCachingTiles(tiles => {
+            const {
+              position: { x, y },
+              tile: { color, is_flag, is_mine, is_open: is_tile_open, number },
+            } = payload;
+            const newTiles = [...tiles];
+            let data = '';
+            if (is_tile_open) {
+              if (is_mine) {
+                data = 'B';
+              } else {
+                data = number?.toString() ?? 'O';
+              }
             } else {
-              newTiles[y - startPoint.y][x - startPoint.x] = number?.toString() ?? 'O';
+              data = (is_flag ? 'F' + color : 'C') + ((x + y) % 2);
             }
-          } else {
-            newTiles[y - startPoint.y][x - startPoint.x] = (is_flag ? 'F' + color : 'C') + ((x + y) % 2);
-          }
-          return newTiles;
-        });
+            newTiles[y - startPoint.y][x - startPoint.x] = data;
+            return newTiles;
+          });
+          break;
+        }
         /** Fetches own information only once when connected. */
-      } else if (event === 'my-cursor') {
-        const { position, pointer, color } = payload;
-        setOringinPosition(position.x, position.y);
-        setCursorPosition(position.x, position.y);
-        setColor(color.toLowerCase());
-        if (pointer) {
-          setClickPosition(pointer.x, pointer.y, '');
+        case 'my-cursor': {
+          const { position, pointer, color } = payload;
+          setOringinPosition(position.x, position.y);
+          setCursorPosition(position.x, position.y);
+          setColor(color.toLowerCase());
+          if (pointer) {
+            setClickPosition(pointer.x, pointer.y, '');
+          }
+          break;
         }
         /** Fetches information of other users. */
-      } else if (event === 'you-died') {
-        const { revive_at } = payload;
-        const leftTime = new Date(revive_at)?.getTime() - new Date().getTime();
-        setReviveTime(Math.floor(leftTime / 1000));
-      } else if (event === 'cursors') {
-        const { cursors } = payload;
-        const newCursors = cursors.map(
-          ({ position: { x, y }, color }: { position: { x: number; y: number }; color: string }) => ({
-            x,
-            y,
-            color: color.toLowerCase(),
-          }),
-        );
-        addCursors(newCursors);
+        case 'you-died': {
+          const { revive_at } = payload;
+          const leftTime = new Date(revive_at)?.getTime() - new Date().getTime();
+          setReviveTime(Math.floor(leftTime / 1000));
+          break;
+        }
+        case 'cursors': {
+          const { cursors } = payload;
+          const newCursors = cursors.map(
+            ({ position: { x, y }, color }: { position: { x: number; y: number }; color: string }) => ({
+              x,
+              y,
+              color: color.toLowerCase(),
+            }),
+          );
+          addCursors(newCursors);
+          break;
+        }
         /** Receives movement events from other users. */
-      } else if (event === 'moved') {
-        const { origin_position, new_position, color } = payload;
-        const { x: originX, y: originY } = origin_position;
-        const { x: newX, y: newY } = new_position;
-        const newCursors = [...cursors];
-        const index = newCursors.findIndex(
-          ({ x, y, color: cursorColor }: CursorState) =>
-            x === originX && y === originY && cursorColor === color.toLowerCase(),
-        );
-        if (index !== -1) {
-          newCursors[index] = { x: newX, y: newY, color: color.toLowerCase() };
+        case 'moved': {
+          const { origin_position, new_position, color } = payload;
+          const { x: originX, y: originY } = origin_position;
+          const { x: newX, y: newY } = new_position;
+          const newCursors = [...cursors];
+          const index = newCursors.findIndex((cursor: CursorState) => {
+            const { x, y, color: cursorColor } = cursor;
+            return x === originX && y === originY && cursorColor === color.toLowerCase();
+          });
+          if (index !== -1) {
+            newCursors[index] = { x: newX, y: newY, color: color.toLowerCase() };
+          }
+          setCursors(newCursors);
+          break;
         }
-        setCursors(newCursors);
-      } else if (event === 'cursor-quit') {
-        const { color, position } = payload;
-        const newCursors = [...cursors];
-        const index = newCursors.findIndex(
-          ({ x, y, color: cursorColor }: CursorState) =>
-            x === position.x && y === position.y && cursorColor === color.toLowerCase(),
-        );
-        if (index !== -1) {
-          newCursors.splice(index, 1);
+        /** Receives other user's quit */
+        case 'cursor-quit': {
+          const { color, position } = payload;
+          const newCursors = [...cursors];
+          const index = newCursors.findIndex((cursor: CursorState) => {
+            const { x, y, color: cursorColor } = cursor;
+            return x === position.x && y === position.y && cursorColor === color.toLowerCase();
+          });
+          if (index !== -1) {
+            newCursors.splice(index, 1);
+          }
+          setCursors(newCursors);
+          break;
         }
-        setCursors(newCursors);
+        default: {
+          break;
+        }
       }
     } catch (e) {
       console.error(e);
