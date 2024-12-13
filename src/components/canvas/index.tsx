@@ -547,7 +547,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
             /** describe ash */
             if (content === 'B') {
-              tileCtx.scale(zoom / 3.5, zoom / 3.5);
+              tileCtx.scale(zoom / 4, zoom / 4);
 
               tileCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
               tileCtx.fill(cachedVectorImages?.boom.inner as Path2D); // draw inner path
