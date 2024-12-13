@@ -658,13 +658,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         </div>
       ) : (
         <div className={S.canvasContainer}>
-          <canvas
-            className={`${S.canvas}`}
-            id="TileCanvas"
-            ref={tileCanvasRef}
-            width={windowWidth}
-            height={windowHeight}
-          />
+          <canvas className={S.canvas} id="TileCanvas" ref={tileCanvasRef} width={windowWidth} height={windowHeight} />
           <canvas
             className={S.canvas}
             id="OtherCursors"
@@ -673,7 +667,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             height={windowHeight}
           />
           <canvas
-            className={`${S.canvas} `}
+            className={S.canvas}
             id="InteractionCanvas"
             ref={interactionCanvasRef}
             width={windowWidth}
