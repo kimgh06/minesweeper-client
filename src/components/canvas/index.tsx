@@ -1,7 +1,7 @@
 'use client';
 import S from './style.module.scss';
 import React, { useRef, useEffect, useState } from 'react';
-import Paths from '@/datas/paths.json';
+import Paths from '@/assets/paths.json';
 
 import useScreenSize from '@/hooks/useScreenSize';
 import useClickStore from '@/store/clickStore';

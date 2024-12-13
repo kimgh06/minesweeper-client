@@ -13,6 +13,7 @@ import CanvasRenderer from '@/components/canvas';
 import useClickStore from '@/store/clickStore';
 import useWebSocketStore from '@/store/websocketStore';
 import Inactive from '@/components/inactive';
+import CanvasDashboard from '@/components/canvasDashboard';
 
 interface Point {
   x: number;
@@ -21,7 +22,6 @@ interface Point {
 
 export default function Play() {
   /** constants */
-  const zoomScale = 1.5;
   const renderRange = 2;
   const originTileSize = 80;
   const webSocketUrl = `${process.env.NEXT_PUBLIC_WS_HOST}/session`;
@@ -34,13 +34,12 @@ export default function Play() {
     setColor,
     setPosition: setCursorPosition,
     zoom,
-    setZoom,
     originX: cursorOriginX,
     originY: cursorOriginY,
     setOringinPosition,
   } = useCursorStore();
   const { setCursors, addCursors, cursors } = useOtherUserCursorsStore();
-  const { x: clickX, y: clickY, setPosition: setClickPosition } = useClickStore();
+  const { setPosition: setClickPosition } = useClickStore();
 
   /** hooks */
   const { windowWidth, windowHeight } = useScreenSize();
@@ -462,58 +461,7 @@ export default function Play() {
   return (
     <div className={S.page}>
       {reviveTime > 0 && <Inactive time={reviveTime} />}
-      <div className={S.dashboard}>
-        <div className={S.coordinates}>
-          <p>
-            &nbsp;
-            <svg width="22" height="26" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M0.436226 1.88654C0.321855 0.917668 1.42232 0.282312 2.2042 0.865797L20.8289 14.7645C21.6738 15.3951 21.2476 16.7379 20.1937 16.7657L12.1637 16.978C11.0359 17.0078 9.99976 17.606 9.41006 18.5678L5.21123 25.4159C4.66013 26.3147 3.28415 26.0124 3.16055 24.9653L0.436226 1.88654Z"
-                fill="white"
-              />
-            </svg>
-            ({cursorOriginX}, {cursorOriginY})
-          </p>
-          <p>
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M20 5L26 5C26.5523 5 27 5.44772 27 6L27 12"
-                stroke="white"
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-              <path
-                d="M12 27L6 27C5.44772 27 5 26.5523 5 26L5 20"
-                stroke="white"
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-              <path d="M5 12L5 6C5 5.44772 5.44772 5 6 5L12 5" stroke="white" strokeWidth="4" strokeLinecap="round" />
-              <path
-                d="M27 20L27 26C27 26.5523 26.5523 27 26 27L20 27"
-                stroke="white"
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-            </svg>
-            &nbsp;({clickX === Infinity ? '' : clickX}, {clickY === Infinity ? '' : clickY})
-          </p>
-        </div>
-        <div className={S.zoom}>
-          <p>
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="14" cy="14" r="9" stroke="white" strokeWidth="4" />
-              <path d="M27 27L21.5 21.5" stroke="white" strokeWidth="4" strokeLinecap="round" />
-            </svg>
-            &nbsp;
-            {Math.ceil(zoom * 100)}%
-          </p>
-          <div className={S.buttons}>
-            <button onClick={() => setZoom(zoom / zoomScale > 0.2 ? zoom / zoomScale : zoom)}>-</button>
-            <button onClick={() => setZoom(zoom * zoomScale < 1.7 ? zoom * zoomScale : zoom)}>+</button>
-          </div>
-        </div>
-      </div>
+      <CanvasDashboard />
       <div className={S.canvas}>
         <CanvasRenderer
           paddingTiles={renderRange}
