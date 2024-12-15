@@ -51,7 +51,7 @@ export default function Play() {
   const [renderStartPoint, setRenderStartPoint] = useState<Point>({ x: 0, y: 0 });
   const [cachingTiles, setCachingTiles] = useState<string[][]>([]);
   const [renderTiles, setRenderTiles] = useState<string[][]>([...cachingTiles.map(row => [...row])]);
-  const [reviveTime, setReviveTime] = useState<number>(-1);
+  const [leftReviveTime, setLeftReviveTime] = useState<number>(-1);
 
   /**
    * Request Tiles
@@ -254,7 +254,7 @@ export default function Play() {
         case 'you-died': {
           const { revive_at } = payload;
           const leftTime = new Date(revive_at)?.getTime() - new Date().getTime();
-          setReviveTime(Math.floor(leftTime / 1000));
+          setLeftReviveTime(Math.floor(leftTime / 1000));
           break;
         }
         case 'cursors': {
@@ -451,27 +451,25 @@ export default function Play() {
   }, [cursorOriginX, cursorOriginY]);
 
   useEffect(() => {
-    if (reviveTime < 1) return;
+    if (leftReviveTime < 1) return;
     setTimeout(() => {
-      setReviveTime(e => e - 1);
+      setLeftReviveTime(e => e - 1);
     }, 1000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reviveTime]);
+  }, [leftReviveTime]);
 
   return (
     <div className={S.page}>
-      {reviveTime > 0 && <Inactive time={reviveTime} />}
+      {leftReviveTime > 0 && <Inactive time={leftReviveTime} />}
       <CanvasDashboard />
-      <div className={S.canvas}>
-        <CanvasRenderer
-          paddingTiles={renderRange}
-          tiles={renderTiles}
-          tileSize={tileSize}
-          startPoint={renderStartPoint}
-          cursorOriginX={cursorOriginX}
-          cursorOriginY={cursorOriginY}
-        />
-      </div>
+      <CanvasRenderer
+        paddingTiles={renderRange}
+        tiles={renderTiles}
+        tileSize={tileSize}
+        startPoint={renderStartPoint}
+        cursorOriginX={cursorOriginX}
+        cursorOriginY={cursorOriginY}
+      />
     </div>
   );
 }
