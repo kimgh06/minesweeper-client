@@ -62,7 +62,7 @@ export default function Play() {
    * @param end_y {number} - end y position
    * @param type {string} - Request type (R: Right tiles, L: Left tiles, U: Up tiles, D: Down tiles, A: All tiles)
    *  */
-  const appendTask = (
+  const requestTiles = (
     start_x: number,
     start_y: number,
     end_x: number,
@@ -75,31 +75,31 @@ export default function Play() {
 
     setCachingTiles(tiles => {
       const newTiles = [...tiles];
-      if (type.includes('U')) {
-        for (let i = 0; i < columnlength; i++) {
-          newTiles.unshift([...Array(rowlength).fill('??')]);
-          newTiles.pop();
-        }
-      }
-      if (type.includes('D')) {
-        for (let i = 0; i < columnlength; i++) {
-          newTiles.push([...Array(rowlength).fill('??')]);
-          newTiles.shift();
-        }
-      }
-      if (type.includes('L')) {
-        for (let i = 0; i < columnlength; i++) {
-          newTiles[i] = [...Array(rowlength).fill('??'), ...newTiles[i].slice(0, -1)];
-        }
-      }
-      if (type.includes('R')) {
-        for (let i = 0; i < columnlength; i++) {
-          newTiles[i] = [...newTiles[i].slice(rowlength, newTiles[0].length), ...Array(rowlength).fill('??')];
-        }
-      }
-      if (type.includes('A')) {
-        const newTiles = Array.from({ length: columnlength }, () => Array.from({ length: rowlength }, () => '??'));
-        return newTiles;
+      switch (type) {
+        case 'U':
+          for (let i = 0; i < columnlength; i++) {
+            newTiles.unshift([...Array(rowlength).fill('??')]);
+            newTiles.pop();
+          }
+          break;
+        case 'D':
+          for (let i = 0; i < columnlength; i++) {
+            newTiles.push([...Array(rowlength).fill('??')]);
+            newTiles.shift();
+          }
+          break;
+        case 'L':
+          for (let i = 0; i < columnlength; i++) {
+            newTiles[i] = [...Array(rowlength).fill('??'), ...newTiles[i].slice(0, -1)];
+          }
+          break;
+        case 'R':
+          for (let i = 0; i < columnlength; i++) {
+            newTiles[i] = [...newTiles[i].slice(rowlength, newTiles[0].length), ...Array(rowlength).fill('??')];
+          }
+          break;
+        case 'A':
+          return Array.from({ length: columnlength }, () => Array.from({ length: rowlength }, () => '??'));
       }
       return newTiles;
     });
@@ -141,23 +141,8 @@ export default function Play() {
       return isMine ? 'B' : number === 0 ? 'O' : number.toString();
     }
     const isFlag = byte[2] === '1';
-    let color = '';
-    switch (byte.slice(3, 5)) {
-      case '00' /** red */:
-        color = '0';
-        break;
-      case '01' /** yellow */:
-        color = '1';
-        break;
-      case '10' /** blue */:
-        color = '2';
-        break;
-      case '11' /** purple */:
-        color = '3';
-        break;
-      default:
-        color = '';
-    }
+    /** 00 red, 01 yellow, 10 blue, 11 purple */
+    const color = parseInt(byte.slice(3, 5), 2).toString();
     if (isFlag) {
       return 'F' + color;
     }
@@ -166,7 +151,6 @@ export default function Play() {
 
   const replaceTiles = (end_x: number, end_y: number, start_x: number, start_y: number, unsortedTiles: string) => {
     if (unsortedTiles.length === 0) return;
-
     const [rowlength, columnlength] = [Math.abs(end_x - start_x + 1) * 2, Math.abs(start_y - end_y + 1)];
     const sortedTiles: string[][] = [];
     for (let i = 0; i < columnlength; i++) {
@@ -232,7 +216,7 @@ export default function Play() {
                 data = number?.toString() ?? 'O';
               }
             } else {
-              data = (is_flag ? 'F' + color : 'C') + ((x + y) % 2);
+              data = (is_flag ? 'F' + color : 'C') + ((x + y) % 2 === 0 ? '0' : '1');
             }
             newTiles[y - startPoint.y][x - startPoint.x] = data;
             return newTiles;
@@ -378,7 +362,7 @@ export default function Play() {
       heightReductionLength = -Math.round((endPoint.y - startPoint.y - tileVisibleHeight) / 2);
       widthReductionLength = -Math.round((endPoint.x - startPoint.x - tileVisibleWidth) / 2);
     }
-    appendTask(
+    requestTiles(
       startPoint.x - widthReductionLength,
       endPoint.y + heightReductionLength,
       endPoint.x + widthReductionLength,
@@ -404,32 +388,32 @@ export default function Play() {
 
     /** Bottom right */
     if (widthExtendLength > 0 && heightExtendLength > 0) {
-      appendTask(rightfrom, downfrom, rightto, upto, 'R');
-      appendTask(leftfrom, downfrom, rightto, downto, 'D');
+      requestTiles(rightfrom, downfrom, rightto, upto, 'R');
+      requestTiles(leftfrom, downfrom, rightto, downto, 'D');
       /** Bottom left */
     } else if (widthExtendLength < 0 && heightExtendLength > 0) {
-      appendTask(leftfrom, downfrom, leftto, upto, 'L');
-      appendTask(leftfrom, downfrom, rightto, downto, 'D');
+      requestTiles(leftfrom, downfrom, leftto, upto, 'L');
+      requestTiles(leftfrom, downfrom, rightto, downto, 'D');
       /** Top right */
     } else if (widthExtendLength > 0 && heightExtendLength < 0) {
-      appendTask(rightfrom, downfrom, rightto, upto, 'R');
-      appendTask(leftfrom, upfrom, rightto, upto, 'U');
+      requestTiles(rightfrom, downfrom, rightto, upto, 'R');
+      requestTiles(leftfrom, upfrom, rightto, upto, 'U');
       /** Top left */
     } else if (widthExtendLength < 0 && heightExtendLength < 0) {
-      appendTask(leftfrom, downfrom, leftto, upto, 'L');
-      appendTask(leftfrom, upfrom, rightto, upto, 'U');
+      requestTiles(leftfrom, downfrom, leftto, upto, 'L');
+      requestTiles(leftfrom, upfrom, rightto, upto, 'U');
       /** Right move */
     } else if (widthExtendLength > 0) {
-      appendTask(rightfrom, endPoint.y, rightto, startPoint.y, 'R');
+      requestTiles(rightfrom, endPoint.y, rightto, startPoint.y, 'R');
       /** Left move */
     } else if (widthExtendLength < 0) {
-      appendTask(leftfrom, endPoint.y, leftto, startPoint.y, 'L');
+      requestTiles(leftfrom, endPoint.y, leftto, startPoint.y, 'L');
       /** Down move */
     } else if (heightExtendLength > 0) {
-      appendTask(startPoint.x, downfrom, endPoint.x, downto, 'D');
+      requestTiles(startPoint.x, downfrom, endPoint.x, downto, 'D');
       /** Up move */
     } else if (heightExtendLength < 0) {
-      appendTask(startPoint.x, upfrom, endPoint.x, upto, 'U');
+      requestTiles(startPoint.x, upfrom, endPoint.x, upto, 'U');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursorX, cursorY]);
