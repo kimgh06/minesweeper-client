@@ -303,8 +303,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
    * @param startY y position of start point
    * @param targetX x position of target point
    * @param targetY y position of target point
-   * */
-  const findPathUsingAStar = (startX: number, startY: number, targetX: number, targetY: number) => {
+   * */ const findPathUsingAStar = (startX: number, startY: number, targetX: number, targetY: number) => {
     // Function to get neighbors of a node
     function getNeighbors(grid: (TileNode | null)[][], node: TileNode) {
       const neighbors = [];
@@ -322,7 +321,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         const [x, y] = [node.x + dx, node.y + dy];
         // Make sure the neighbor is within bounds and not an obstacle
         if (y >= 0 && y < grid.length && x >= 0 && x < grid[y].length && grid[y][x] !== null) {
-          neighbors.push(grid[y][x]);
+          neighbors.push({ node: grid[y][x], isDiagonal: dx !== 0 && dy !== 0 });
         }
       }
       return neighbors;
@@ -368,12 +367,15 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
       /** Find neighbor nodes from current node. */
       const neighbors = getNeighbors(grid, current);
-      for (const neighbor of neighbors) {
+      for (const { node: neighbor, isDiagonal } of neighbors) {
         if (closedList.includes(neighbor)) {
           continue;
         }
 
-        const tempG = current.g + 1;
+        // Apply different cost for diagonal movement
+        const moveCost = isDiagonal ? 1.5 : 1;
+        const tempG = current.g + moveCost;
+
         if (!openList.includes(neighbor)) {
           openList.push(neighbor);
         } else if (tempG >= neighbor.g) {
@@ -382,10 +384,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
         neighbor.parent = current;
         neighbor.g = tempG;
-        const dx = Math.abs(neighbor.x - target.x);
-        const dy = Math.abs(neighbor.y - target.y);
-        const IsDiagonal = dx === dy ? Math.SQRT2 : 1;
-        neighbor.h = IsDiagonal + Math.abs(neighbor.x - target.x) + Math.abs(neighbor.y - target.y);
+        neighbor.h = Math.abs(neighbor.x - target.x) + Math.abs(neighbor.y - target.y);
         neighbor.f = neighbor.g + neighbor.h;
       }
     }
