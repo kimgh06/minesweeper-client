@@ -392,7 +392,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   };
 
   /** start render */
-  const render = () => {
+  const renderTiles = () => {
     const tileCanvas = canvasRefs.tileCanvasRef.current;
     const interactionCanvas = canvasRefs.interactionCanvasRef.current;
     if (!tileCanvas || !interactionCanvas || tileSize === 0) return;
@@ -643,7 +643,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       });
       return;
     }
-    render();
+    renderTiles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tiles, loading, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color, zoom]);
 
