@@ -60,7 +60,7 @@ The cursor canvas is rendered based on other user cursors' position
   - Go through each cursor in the cursors array.
   - Calculate the correct position for each cursor.
   - Use the drawCursor function to draw the cursor with the right position and color.
-  
+
 More details can be found in components/canvas/index.tsx
 ### 5. Update Canvases
 
@@ -68,16 +68,20 @@ Several events might trigger the need to update the canvas. Here's how to handle
 
 #### 5-1. When Client Cursor's Position Changes
 
-- Update all canvases when the client's cursor position changes.
+Similar to how tiles were loaded previously, load the tiles based on the direction of movement. Push the tiles in the opposite direction of the movement, fill the empty spaces with "??", and then load and replace the tiles accordingly.
+
+Diagonal movements are handled similarly. When the cursor moves diagonally, load the tiles in the direction of the movement, push the tiles in the opposite direction, fill the empty spaces with "??", and then load and replace the tiles accordingly.
+
+And set start & end points, re-render all canvases based on cursor's position
 
 #### 5-2. When Other Cursors' Status Changes
 
-- Update Cursor canvas when other users' cursor statuses change.
+Re-render cursor canvas based on other cursors' position.
 
 #### 5-3. When Any Tile Has Been Updated
 
-- Update Tile canvas when any tile is updated.
+Replace that tile and Re-render all canvases.
 
 #### 5-4. When Client Sets the Zoom Level
 
-- Update all canvases when the client adjusts the zoom level.
+And set start & end points, re-render all canvases based on cursor's position
