@@ -84,7 +84,7 @@ Promise.all([lotteriaChabFont.load()]).then(() => {
 
 Once all properties are cached, set the loading state to `false` and render the tiles on the tile canvas. Rendering will depend on properties such as tile map, tile size, cursor positions, click position, color, and zoom.
 
-The tile canvas would be rendered using CanvasRenderingContext2D refer to Cached Path2D Objects.
+The tile canvas is rendered based on CanvasRenderingContext2D refer to Cached Path2D Objects.
 
 Example:
 ```tsx
@@ -114,7 +114,7 @@ tileCtx.fillStyle = gradientObject.inner[0];
 tileCtx.fill(tileVector);
 ```
 
-The interaction canvas would be rendered by user cursor's position, pointer, and moving path.
+The interaction canvas is rendered based on the user's cursor position, pointer, and movement path.
 
 ```tsx
 /** More details can be found in components/canvas/index.tsx */
@@ -149,7 +149,7 @@ if (paths.length > 0) {
 }
 ```
 
-The cursor canvas would be rendered by other user cursors' position
+The cursor canvas is rendered based on other user cursors' position
 ```tsx
 /** More details can be found in components/canvas/index.tsx */
 // Draw other users' cursor
