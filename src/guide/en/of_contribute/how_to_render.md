@@ -23,7 +23,7 @@ More details can be found in play/page.tsx
 
 To get the tiles and cursors data from the server, establish a WebSocket connection and listen for incoming messages. When a message is received, parse the data and update the state accordingly.
 
-Request all tiles based on start & end points and make all tiles to have dummy datas "??" 
+Request all tiles based on start & end points and make all tiles to have dummy datas "??".
 
 Warning:
 - The `start_y` and `end_y` coordinates are reversed because the y-axis is inverted.
