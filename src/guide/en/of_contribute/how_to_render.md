@@ -8,20 +8,16 @@ This project uses three `<canvas>` elements to render graphics for animation eff
 
 ## How to Make Frames
 
-### 0. Connect to the Server
+### 0. Initialize Start & End Points.
 
-This hook attempts to reconnect the WebSocket using the specified URL and view dimensions whenever the WebSocket is not open and the start and end points are defined.
+Initialize the tiles and set up the start & end point based on client's window size and tile size.
+They're calculated based on how many tiles can be rendered in client's window.
 
-```tsx
-/** More details can be found in play/page.tsx */
-connect(webSocketUrl + `?view_width=${endPoint.x - startPoint.x + 1}&view_height=${endPoint.y - startPoint.y + 1}`);
-```
+### 1. Connect to the Server
 
-### 1. Initialize Tiles
+This hook attempts to reconnect the WebSocket using the specified URL and view dimensions whenever the WebSocket is not open and the start & end points are defined.
 
-Initialize the tiles and set up the required properties.
-
-### 2. Get Tiles & Cursors Data from Server Using WebSocket
+### 2. Get Tiles Data from Server Using WebSocket
 
 To get the tiles and cursors data from the server, establish a WebSocket connection and listen for incoming messages. When a message is received, parse the data and update the state accordingly.
 
@@ -39,7 +35,9 @@ requestTiles(
   startPoint.y - heightReductionLength,
   'A',
 );
+```
 
+```tsx
 ...
 /** Get Tiles */
 const {
@@ -48,6 +46,7 @@ const {
   tiles: unsortedTiles,
 } = payload;
 
+/** Replace old tiles to updated tiles.*/
 replaceTiles(end_x, end_y, start_x, start_y, unsortedTiles);
 ```
 
@@ -169,16 +168,16 @@ Several events might trigger the need to update the canvas. Here's how to handle
 
 #### 5-1. When Client Cursor's Position Changes
 
-- Update the canvas when the client's cursor position changes.
+- Update all canvases when the client's cursor position changes.
 
 #### 5-2. When Other Cursors' Status Changes
 
-- Update the canvas when other users' cursor statuses change.
+- Update Cursor canvas when other users' cursor statuses change.
 
 #### 5-3. When Any Tile Has Been Updated
 
-- Update the canvas when any tile is updated.
+- Update Tile canvas when any tile is updated.
 
 #### 5-4. When Client Sets the Zoom Level
 
-- Update the canvas when the client adjusts the zoom level.
+- Update all canvases when the client adjusts the zoom level.
