@@ -1,28 +1,37 @@
-# How to Render Tiles.
-This project uses 3 canvas elements to render graphics because of animation efficiency.
-1. Tile Canvas: Render tiles.
-2. Interaction Canvas: Draw your cursor's path and its range of interaction.
-3. Cursors Canvas: Draw user cursors
+# How to Render Tiles
 
-## How to make Frames
-### 0. Connect Server.
-This hook will attempt to reconnect the WebSocket using the specified URL and view dimensions whenever the WebSocket is not open and the start and end points are defined.
+This project uses three `<canvas>` elements to render graphics for animation efficiency:
+
+1. Tile Canvas: Renders tiles.
+2. Interaction Canvas: Draws your cursor's path and its range of interaction.
+3. Cursors Canvas: Draws user cursors.
+
+## How to Make Frames
+
+### 0. Connect to the Server
+
+This hook attempts to reconnect the WebSocket using the specified URL and view dimensions whenever the WebSocket is not open and the start and end points are defined.
+
 ```tsx
-/** you can see more in play/page.tsx */
+/** More details can be found in play/page.tsx */
 connect(webSocketUrl + `?view_width=${endPoint.x - startPoint.x + 1}&view_height=${endPoint.y - startPoint.y + 1}`);
 ```
+
 ### 1. Initialize Tiles
 
+Initialize the tiles and set up the required properties.
 
-### 2. Get tiles & cursors data from server using websocket.
+### 2. Get Tiles & Cursors Data from Server Using WebSocket
+
 To get the tiles and cursors data from the server, establish a WebSocket connection and listen for incoming messages. When a message is received, parse the data and update the state accordingly.
 
-Send start y and end y coordinates are reversed because the y-axis is reversed.
-It then destructures the received payload to extract specific values.
-Finally, it uses these values in a function call to replaceTiles.
+- The `start_y` and `end_y` coordinates are reversed because the y-axis is inverted.
+- The received payload is destructured to extract specific values.
+- The extracted values are then used in the `replaceTiles` function to update the tiles.
+
 ```tsx
-/** You can see more in play/page.tsx */
-/** Request Tile */
+/** More details can be found in play/page.tsx */
+/** Request Tiles */
 requestTiles(
   startPoint.x - widthReductionLength,
   endPoint.y + heightReductionLength,
@@ -42,10 +51,12 @@ const {
 replaceTiles(end_x, end_y, start_x, start_y, unsortedTiles);
 ```
 
-### 3. Caching Path2D objects and a font.
+### 3. Caching Path2D Objects and a Font
+
 To improve rendering performance, cache the Path2D objects and load the custom font before rendering.
 
 ```tsx
+/** More details can be found in components/canvas/index.tsx */
 setCachedVectorImages({
   cursor: new Path2D(cursorPaths),
   flag: {
@@ -56,8 +67,8 @@ setCachedVectorImages({
     inner: new Path2D(boomPaths[0]),
     outer: new Path2D(boomPaths[1]),
   },
-  });
-  
+});
+
 const lotteriaChabFont = new FontFace(
   'LOTTERIACHAB',
   "url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/LOTTERIACHAB.woff2') format('woff2')",
@@ -65,21 +76,109 @@ const lotteriaChabFont = new FontFace(
 
 Promise.all([lotteriaChabFont.load()]).then(() => {
   document.fonts.add(lotteriaChabFont);
-  setLoading(false);
+  setLoading(false); // Start to render
 });
 ```
-### 4. Render initial Tiles in Canvases.
-If all properties are cached, set the loading state to load and render tiles in tile canvas.
+
+### 4. Render Tiles in Canvases
+
+Once all properties are cached, set the loading state to `false` and render the tiles on the tile canvas. Rendering will depend on properties such as tile map, tile size, cursor positions, click position, color, and zoom.
+
+The tile canvas would be rendered using CanvasRenderingContext2D refer to Cached Path2D Objects.
+
+Example:
 ```tsx
-renderTiles();
+/** More details can be found in components/canvas/index.tsx */
+const innerGradientValues: [number, number, number, number] = [
+  borderPixel,
+  borderPixel,
+  tileSize - borderPixel * 2,
+  tileSize - borderPixel * 2,
+];
+
+const gradientObject = {
+  inner: [
+    tileCtx.createLinearGradient(...innerGradientValues),
+    tileCtx.createLinearGradient(...innerGradientValues),
+    ...
+  ],
+  ...
+};
+
+gradientObject.inner.forEach((gradient, index) => {
+  gradient.addColorStop(0, tileColors.inner[index][0]);
+  gradient.addColorStop(1, tileColors.inner[index][1]);
+});
+
+tileCtx.fillStyle = gradientObject.inner[0];
+tileCtx.fill(tileVector);
 ```
 
-### 5. Update canvases
+The interaction canvas would be rendered by user cursor's position, pointer, and moving path.
 
-#### 5-1. When client cursor's position changes.
+```tsx
+/** More details can be found in components/canvas/index.tsx */
+// Draw my cursor
+drawCursor(interactionCtx, cursorCanvasX, cursorCanvasY, cursorColor);
 
-#### 5-2. When other cursors's statuses changes.
+// Describe clicked tile border
+interactionCtx.beginPath();
+interactionCtx.strokeStyle = cursorColor;
+interactionCtx.lineWidth = borderPixel;
+interactionCtx.strokeRect(
+  clickCanvasX + borderPixel / 2,
+  clickCanvasY + borderPixel / 2,
+  tileSize - borderPixel,
+  tileSize - borderPixel,
+);
+interactionCtx.closePath();
 
-#### 5-3. When any tile has been updated.
+// Draw path
+if (paths.length > 0) {
+  interactionCtx.beginPath();
+  interactionCtx.strokeStyle = 'black';
+  interactionCtx.lineWidth = tileSize / 6;
+  const [x, y] = [paths[0].x + compenX, paths[0].y + compenY];
+  interactionCtx.moveTo(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2); // start point
 
-#### 5-4. When client sets the zoom level.
+  paths.forEach(vector => {
+    const [x, y] = [vector.x + compenX, vector.y + compenY];
+    interactionCtx.lineTo(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2);
+  });
+  interactionCtx.stroke();
+}
+```
+
+The cursor canvas would be rendered by other user cursors' position
+```tsx
+/** More details can be found in components/canvas/index.tsx */
+// Draw other users' cursor
+const otherCursorsCtx = canvasRefs.otherCursorsRef.current?.getContext('2d');
+if (!otherCursorsCtx) return;
+otherCursorsCtx.clearRect(0, 0, windowWidth, windowHeight);
+cursors.forEach(cursor => {
+  const x = cursor.x - cursorOriginX + tilePaddingWidth;
+  const y = cursor.y - cursorOriginY + tilePaddingHeight;
+  drawCursor(otherCursorsCtx, x * tileSize, y * tileSize, cursorColors[cursor.color]);
+});
+```
+
+### 5. Update Canvases
+
+Several events might trigger the need to update the canvas. Here's how to handle them:
+
+#### 5-1. When Client Cursor's Position Changes
+
+- Update the canvas when the client's cursor position changes.
+
+#### 5-2. When Other Cursors' Status Changes
+
+- Update the canvas when other users' cursor statuses change.
+
+#### 5-3. When Any Tile Has Been Updated
+
+- Update the canvas when any tile is updated.
+
+#### 5-4. When Client Sets the Zoom Level
+
+- Update the canvas when the client adjusts the zoom level.
