@@ -5,7 +5,7 @@ It follows the same rules as Minesweeper. However, the map expands infinitely, a
 Let's play the game [here](https://gamultong.github.io/gamulpung-client/).
 
 ## Contribute
-If you want to contribute this project, Follow this steps.
+If you want to contribute this project, Follow these steps.
 
 ### Fork this repository
 
