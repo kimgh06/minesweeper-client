@@ -1,4 +1,12 @@
-# About Interactions.
+# Rules Of Gamulpung
+
+## Summary of Actions:
+| Tile State | General Click (Left Click)                | Special Click (Right Click)       |
+|------------|-------------------------------------------|--------------------------------------|
+| CLOSED     | OPEN the tile (reveals mine or number)    | FLAG the tile (set to FLAGGED)       |
+| OPENED     | Move to the tile if there’s a path        | No action                            |
+| EXPLODED   | Move to the tile if there’s a path        | No action                            |
+| FLAGGED    | No action                                 | Remove flag (set back to CLOSED)     |  
 
 ## Tile States
 Here are the four possible states of a tile in Minesweeper:
@@ -18,7 +26,3 @@ However, if any neighboring tile explodes, and you will LOSE control of all tile
 ### SPECIAL CLICK (Right Click):
 - If "CLOSED": You can set your own flag on clicked tile and make its status to "FLAGGED".
 - If "FLAGGED": You can remove any flag on clicked tile and make its status to "CLOSED".
-
-## Move to Clicked Tile
-When you choose "OPENED" or "EXPLODED" tile, the computer finds a path to that tile from your cursor's position.
-
