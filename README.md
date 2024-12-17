@@ -1,10 +1,12 @@
-# [Project Name]
+# Gamulpung
 It follows the same rules as Minesweeper. However, the map expands infinitely, allowing you to perform as many actions as you want!
 
 ## Play
-Let's play the game [here](https://gamultong.github.io/minesweeper-client/).
+Let's play the game [here](https://gamultong.github.io/gamulpung-client/).
 
 ## Contribute
+If you want to contribute this project, Follow these steps.
+
 ### Fork this repository
 
 1. Navigate to the GitHub repository you want to fork.
