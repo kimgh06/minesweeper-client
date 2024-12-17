@@ -1,0 +1,25 @@
+@font-face {
+  font-family: 'CookieRun-Regular';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/CookieRun-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.nav {
+  font-family: 'CookieRun-Regular';
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 168px;
+  align-items: center;
+  .side {
+    display: flex;
+    align-items: center;
+  }
+  .gap {
+    gap: 24px;
+  }
+  a {
+    height: 55px;
+  }
+}
