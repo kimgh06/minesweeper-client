@@ -6,6 +6,12 @@
 }
 
 .nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  background-color: white;
+  color: black;
   font-family: 'CookieRun-Regular';
   display: flex;
   justify-content: space-between;

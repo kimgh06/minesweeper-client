@@ -6,7 +6,9 @@ export default function Navigation() {
   return (
     <nav className={S.nav}>
       <div className={`${S.side} ${S.gap}`}>
-        <Image src="/gamulpung-client/icon.png" alt="Gamulpung" width={50} height={50} />
+        <Link href="/">
+          <Image src="/gamulpung-client/icon.png" alt="Gamulpung" width={50} height={50} />
+        </Link>
         <span>Introduce</span>
         <span>Language</span>
         <span>Github</span>
