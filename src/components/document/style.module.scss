@@ -6,6 +6,7 @@
 }
 
 .document {
+  $aside-width: 200px;
   margin-top: 55px;
   display: flex;
   background-color: #f7f8f7;
@@ -13,7 +14,7 @@
   color: black;
   display: flex;
   .aside {
-    width: 20%;
+    width: $aside-width;
     height: 100%;
     padding: 20px;
     border-right: 2px solid black;
@@ -44,7 +45,7 @@
   }
   .main {
     padding: 0 50px;
-    margin-left: 20%;
+    margin-left: $aside-width;
     display: flex;
     flex-direction: column;
     gap: 20px;

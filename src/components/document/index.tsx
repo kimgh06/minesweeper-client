@@ -1,7 +1,8 @@
+import Link from 'next/link';
 import S from './style.module.scss';
 
 interface AsideType {
-  [key: string]: string[];
+  [key: string]: { [key: string]: string };
 }
 
 export default function Document({ data, aside }: { data: string; aside: AsideType }) {
@@ -10,11 +11,13 @@ export default function Document({ data, aside }: { data: string; aside: AsideTy
       <aside className={S.aside}>
         {aside &&
           Object.keys(aside).map(key => (
-            <details key={key}>
+            <details key={key} open>
               <summary>{key}</summary>
               <ul>
-                {aside[key].map(value => (
-                  <li key={value}>{value}</li>
+                {Object.entries(aside[key]).map(([value, href]) => (
+                  <Link href={href} key={value}>
+                    <li>{value}</li>
+                  </Link>
                 ))}
               </ul>
             </details>

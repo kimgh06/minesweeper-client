@@ -1,0 +1,9 @@
+{
+  "Contribute Guide": {
+    "Overview": "#overviewofcontributersguide",
+    "About dashboard": "#aboutdashboard",
+    "About interactions": "#aboutinteractions",
+    "How to render tiles": "#howtorendertiles",
+    "Kinds of websocket events": "#kindsofwebsocketevents"
+  }
+}
