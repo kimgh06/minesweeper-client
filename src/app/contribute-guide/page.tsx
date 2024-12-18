@@ -22,9 +22,10 @@ export default async function ContributeGuide() {
   };
   const files = ['overview', 'about_dashboard', 'about_interactions', 'how_to_render', 'kinds_of_websocket_events'];
 
-  // Markdown 파일 가져오기 및 HTML 변환
   const markdownData = await fetchMarkdownFiles(files);
-  const htmlData = new Converter().makeHtml(markdownData);
+  const markdownConverter = new Converter();
+  markdownConverter.setOption('tables', true);
+  const htmlData = markdownConverter.makeHtml(markdownData);
 
   return (
     <>
