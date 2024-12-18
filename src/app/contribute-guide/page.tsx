@@ -9,7 +9,7 @@ export default async function ContributeGuide() {
       const url = process.env.NEXT_PUBLIC_HOST;
       const files = ['overview', 'about_dashboard', 'about_interactions', 'how_to_render', 'kinds_of_websocket_events'];
       const promises = files.map(file =>
-        fetch(`${url}/gamulpung-client/guide/en/of_contribute/${file}.md`).then(res => {
+        fetch(`${url}/guide/en/of_contribute/${file}.md`).then(res => {
           if (!res.ok) throw new Error(`Failed to fetch ${file}`);
           return res.text();
         }),
