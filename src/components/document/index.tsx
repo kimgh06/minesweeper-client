@@ -5,17 +5,18 @@ interface AsideType {
   [key: string]: { [key: string]: string };
 }
 
-export default function Document({ data, aside }: { data: string; aside: AsideType }) {
+export default function Document({ endpoint, data, aside }: { endpoint: string; data: string; aside: AsideType }) {
+  const url = process.env.NEXT_PUBLIC_HOST;
   return (
     <div className={S.document}>
       <aside className={S.aside}>
         {aside &&
           Object.keys(aside).map(key => (
-            <details key={key} open>
+            <details key={key} open={endpoint === key}>
               <summary>{key}</summary>
               <ul>
                 {Object.entries(aside[key]).map(([value, href]) => (
-                  <Link href={href} key={value}>
+                  <Link href={`${url}/${key.replaceAll(/ /g, '-').toLowerCase()}${href}`} key={value}>
                     <li>{value}</li>
                   </Link>
                 ))}

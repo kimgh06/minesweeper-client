@@ -36,10 +36,10 @@ export default function Navigation() {
                 <p>How to play</p>
               </Link>
               <Link href="/contribute-guide">
-                <p>Documents</p>
-              </Link>
-              <Link href="/contribute">
                 <p>Contribute</p>
+              </Link>
+              <Link href="/release-notes">
+                <p>Releases</p>
               </Link>
             </div>
             <div>

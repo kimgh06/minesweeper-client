@@ -7,9 +7,9 @@ export default async function ContributeGuide() {
   const fetchMarkdownFiles = async () => {
     try {
       const url = process.env.NEXT_PUBLIC_HOST;
-      const files = ['overview', 'about_dashboard', 'about_interactions', 'how_to_render', 'kinds_of_websocket_events'];
+      const files = ['v0-1-1'];
       const promises = files.map(file =>
-        fetch(`${url}/docs/en/of_contribute/${file}.md`).then(res => {
+        fetch(`${url}/docs/en/release/${file}.md`).then(res => {
           if (!res.ok) throw new Error(`Failed to fetch ${file}`);
           return res.text();
         }),
@@ -30,7 +30,7 @@ export default async function ContributeGuide() {
   return (
     <>
       <Navigation />
-      <Document data={htmlData} aside={aside} endpoint="Contribute Guide" />
+      <Document data={htmlData} aside={aside} endpoint="Release Notes" />
     </>
   );
 }
