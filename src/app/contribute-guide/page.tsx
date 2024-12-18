@@ -4,9 +4,10 @@ import { Converter } from 'showdown';
 import aside from './aside.json';
 
 export default async function ContributeGuide() {
-  const fetchMarkdownFiles = async (files: string[]) => {
+  const fetchMarkdownFiles = async () => {
     try {
       const url = process.env.NEXT_PUBLIC_HOST;
+      const files = ['overview', 'about_dashboard', 'about_interactions', 'how_to_render', 'kinds_of_websocket_events'];
       const promises = files.map(file =>
         fetch(`${url}/gamulpung-client/guide/en/of_contribute/${file}.md`).then(res => {
           if (!res.ok) throw new Error(`Failed to fetch ${file}`);
@@ -20,9 +21,8 @@ export default async function ContributeGuide() {
       return '';
     }
   };
-  const files = ['overview', 'about_dashboard', 'about_interactions', 'how_to_render', 'kinds_of_websocket_events'];
 
-  const markdownData = await fetchMarkdownFiles(files);
+  const markdownData = await fetchMarkdownFiles();
   const markdownConverter = new Converter();
   markdownConverter.setOption('tables', true);
   const htmlData = markdownConverter.makeHtml(markdownData);

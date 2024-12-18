@@ -13,6 +13,7 @@
 }
 
 .nav {
+  $padding: 15svw;
   position: fixed;
   top: 0;
   left: 0;
@@ -25,7 +26,7 @@
     justify-content: space-between;
     display: flex;
     width: 100%;
-    padding: 0 168px;
+    padding: 0 $padding;
     align-items: center;
     .side {
       display: flex;
@@ -45,7 +46,7 @@
     font-weight: 900;
     display: flex;
     gap: 24px;
-    padding: 10px 168px;
+    padding: 10px $padding;
     margin-left: 85px;
     a {
       color: black;
