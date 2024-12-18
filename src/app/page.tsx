@@ -8,9 +8,9 @@ export default function Home() {
       <Navigation />
       <div className={S.welcome}>
         <h2>Welcome to</h2>
-        <h1>Gamulpung</h1>
+        <h1>GAMULPUNG💣</h1>
         <Link href="/play">
-          <button>Play</button>
+          <button>PLAY</button>
         </Link>
       </div>
     </div>
