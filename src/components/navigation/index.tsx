@@ -20,7 +20,7 @@ export default function Navigation() {
           </Link>
         </div>
         <div className={S.side}>
-          <Link href="/contribute-guide">
+          <Link href="/documents/contribute-guide">
             <Image src="/gamulpung-client/contributeButton.svg" alt="Contribute" width={158} height={55} />
           </Link>
           <Link href="/play">
@@ -32,13 +32,13 @@ export default function Navigation() {
         {isMenuOpen && (
           <div className={S.menu}>
             <div>
-              <Link href="/how-to-play">
+              <Link href="/documents/how-to-play">
                 <p>How to play</p>
               </Link>
-              <Link href="/contribute-guide">
+              <Link href="/documents/contribute-guide">
                 <p>Contribute</p>
               </Link>
-              <Link href="/release-notes">
+              <Link href="/documents/release-notes">
                 <p>Releases</p>
               </Link>
             </div>
