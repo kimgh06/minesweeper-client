@@ -1,7 +1,6 @@
 import Document from '@/components/document';
 import Navigation from '@/components/navigation';
 import { Converter } from 'showdown';
-import aside from '../docsPath.json';
 
 export default async function ContributeGuide() {
   const fetchMarkdownFiles = async () => {
@@ -30,7 +29,7 @@ export default async function ContributeGuide() {
   return (
     <>
       <Navigation />
-      <Document data={htmlData} aside={aside} endpoint="How to Play" />
+      <Document data={htmlData} endpoint="How to Play" />
     </>
   );
 }

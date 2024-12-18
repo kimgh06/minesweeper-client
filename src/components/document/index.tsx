@@ -1,12 +1,10 @@
 import Link from 'next/link';
 import S from './style.module.scss';
+import aside from './docsPath.json';
 
-interface AsideType {
-  [key: string]: { [key: string]: string };
-}
-
-export default function Document({ endpoint, data, aside }: { endpoint: string; data: string; aside: AsideType }) {
+export default function Document({ endpoint, data }: { endpoint: string; data: string }) {
   const url = process.env.NEXT_PUBLIC_HOST;
+
   return (
     <div className={S.document}>
       <aside className={S.aside}>
@@ -15,7 +13,7 @@ export default function Document({ endpoint, data, aside }: { endpoint: string; 
             <details key={key} open={endpoint === key}>
               <summary>{key}</summary>
               <ul>
-                {Object.entries(aside[key]).map(([value, href]) => (
+                {Object.entries(aside[key as keyof typeof aside]).map(([value, href]) => (
                   <Link href={`${url}/${key.replaceAll(/ /g, '-').toLowerCase()}${href}`} key={value}>
                     <li>{value}</li>
                   </Link>
