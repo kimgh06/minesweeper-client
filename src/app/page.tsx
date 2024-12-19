@@ -17,7 +17,7 @@ export default function Home() {
       <div className={S.rules}>
         <h1>How to Play</h1>
         {data?.data.map(step => (
-          <StepVideo key={step.id} num={step.id} text={step.descriptsion} source={step.gif} />
+          <StepVideo key={step.id} num={step.id} text={step.description} source={step.gif} />
         ))}
       </div>
       <div className={S.contribute}>
