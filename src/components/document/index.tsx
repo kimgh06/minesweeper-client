@@ -14,7 +14,7 @@ export default function Document({ endpoint, data }: { endpoint: string; data: s
               <summary>{key}</summary>
               <ul>
                 {Object.entries(aside[key as keyof typeof aside]).map(([value, href]) => (
-                  <Link href={`${url}/${key.replaceAll(/ /g, '-').toLowerCase()}${href}`} key={value}>
+                  <Link href={`${url}/documents/${key.replaceAll(/ /g, '-').toLowerCase()}${href}`} key={value}>
                     <li>{value}</li>
                   </Link>
                 ))}
