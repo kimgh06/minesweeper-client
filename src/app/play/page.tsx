@@ -1,6 +1,5 @@
 'use client';
 /** style */
-import './globals.css';
 import S from './page.module.scss';
 
 /** hooks */
@@ -117,11 +116,16 @@ export default function Play() {
 
   /** Re-connect websocket when websocket is closed state. */
   useEffect(() => {
+    document.documentElement.style.overflow = 'hidden';
+
     if (!isOpen && startPoint.x !== 0 && startPoint.y !== 0 && endPoint.x !== 0 && endPoint.y) {
       connect(
         webSocketUrl + `?view_width=${endPoint.x - startPoint.x + 1}&view_height=${endPoint.y - startPoint.y + 1}`,
       );
     }
+    return () => {
+      document.documentElement.style.overflow = 'auto';
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, startPoint, endPoint]);
 

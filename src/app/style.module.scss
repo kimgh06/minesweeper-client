@@ -13,8 +13,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  font-family: 'CookieRun-Regular';
   .welcome {
-    font-family: 'CookieRun-Regular';
     display: flex;
     color: white;
     width: 100%;
@@ -40,5 +40,7 @@
       font-size: 20px;
       cursor: pointer;
     }
+  }
+  .rules {
   }
 }
