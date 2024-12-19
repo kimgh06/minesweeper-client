@@ -64,5 +64,21 @@
       flex-direction: column;
       gap: 20px;
     }
+    li {
+      margin-left: 30px;
+    }
+    code {
+      font-family: 'Pretendard-Regular';
+      color: #8ba91f;
+      background: linear-gradient(#e9f6b9, #f1fad1);
+      padding: 5px;
+      border-radius: 5px;
+    }
+    th {
+      text-align: left;
+    }
+    td {
+      padding: 7px 0;
+    }
   }
 }
