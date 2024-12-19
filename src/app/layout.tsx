@@ -21,12 +21,12 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://gamultong.github.io/minesweeper-client/',
+    url: 'https://gamultong.github.io/gamulpung-client/',
     siteName: 'Minesweeper',
     images: [
       {
-        url: '/minesweeper-client/icon.png',
-        alt: 'Minesweeper',
+        url: '/gamulpung-client/ogimage.png',
+        alt: 'Gamulpung',
       },
     ],
   },
