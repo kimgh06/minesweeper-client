@@ -43,9 +43,15 @@ export default function Navigation() {
               </Link>
             </div>
             <div>
-              <p>English</p>
-              <p>한국어</p>
-              <p>日本語</p>
+              <Link href="?lang=en">
+                <p>English</p>
+              </Link>
+              <Link href="?lang=ko">
+                <p>한국어</p>
+              </Link>
+              {/* <Link href="?lang=ja">
+                <p>日本語</p>
+              </Link> */}
             </div>
           </div>
         )}

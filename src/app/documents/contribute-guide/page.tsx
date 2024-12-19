@@ -2,10 +2,10 @@ import Document from '@/components/document';
 import { Converter } from 'showdown';
 
 export default async function ContributeGuide({ searchParams }: { searchParams: { lang: string | undefined } }) {
+  const lang = searchParams.lang || 'en';
   const fetchMarkdownFiles = async () => {
     try {
       const url = process.env.NEXT_PUBLIC_HOST;
-      const lang = searchParams.lang || 'en';
       const files = ['overview', 'about_dashboard', 'about_interactions', 'how_to_render', 'kinds_of_websocket_events'];
       const promises = files.map(file =>
         fetch(`${url}/docs/${lang}/of_contribute/${file}.md`).then(res => {
@@ -28,7 +28,7 @@ export default async function ContributeGuide({ searchParams }: { searchParams: 
 
   return (
     <>
-      <Document data={htmlData} endpoint="Contribute Guide" />
+      <Document data={htmlData} lang={lang} endpoint="Contribute Guide" />
     </>
   );
 }
