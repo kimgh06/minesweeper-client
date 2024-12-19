@@ -2,7 +2,7 @@ import Link from 'next/link';
 import S from './style.module.scss';
 import aside from './docsPath.json';
 
-export default function Document({ endpoint, data }: { endpoint: string; data: string }) {
+export default function Document({ endpoint, data, lang }: { endpoint: string; data: string; lang: string }) {
   const url = process.env.NEXT_PUBLIC_HOST;
 
   return (
@@ -14,7 +14,10 @@ export default function Document({ endpoint, data }: { endpoint: string; data: s
               <summary>{key}</summary>
               <ul>
                 {Object.entries(aside[key as keyof typeof aside]).map(([value, href]) => (
-                  <Link href={`${url}/documents/${key.replaceAll(/ /g, '-').toLowerCase()}${href}`} key={value}>
+                  <Link
+                    href={`${url}/documents/${key.replaceAll(/ /g, '-').toLowerCase()}?lang=${lang}${href}`}
+                    key={value}
+                  >
                     <li>{value}</li>
                   </Link>
                 ))}

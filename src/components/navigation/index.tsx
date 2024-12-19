@@ -3,14 +3,17 @@ import Image from 'next/image';
 import S from './style.module.scss';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const lang = searchParams.get('lang');
   return (
     <nav className={S.nav} onPointerOver={() => setIsMenuOpen(true)} onPointerLeave={() => setIsMenuOpen(false)}>
       <div className={S.navigation}>
         <div className={`${S.side} ${S.gap}`}>
-          <Link href="/">
+          <Link href={`?lang=${lang}`}>
             <Image src="/gamulpung-client/icon.png" alt="Gamulpung" width={50} height={50} />
           </Link>
           <span>Introduce</span>
@@ -20,7 +23,7 @@ export default function Navigation() {
           </Link>
         </div>
         <div className={S.side}>
-          <Link href="/documents/contribute-guide">
+          <Link href={`/documents/contribute-guide?lang=${lang}`}>
             <Image src="/gamulpung-client/contributeButton.svg" alt="Contribute" width={158} height={55} />
           </Link>
           <Link href="/play">
@@ -32,18 +35,18 @@ export default function Navigation() {
         {isMenuOpen && (
           <div className={S.menu}>
             <div>
-              <Link href="/documents/how-to-play">
+              <Link href={`/documents/how-to-play?lang=${lang}`}>
                 <p>How to play</p>
               </Link>
-              <Link href="/documents/contribute-guide">
+              <Link href={`/documents/contribute-guide?lang=${lang}`}>
                 <p>Contribute</p>
               </Link>
-              <Link href="/documents/release-notes">
+              <Link href={`/documents/release-notes?lang=${lang}`}>
                 <p>Releases</p>
               </Link>
             </div>
             <div>
-              <Link href="?lang=en">
+              <Link href="?">
                 <p>English</p>
               </Link>
               <Link href="?lang=ko">
