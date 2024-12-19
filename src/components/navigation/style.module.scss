@@ -1,0 +1,61 @@
+@font-face {
+  font-family: 'CookieRun-Regular';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/CookieRun-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Pretendard-Regular';
+  src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+}
+
+.nav {
+  $padding: 15svw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background-color: white;
+  color: black;
+  .navigation {
+    font-family: 'CookieRun-Regular';
+    justify-content: space-between;
+    display: flex;
+    width: 100%;
+    padding: 0 $padding;
+    align-items: center;
+    .side {
+      display: flex;
+      align-items: center;
+    }
+    .gap {
+      gap: 35px;
+    }
+    a {
+      height: 55px;
+      display: flex;
+      align-items: center;
+    }
+  }
+  .menu {
+    font-family: 'pretendard-regular';
+    font-weight: 900;
+    display: flex;
+    gap: 24px;
+    padding: 10px $padding;
+    margin-left: 85px;
+    a {
+      color: black;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 900;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}

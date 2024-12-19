@@ -1,0 +1,10 @@
+.stepVideo {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 50px 200px;
+  img {
+    background-color: white;
+    object-fit: scale-down;
+  }
+}

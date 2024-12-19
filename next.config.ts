@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   sassOptions: {
     silenceDeprecations: ['legacy-js-api'],
   },
+  images: {
+    unoptimized: true,
+  },
   output: 'export',
   basePath: '/gamulpung-client', // GitHub Pages에서 사용하는 경로로 설정
   assetPrefix: '/gamulpung-client/', // GitHub Pages에서 사용하는 경로로 설정

@@ -1,0 +1,33 @@
+@font-face {
+  font-family: 'LOTTERIACHAB';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/LOTTERIACHAB.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.footer {
+  $paddingwidth: 15svw;
+  $paddingPerpendicular: 5px;
+  $border: 20px;
+  background: linear-gradient(#e9f6b9, #f1fad1);
+  border: $border solid #e9faaa;
+  color: #8ba91f;
+  font-family: 'LOTTERIACHAB';
+  justify-content: space-between;
+  font-weight: bold;
+  display: flex;
+  width: 100%;
+  padding: $paddingPerpendicular calc($paddingwidth - $border);
+  align-items: center;
+  a {
+    cursor: pointer;
+    &:hover {
+      text-decoration: underline;
+    }
+    div {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+  }
+}

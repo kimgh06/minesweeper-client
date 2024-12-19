@@ -1,0 +1,45 @@
+
+{
+  "data": [
+    {
+      "id": 1,
+      "gif": "/gamulpung-client/mainvideos/moving.gif",
+      "description": {
+       "en": "Click Open Tile to move cursor",
+       "ko": "열린 타일을 클릭하여 커서를 이동하세요"
+      }
+    },
+    {
+      "id": 2,
+      "description": {
+       "en": "Click - and + buttons to zoom in and out",
+       "ko": "확대 및 축소 버튼을 클릭하여 확대 및 축소하세요"
+      },
+      "gif": "/gamulpung-client/mainvideos/zoom.gif"
+    },
+    {
+      "id": 3,
+      "description": {
+       "en": "Click left mouse button on closed tile to open tile",
+       "ko": "닫힌 타일에 왼쪽 마우스 버튼을 클릭하여 타일을 엽니다"
+      },
+      "gif": "/gamulpung-client/mainvideos/open_tile.gif"
+    },
+    {
+      "id": 4,
+      "description": {
+       "en": "Click right mouse button on open tile to flag tile",
+       "ko": "열린 타일에 오른쪽 마우스 버튼을 클릭하여 타일을 깃발로 표시하세요"
+      },
+      "gif": "/gamulpung-client/mainvideos/flag.gif"
+    },
+    {
+      "id": 5,
+      "description": {
+       "en": "If the tile you clicked is a mine, you get a stun for 3 minutes",
+       "ko": "클릭한 타일이 지뢰인 경우 3분간 스턴을 받습니다"
+      },
+      "gif": "/gamulpung-client/mainvideos/mine.gif"
+    }
+  ]
+}
