@@ -8,7 +8,7 @@ export default function StepVideo({ num, text, source: gif }: { num: number; tex
         <p>Step {num}</p>
         <p>{text}</p>
       </div>
-      <Image src={gif} alt={text} width={400} height={300} />
+      <Image src={gif} alt={text} width={400} height={225} />
     </div>
   );
 }

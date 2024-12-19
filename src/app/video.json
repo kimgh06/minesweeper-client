@@ -1,0 +1,30 @@
+
+{
+  "data": [
+    {
+      "id": 1,
+      "descriptsion": "Click Open Tile to move cursor",
+      "gif": "/gamulpung-client/mainvideos/moving.gif"
+    },
+    {
+      "id": 2,
+      "descriptsion": "Click + and - buttons to zoom your screen",
+      "gif": "/gamulpung-client/mainvideos/zoom.gif"
+    },
+    {
+      "id": 3,
+      "descriptsion": "Click Left Mouse Button on closed tile to open it",
+      "gif": "/gamulpung-client/mainvideos/open_tile.gif"
+    },
+    {
+      "id": 4,
+      "descriptsion": "Click Right Mouse Button on closed tile to flag it",
+      "gif": "/gamulpung-client/mainvideos/flag.gif"
+    },
+    {
+      "id": 5,
+      "descriptsion": "If the tile you clicked has a mine, you get a stun 3 minutes",
+      "gif": "/gamulpung-client/mainvideos/mine.gif"
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import S from './style.module.scss';
 import StepVideo from '@/components/stepVideo';
 import Image from 'next/image';
+import data from './video.json';
 
 export default function Home() {
   return (
@@ -15,8 +16,9 @@ export default function Home() {
       </div>
       <div className={S.rules}>
         <h1>How to Play</h1>
-        <StepVideo num={1} text="Download the game" source="/gamulpung-client/step1.mp4" />
-        <StepVideo num={1} text="Download the game" source="/gamulpung-client/step1.mp4" />
+        {data?.data.map(step => (
+          <StepVideo key={step.id} num={step.id} text={step.descriptsion} source={step.gif} />
+        ))}
       </div>
       <div className={S.contribute}>
         <div className={S.mainBlock}>
