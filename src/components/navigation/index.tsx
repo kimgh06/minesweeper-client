@@ -13,7 +13,7 @@ export default function Navigation() {
     <nav className={S.nav} onPointerOver={() => setIsMenuOpen(true)} onPointerLeave={() => setIsMenuOpen(false)}>
       <div className={S.navigation}>
         <div className={`${S.side} ${S.gap}`}>
-          <Link href={`?lang=${lang}`}>
+          <Link href={`/?lang=${lang}`}>
             <Image src="/gamulpung-client/icon.png" alt="Gamulpung" width={50} height={50} />
           </Link>
           <span>Introduce</span>
