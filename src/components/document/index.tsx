@@ -22,7 +22,7 @@ export default function Document({ endpoint, data }: { endpoint: string; data: s
             </details>
           ))}
       </aside>
-      <main className={S.main} dangerouslySetInnerHTML={{ __html: data }}></main>
+      <main className={S.main} dangerouslySetInnerHTML={{ __html: data }} />
     </div>
   );
 }

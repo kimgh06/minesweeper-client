@@ -1,5 +1,4 @@
 import Document from '@/components/document';
-import Navigation from '@/components/navigation';
 import { Converter } from 'showdown';
 
 export default async function ContributeGuide() {
@@ -28,7 +27,6 @@ export default async function ContributeGuide() {
 
   return (
     <>
-      <Navigation />
       <Document data={htmlData} endpoint="Contribute Guide" />
     </>
   );
