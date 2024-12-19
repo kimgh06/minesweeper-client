@@ -2,7 +2,7 @@
 This project is based on Microsoft's Minesweeper.
 You can control any tile to open, set a flag, or explode if the tile has a mine.
 
-## Goal of This Project.
+## The Goal of This Project.
 
 ## How to Test This Repository.
 
