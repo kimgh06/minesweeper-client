@@ -1,13 +1,14 @@
 import Document from '@/components/document';
 import { Converter } from 'showdown';
 
-export default async function ContributeGuide() {
+export default async function ContributeGuide({ searchParams }: { searchParams: { lang: string | undefined } }) {
   const fetchMarkdownFiles = async () => {
     try {
       const url = process.env.NEXT_PUBLIC_HOST;
       const files = ['rules_of_pung'];
+      const lang = searchParams.lang || 'en';
       const promises = files.map(file =>
-        fetch(`${url}/docs/en/play/${file}.md`).then(res => {
+        fetch(`${url}/docs/${lang}/play/${file}.md`).then(res => {
           if (!res.ok) throw new Error(`Failed to fetch ${file}`);
           return res.text();
         }),
