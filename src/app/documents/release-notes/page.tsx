@@ -1,7 +1,7 @@
 import Document from '@/components/document';
 import { Converter } from 'showdown';
 
-export default async function ContributeGuide({ searchParams }: { searchParams: { lang: string | undefined } }) {
+export default async function ContributeGuide({ searchParams }: { searchParams: { lang?: string | undefined } }) {
   const lang = (await searchParams?.lang) || 'en';
   const fetchMarkdownFiles = async () => {
     try {
