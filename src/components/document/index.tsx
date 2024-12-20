@@ -33,7 +33,7 @@ export default function Document({ endpoint, files, dir }: { endpoint: string; f
   useEffect(() => {
     fetchMarkdownFiles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [lang]);
 
   return (
     <div className={S.document}>
