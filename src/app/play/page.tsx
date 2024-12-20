@@ -33,7 +33,6 @@ export default function Play() {
     setColor,
     setPosition: setCursorPosition,
     zoom,
-    setZoom,
     originX: cursorOriginX,
     originY: cursorOriginY,
     setOringinPosition,
@@ -123,6 +122,7 @@ export default function Play() {
       document.documentElement.style.overflow = 'auto';
       disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /** Re-connect websocket when websocket is closed state. */
