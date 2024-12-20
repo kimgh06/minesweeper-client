@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     siteName: 'Minesweeper',
     images: [
       {
-        url: host + '/gamulpung-client/ogimage.png',
+        url: host + '/ogimage.png',
         alt: 'Gamulpung',
       },
     ],
