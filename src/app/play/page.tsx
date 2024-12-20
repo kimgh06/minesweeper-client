@@ -26,7 +26,7 @@ export default function Play() {
   const webSocketUrl = `${process.env.NEXT_PUBLIC_WS_HOST}/session`;
 
   /** stores */
-  const { isOpen, message, sendMessage, connect } = useWebSocketStore();
+  const { isOpen, message, sendMessage, connect, disconnect } = useWebSocketStore();
   const {
     x: cursorX,
     y: cursorY,
@@ -114,18 +114,22 @@ export default function Play() {
     return;
   };
 
-  /** Re-connect websocket when websocket is closed state. */
+  /** Disconnect websocket when Component has been unmounted */
   useEffect(() => {
     document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.documentElement.style.overflow = 'auto';
+      disconnect();
+    };
+  }, []);
 
+  /** Re-connect websocket when websocket is closed state. */
+  useEffect(() => {
     if (!isOpen && startPoint.x !== 0 && startPoint.y !== 0 && endPoint.x !== 0 && endPoint.y) {
       connect(
         webSocketUrl + `?view_width=${endPoint.x - startPoint.x + 1}&view_height=${endPoint.y - startPoint.y + 1}`,
       );
     }
-    return () => {
-      document.documentElement.style.overflow = 'auto';
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, startPoint, endPoint]);
 
