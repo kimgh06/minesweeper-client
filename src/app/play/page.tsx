@@ -33,6 +33,7 @@ export default function Play() {
     setColor,
     setPosition: setCursorPosition,
     zoom,
+    setZoom,
     originX: cursorOriginX,
     originY: cursorOriginY,
     setOringinPosition,
@@ -51,7 +52,6 @@ export default function Play() {
   const [cachingTiles, setCachingTiles] = useState<string[][]>([]);
   const [renderTiles, setRenderTiles] = useState<string[][]>([...cachingTiles.map(row => [...row])]);
   const [leftReviveTime, setLeftReviveTime] = useState<number>(-1);
-  const [isInitiated, setIsInitiated] = useState<boolean>(false);
 
   /**
    * Request Tiles
@@ -69,7 +69,7 @@ export default function Play() {
     end_y: number,
     type: 'R' | 'L' | 'U' | 'D' | 'A',
   ) => {
-    if (!isOpen || !isInitiated) return;
+    if (!isOpen) return;
     /** add Dummy data to originTiles */
     const [rowlength, columnlength] = [Math.abs(end_x - start_x) + 1, Math.abs(start_y - end_y) + 1];
 
@@ -131,8 +131,6 @@ export default function Play() {
       connect(
         webSocketUrl + `?view_width=${endPoint.x - startPoint.x + 1}&view_height=${endPoint.y - startPoint.y + 1}`,
       );
-    } else if (cursorOriginX !== 100 && cursorOriginY !== 100) {
-      setIsInitiated(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, startPoint, endPoint]);
@@ -244,6 +242,9 @@ export default function Play() {
           if (pointer) {
             setClickPosition(pointer.x, pointer.y, '');
           }
+          setTimeout(() => {
+            setZoom(1 - 0.0000000001);
+          }, 1);
           break;
         }
         /** Fetches information of other users. */
@@ -328,6 +329,7 @@ export default function Play() {
       Math.floor(Math.floor((windowHeight * renderRange) / newTileSize) / 2),
     ];
 
+    if (tilePaddingHeight < 1 || tilePaddingWidth < 1) return;
     setStartPoint({
       x: cursorX - tilePaddingWidth,
       y: cursorY - tilePaddingHeight,
@@ -381,14 +383,8 @@ export default function Play() {
       startPoint.y - heightReductionLength,
       'A',
     );
-    console.log(
-      startPoint.x - widthReductionLength,
-      endPoint.y + heightReductionLength,
-      endPoint.x + widthReductionLength,
-      startPoint.y - heightReductionLength,
-    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowWidth, windowHeight, zoom, renderRange, isOpen, isInitiated]);
+  }, [windowWidth, windowHeight, zoom, renderRange, isOpen]);
 
   /** When cursor position has changed. */
   useEffect(() => {
