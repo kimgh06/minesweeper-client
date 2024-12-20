@@ -27,7 +27,7 @@ export default function Navigation() {
             <Image src="/gamulpung-client/contributeButton.svg" alt="Contribute" width={158} height={55} />
           </Link>
           <Link href="/play">
-            <Image src="/gamulpung-client/playButton.svg" alt="Play" width={88} height={55} />
+            <Image src="/gamulpung-client/playbutton.svg" alt="Play" width={88} height={55} />
           </Link>
         </div>
       </div>
