@@ -648,7 +648,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   }, [tiles, loading, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color, zoom]);
 
   useEffect(() => {
-    if (cursors.length === 0) return;
     drawOtherUserCursors();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursors]);
