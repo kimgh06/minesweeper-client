@@ -52,6 +52,7 @@ export default function Play() {
   const [cachingTiles, setCachingTiles] = useState<string[][]>([]);
   const [renderTiles, setRenderTiles] = useState<string[][]>([...cachingTiles.map(row => [...row])]);
   const [leftReviveTime, setLeftReviveTime] = useState<number>(-1);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   /**
    * Request Tiles
@@ -69,7 +70,7 @@ export default function Play() {
     end_y: number,
     type: 'R' | 'L' | 'U' | 'D' | 'A',
   ) => {
-    if (!isOpen) return;
+    if (!isOpen || !isInitialized) return;
     /** add Dummy data to originTiles */
     const [rowlength, columnlength] = [Math.abs(end_x - start_x) + 1, Math.abs(start_y - end_y) + 1];
 
@@ -144,8 +145,8 @@ export default function Play() {
     // hex to byte
     const byte = hexArray.map(hex => parseInt(hex, 16).toString(2).padStart(8, '0')).join('');
     // byte 0 - IsOpen, 1 - IsMine, 2 - IsFlag, 3 ~ 4 color, 5 ~ 7 number of mines
-    const isOpen = byte[0] === '1';
-    if (isOpen) {
+    const isTileOpened = byte[0] === '1';
+    if (isTileOpened) {
       const isMine = byte[1] === '1';
       const number = parseInt(byte.slice(5), 2);
       return isMine ? 'B' : number === 0 ? 'O' : number.toString();
@@ -243,7 +244,7 @@ export default function Play() {
             setClickPosition(pointer.x, pointer.y, '');
           }
           setTimeout(() => {
-            setZoom(1 - 0.0000000001);
+            setIsInitialized(true);
           }, 1);
           break;
         }
@@ -346,10 +347,11 @@ export default function Play() {
     setTileSize(newTileSize);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowWidth, windowHeight, zoom, cursorOriginX, cursorOriginY, cursorX, cursorY, renderRange, isOpen]);
+  }, [windowWidth, windowHeight, zoom, cursorOriginX, cursorOriginY, cursorX, cursorY, renderRange, isInitialized]);
 
   /** Handling zoom event */
   useEffect(() => {
+    if (!isInitialized) return;
     const newTileSize = originTileSize * zoom;
     const [tileVisibleWidth, tileVisibleHeight] = [
       Math.floor((windowWidth * renderRange) / newTileSize),
@@ -374,7 +376,6 @@ export default function Play() {
       startPoint.y - heightReductionLength,
       'A',
     );
-    if (!isOpen) return;
     const body = JSON.stringify({
       event: 'set-view-size',
       payload: {
@@ -384,7 +385,7 @@ export default function Play() {
     });
     sendMessage(body);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowWidth, windowHeight, zoom, renderRange, isOpen]);
+  }, [windowWidth, windowHeight, zoom, renderRange, isInitialized]);
 
   /** When cursor position has changed. */
   useEffect(() => {
@@ -434,7 +435,7 @@ export default function Play() {
 
   /** Send user move event */
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isInitialized) return;
     const body = JSON.stringify({
       event: 'moving',
       payload: {
