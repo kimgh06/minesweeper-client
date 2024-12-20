@@ -1,10 +1,38 @@
 import Document from '@/components/document';
+import { Converter } from 'showdown';
 
-export default function ContributeGuide() {
-  const files = ['v0-1-1'];
+export default async function ContributeGuide({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const lang = (searchParams?.lang as string) || 'en';
+  const fetchMarkdownFiles = async () => {
+    try {
+      const url = process.env.NEXT_PUBLIC_HOST;
+      const files = ['v0-1-1'];
+      const promises = files.map(file =>
+        fetch(`${url}/docs/${lang}/release/${file}.md`).then(res => {
+          if (!res.ok) throw new Error(`Failed to fetch ${file}`);
+          return res.text();
+        }),
+      );
+      const values = await Promise.all(promises);
+      return values.join('\n');
+    } catch (error) {
+      console.error('Error fetching markdown files:', error);
+      return '';
+    }
+  };
+
+  const markdownData = await fetchMarkdownFiles();
+  const markdownConverter = new Converter();
+  markdownConverter.setOption('tables', true);
+  const htmlData = markdownConverter.makeHtml(markdownData);
+
   return (
     <>
-      <Document files={files} endpoint="Contribute Guide" />
+      <Document data={htmlData} endpoint="Release Notes" lang={lang} />
     </>
   );
 }
