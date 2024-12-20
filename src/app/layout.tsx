@@ -16,6 +16,8 @@ const geistMono = localFont({
   weight: '100 900',
 });
 
+const host = process.env.NEXT_PUBLIC_HOST;
+
 export const metadata: Metadata = {
   title: 'Minesweeper',
   description: 'A simple Minesweeper game',
@@ -26,7 +28,7 @@ export const metadata: Metadata = {
     siteName: 'Minesweeper',
     images: [
       {
-        url: '/gamulpung-client/ogimage.png',
+        url: host + '/gamulpung-client/ogimage.png',
         alt: 'Gamulpung',
       },
     ],
