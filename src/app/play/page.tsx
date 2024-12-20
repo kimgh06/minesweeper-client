@@ -51,6 +51,7 @@ export default function Play() {
   const [cachingTiles, setCachingTiles] = useState<string[][]>([]);
   const [renderTiles, setRenderTiles] = useState<string[][]>([...cachingTiles.map(row => [...row])]);
   const [leftReviveTime, setLeftReviveTime] = useState<number>(-1);
+  const [isInitiated, setIsInitiated] = useState<boolean>(false);
 
   /**
    * Request Tiles
@@ -68,7 +69,7 @@ export default function Play() {
     end_y: number,
     type: 'R' | 'L' | 'U' | 'D' | 'A',
   ) => {
-    if (!isOpen) return;
+    if (!isOpen || !isInitiated) return;
     /** add Dummy data to originTiles */
     const [rowlength, columnlength] = [Math.abs(end_x - start_x) + 1, Math.abs(start_y - end_y) + 1];
 
@@ -125,11 +126,13 @@ export default function Play() {
 
   /** Re-connect websocket when websocket is closed state. */
   useEffect(() => {
-    if (!isOpen && startPoint.x !== 0 && startPoint.y !== 0 && endPoint.x !== 0 && endPoint.y) {
+    if (!isOpen && startPoint.x !== endPoint.x && endPoint.y !== startPoint.y) {
       disconnect();
       connect(
         webSocketUrl + `?view_width=${endPoint.x - startPoint.x + 1}&view_height=${endPoint.y - startPoint.y + 1}`,
       );
+    } else if (cursorOriginX !== 100 && cursorOriginY !== 100) {
+      setIsInitiated(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, startPoint, endPoint]);
@@ -378,8 +381,14 @@ export default function Play() {
       startPoint.y - heightReductionLength,
       'A',
     );
+    console.log(
+      startPoint.x - widthReductionLength,
+      endPoint.y + heightReductionLength,
+      endPoint.x + widthReductionLength,
+      startPoint.y - heightReductionLength,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowWidth, windowHeight, zoom, renderRange, isOpen]);
+  }, [windowWidth, windowHeight, zoom, renderRange, isOpen, isInitiated]);
 
   /** When cursor position has changed. */
   useEffect(() => {
