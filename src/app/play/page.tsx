@@ -345,15 +345,6 @@ export default function Play() {
     });
     setTileSize(newTileSize);
 
-    if (!isOpen) return;
-    const body = JSON.stringify({
-      event: 'set-view-size',
-      payload: {
-        width: Math.floor(Math.floor((windowWidth * renderRange) / newTileSize)),
-        height: Math.floor(Math.floor((windowHeight * renderRange) / newTileSize)),
-      },
-    });
-    sendMessage(body);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, cursorOriginX, cursorOriginY, cursorX, cursorY, renderRange, isOpen]);
 
@@ -383,6 +374,15 @@ export default function Play() {
       startPoint.y - heightReductionLength,
       'A',
     );
+    if (!isOpen) return;
+    const body = JSON.stringify({
+      event: 'set-view-size',
+      payload: {
+        width: Math.floor(Math.floor((windowWidth * renderRange) / newTileSize)),
+        height: Math.floor(Math.floor((windowHeight * renderRange) / newTileSize)),
+      },
+    });
+    sendMessage(body);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, renderRange, isOpen]);
 
