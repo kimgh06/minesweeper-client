@@ -126,6 +126,7 @@ export default function Play() {
   /** Re-connect websocket when websocket is closed state. */
   useEffect(() => {
     if (!isOpen && startPoint.x !== 0 && startPoint.y !== 0 && endPoint.x !== 0 && endPoint.y) {
+      disconnect();
       connect(
         webSocketUrl + `?view_width=${endPoint.x - startPoint.x + 1}&view_height=${endPoint.y - startPoint.y + 1}`,
       );
@@ -133,10 +134,10 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, startPoint, endPoint]);
 
-  /** decode Hex using two charactors
+  /** Parse Hex using two charactors
    * @param hex {string} - Hex string
    */
-  const decodeHex = (hex: string) => {
+  const parseHex = (hex: string) => {
     const hexArray = hex.match(/.{1,2}/g);
     if (!hexArray) return '';
     // hex to byte
@@ -166,7 +167,7 @@ export default function Play() {
       const sortedlist = unsortedTiles.slice(i * rowlength, (i + 1) * rowlength);
       for (let j = 0; j < rowlength / 2; j++) {
         const hex = sortedlist.slice(j * 2, j * 2 + 2);
-        tempTilelist[j] = decodeHex(hex);
+        tempTilelist[j] = parseHex(hex);
       }
       sortedTiles[i] = tempTilelist;
     }
