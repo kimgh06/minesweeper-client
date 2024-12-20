@@ -4,8 +4,7 @@ import StepVideo from '@/components/stepVideo';
 import Image from 'next/image';
 import data from './video.json';
 
-export default function Home({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
-  const lang = searchParams?.lang as string;
+export default function Home() {
   return (
     <div className={S.page}>
       <div className={S.welcome}>
@@ -18,7 +17,7 @@ export default function Home({ searchParams }: { searchParams?: { [key: string]:
       <div className={S.rules}>
         <h1>How to Play</h1>
         {data?.data.map(step => (
-          <StepVideo key={step.id} num={step.id} text={step.description} source={step.gif} lang={lang} />
+          <StepVideo key={step.id} num={step.id} text={step.description} source={step.gif} />
         ))}
       </div>
       <div className={S.contribute}>

@@ -1,20 +1,13 @@
+'use client';
 import Image from 'next/image';
 import S from './style.module.scss';
+import { useSearchParams } from 'next/navigation';
 
 interface lang {
   [key: string]: string;
 }
-export default function StepVideo({
-  num,
-  text,
-  source: gif,
-  lang,
-}: {
-  num: number;
-  text: lang;
-  source: string;
-  lang: string;
-}) {
+export default function StepVideo({ num, text, source: gif }: { num: number; text: lang; source: string }) {
+  const lang = useSearchParams().get('lang');
   return (
     <div className={S.stepVideo}>
       <div>
