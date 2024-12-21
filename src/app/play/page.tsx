@@ -129,9 +129,8 @@ export default function Play() {
   useEffect(() => {
     if (!isOpen && startPoint.x !== endPoint.x && endPoint.y !== startPoint.y) {
       disconnect();
-      connect(
-        webSocketUrl + `?view_width=${endPoint.x - startPoint.x + 1}&view_height=${endPoint.y - startPoint.y + 1}`,
-      );
+      const [view_width, view_height] = [endPoint.x - startPoint.x + 1, endPoint.y - startPoint.y + 1];
+      connect(webSocketUrl + `?view_width=${view_width}&view_height=${view_height}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, startPoint, endPoint]);
@@ -146,17 +145,12 @@ export default function Play() {
     const byte = hexArray.map(hex => parseInt(hex, 16).toString(2).padStart(8, '0')).join('');
     // byte 0 - IsOpen, 1 - IsMine, 2 - IsFlag, 3 ~ 4 color, 5 ~ 7 number of mines
     const isTileOpened = byte[0] === '1';
-    if (isTileOpened) {
-      const isMine = byte[1] === '1';
-      const number = parseInt(byte.slice(5), 2);
-      return isMine ? 'B' : number === 0 ? 'O' : number.toString();
-    }
+    const isMine = byte[1] === '1';
     const isFlag = byte[2] === '1';
-    /** 00 red, 01 yellow, 10 blue, 11 purple */
-    const color = parseInt(byte.slice(3, 5), 2).toString();
-    if (isFlag) {
-      return 'F' + color;
-    }
+    const color = parseInt(byte.slice(3, 5), 2).toString(); /** 00 red, 01 yellow, 10 blue, 11 purple */
+    const number = parseInt(byte.slice(5), 2);
+    if (isTileOpened) return isMine ? 'B' : number === 0 ? 'O' : number.toString();
+    if (isFlag) return 'F' + color;
     return 'C';
   };
 
