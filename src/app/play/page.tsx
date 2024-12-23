@@ -154,8 +154,7 @@ export default function Play() {
     return 'C';
   };
 
-  const replaceTiles = (end_x: number, end_y: number, start_x: number, start_y: number, unsortedTiles: string) => {
-    if (unsortedTiles.length === 0) return;
+  const sortTiles = (end_x: number, end_y: number, start_x: number, start_y: number, unsortedTiles: string) => {
     const [rowlength, columnlength] = [Math.abs(end_x - start_x + 1) * 2, Math.abs(start_y - end_y + 1)];
     const sortedTiles: string[][] = [];
     for (let i = 0; i < columnlength; i++) {
@@ -169,11 +168,30 @@ export default function Play() {
     }
     /** The y-axis is reversed.*/
     sortedTiles.reverse();
+    return { rowlength, columnlength, sortedTiles };
+  };
+
+  const replaceTiles = (
+    end_x: number,
+    end_y: number,
+    start_x: number,
+    start_y: number,
+    unsortedTiles: string,
+    type: 'All' | 'PART',
+  ) => {
+    if (unsortedTiles.length === 0) return;
+    const { rowlength, columnlength, sortedTiles } = sortTiles(end_x, end_y, start_x, start_y, unsortedTiles);
     /** Replace dummy data according to coordinates */
     const newTiles = [...cachingTiles];
     for (let i = 0; i < columnlength; i++) {
-      /** Move down only when receiving tiles from below. */
-      const rowIndex = i + (cursorY < end_y ? endPoint.y - startPoint.y - columnlength + 1 : 0);
+      let rowIndex = i;
+      if (type === 'All') {
+        /** Move down only when receiving tiles from below. */
+        rowIndex += cursorY < end_y ? endPoint.y - startPoint.y - columnlength + 1 : 0;
+      }
+      if (type === 'PART') {
+        rowIndex += end_y - startPoint.y;
+      }
       newTiles[rowIndex] = newTiles[rowIndex] ?? [];
       for (let j = 0; j < rowlength; j++) {
         let tile = sortedTiles[i][j];
@@ -201,7 +219,7 @@ export default function Play() {
             start_p: { x: start_x, y: start_y },
             tiles: unsortedTiles,
           } = payload;
-          replaceTiles(end_x, end_y, start_x, start_y, unsortedTiles);
+          replaceTiles(end_x, end_y, start_x, start_y, unsortedTiles, 'All');
           break;
         }
         /** When receiving unrequested tiles when sending tile open event */
@@ -233,7 +251,7 @@ export default function Play() {
             start_p: { x: start_x, y: start_y },
             tiles,
           } = payload;
-          replaceTiles(end_x, end_y, start_x, start_y, tiles);
+          replaceTiles(end_x, end_y, start_x, start_y, tiles, 'PART');
           break;
         }
         /** Fetches own information only once when connected. */
