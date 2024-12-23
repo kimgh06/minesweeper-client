@@ -204,28 +204,36 @@ export default function Play() {
           replaceTiles(end_x, end_y, start_x, start_y, unsortedTiles);
           break;
         }
-        /** When receiving unrequested tiles & when sending tile open event */
-        case 'flag-set':
-        case 'tile-updated': {
-          setCachingTiles(tiles => {
-            const {
-              position: { x, y },
-              tile: { color, is_flag, is_mine, is_open: is_tile_open, number },
-            } = payload;
-            const newTiles = [...tiles];
-            let data = '';
-            if (is_tile_open) {
-              if (is_mine) {
-                data = 'B';
-              } else {
-                data = number?.toString() ?? 'O';
-              }
-            } else {
-              data = (is_flag ? 'F' + color : 'C') + ((x + y) % 2 === 0 ? '0' : '1');
-            }
-            newTiles[y - startPoint.y][x - startPoint.x] = data;
-            return newTiles;
-          });
+        /** When receiving unrequested tiles when sending tile open event */
+        case 'flag-set': {
+          const {
+            position: { x, y },
+            is_set,
+            color,
+          } = payload;
+          const newTiles = [...cachingTiles];
+          newTiles[y - startPoint.y][x - startPoint.x] = (is_set ? 'F' + color : 'C') + ((x + y) % 2 === 0 ? '0' : '1');
+          setCachingTiles(newTiles);
+          break;
+        }
+        case 'single-tile-opened': {
+          const {
+            position: { x, y },
+            tile,
+          } = payload;
+          const newTiles = [...cachingTiles];
+          const newTile = parseHex(tile);
+          newTiles[y - startPoint.y][x - startPoint.x] = newTile;
+          setCachingTiles(newTiles);
+          break;
+        }
+        case 'tiles-opened': {
+          const {
+            end_p: { x: end_x, y: end_y },
+            start_p: { x: start_x, y: start_y },
+            tiles,
+          } = payload;
+          replaceTiles(end_x, end_y, start_x, start_y, tiles);
           break;
         }
         /** Fetches own information only once when connected. */
@@ -289,6 +297,11 @@ export default function Play() {
             newCursors.splice(index, 1);
           }
           setCursors(newCursors);
+          break;
+        }
+        case 'error': {
+          const { msg } = payload;
+          console.error(msg);
           break;
         }
         default: {
