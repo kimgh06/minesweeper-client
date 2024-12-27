@@ -125,10 +125,15 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** Re-connect websocket when websocket is closed state. */
+  /**
+   * Initialize
+   * Re-connect websocket when websocket is closed state.
+   * */
   useEffect(() => {
     if (!isOpen && startPoint.x !== endPoint.x && endPoint.y !== startPoint.y) {
       disconnect();
+      setLeftReviveTime(-1);
+      setIsInitialized(false);
       const [view_width, view_height] = [endPoint.x - startPoint.x + 1, endPoint.y - startPoint.y + 1];
       connect(webSocketUrl + `?view_width=${view_width}&view_height=${view_height}`);
     }
