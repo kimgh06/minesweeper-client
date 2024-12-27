@@ -33,6 +33,7 @@ export default function Play() {
     setColor,
     setPosition: setCursorPosition,
     zoom,
+    setZoom,
     originX: cursorOriginX,
     originY: cursorOriginY,
     setOringinPosition,
@@ -68,7 +69,7 @@ export default function Play() {
     const [rowlength, columnlength] = [Math.abs(end_x - start_x) + 1, Math.abs(start_y - end_y) + 1];
 
     setCachingTiles(tiles => {
-      const newTiles = [...tiles];
+      let newTiles = [...tiles];
       switch (type) {
         case 'U':
           for (let i = 0; i < columnlength; i++) {
@@ -83,17 +84,13 @@ export default function Play() {
           }
           break;
         case 'L':
-          for (let i = 0; i < columnlength; i++) {
-            newTiles[i] = [...Array(rowlength).fill('??'), ...newTiles[i].slice(0, -1)];
-          }
+          for (let i = 0; i < columnlength; i++) newTiles[i] = [...Array(rowlength).fill('??'), ...newTiles[i].slice(0, -1)];
           break;
         case 'R':
-          for (let i = 0; i < columnlength; i++) {
-            newTiles[i] = [...newTiles[i].slice(rowlength, newTiles[0].length), ...Array(rowlength).fill('??')];
-          }
+          for (let i = 0; i < columnlength; i++) newTiles[i] = [...newTiles[i].slice(rowlength, newTiles[0].length), ...Array(rowlength).fill('??')];
           break;
         case 'A':
-          return Array.from({ length: columnlength }, () => Array.from({ length: rowlength }, () => '??'));
+          newTiles = Array.from({ length: columnlength }, () => Array.from({ length: rowlength }, () => '??'));
       }
       return newTiles;
     });
@@ -112,6 +109,8 @@ export default function Play() {
   /** Disconnect websocket when Component has been unmounted */
   useEffect(() => {
     document.documentElement.style.overflow = 'hidden';
+    setIsInitialized(false);
+    setZoom(1);
     return () => {
       document.documentElement.style.overflow = 'auto';
       disconnect();
@@ -125,9 +124,7 @@ export default function Play() {
    * */
   useEffect(() => {
     if (!isOpen && startPoint.x !== endPoint.x && endPoint.y !== startPoint.y) {
-      disconnect();
       setLeftReviveTime(-1);
-      setIsInitialized(false);
       const [view_width, view_height] = [endPoint.x - startPoint.x + 1, endPoint.y - startPoint.y + 1];
       connect(webSocketUrl + `?view_width=${view_width}&view_height=${view_height}`);
     }
@@ -445,6 +442,7 @@ export default function Play() {
       <CanvasRenderer
         paddingTiles={renderRange}
         tiles={renderTiles}
+        setCachingTiles={setCachingTiles}
         tileSize={tileSize}
         startPoint={renderStartPoint}
         cursorOriginX={cursorOriginX}

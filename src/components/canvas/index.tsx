@@ -1,6 +1,6 @@
 'use client';
 import S from './style.module.scss';
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, Dispatch, SetStateAction } from 'react';
 import Paths from '@/assets/paths.json';
 
 import useScreenSize from '@/hooks/useScreenSize';
@@ -34,6 +34,7 @@ interface CanvasRendererProps {
   cursorOriginY: number;
   paddingTiles: number;
   startPoint: { x: number; y: number };
+  setCachingTiles: Dispatch<SetStateAction<string[][]>>;
 }
 
 interface Path {
@@ -60,15 +61,13 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   cursorOriginX,
   cursorOriginY,
   startPoint,
+  setCachingTiles,
 }) => {
   /** constants */
   const movingSpeed = 200; // milliseconds
   const animationFrames = 30; // frames
   const [relativeX, relativeY] = [cursorOriginX - startPoint.x, cursorOriginY - startPoint.y];
-  const [tilePaddingWidth, tilePaddingHeight] = [
-    ((paddingTiles - 1) * relativeX) / paddingTiles,
-    ((paddingTiles - 1) * relativeY) / paddingTiles,
-  ];
+  const [tilePaddingWidth, tilePaddingHeight] = [((paddingTiles - 1) * relativeX) / paddingTiles, ((paddingTiles - 1) * relativeY) / paddingTiles];
   const { boomPaths, cursorPaths, flagPaths, tileColors, countColors } = Paths;
   const cursorColors: { [key: string]: string } = {
     red: '#FF4D00',
@@ -165,10 +164,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           return;
         }
         countFrame += 1 / animationFrames;
-        const [translateX, translateY] = [
-          dx * (tileSize - countFrame * tileSize),
-          dy * (tileSize - countFrame * tileSize),
-        ];
+        const [translateX, translateY] = [dx * (tileSize - countFrame * tileSize), dy * (tileSize - countFrame * tileSize)];
         for (const canvas of currentRefs) canvas.style.transform = `translate(${translateX}px, ${translateY}px)`;
       }, movingSpeed / animationFrames);
     };
@@ -220,10 +216,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const [clickX, clickY] = [event.clientX - rectLeft, event.clientY - rectTop];
 
     // Transform canvas coordinate to relative coordinate
-    const [tileArrayX, tileArrayY] = [
-      Math.floor(clickX / tileSize + tilePaddingWidth),
-      Math.floor(clickY / tileSize + tilePaddingHeight),
-    ];
+    const [tileArrayX, tileArrayY] = [Math.floor(clickX / tileSize + tilePaddingWidth), Math.floor(clickY / tileSize + tilePaddingHeight)];
     // Transform canvas coordinate to absolute coordinate
     const [tileX, tileY] = [Math.round(tileArrayX + startPoint.x), Math.round(tileArrayY + startPoint.y)];
     // Getting content of clicked tile
@@ -232,6 +225,11 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     setClickPosition(tileX, tileY, clickedTileContent);
 
     const clickType = event.buttons === 2 ? 'SPECIAL_CLICK' : 'GENERAL_CLICK';
+    if (movementInterval.current) {
+      cancelCurrentMovement();
+      setCachingTiles(tiles);
+    }
+
     if (clickType === 'GENERAL_CLICK' && !(clickedTileContent?.includes('F') || clickedTileContent?.includes('C'))) {
       moveCursor(tileArrayX, tileArrayY);
     }
@@ -271,7 +269,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
    * @param startY y position of start point
    * @param targetX x position of target point
    * @param targetY y position of target point
-   * */ const findPathUsingAStar = (startX: number, startY: number, targetX: number, targetY: number) => {
+   * */
+  const findPathUsingAStar = (startX: number, startY: number, targetX: number, targetY: number) => {
     // Function to get neighbors of a node
     function getNeighbors(grid: (TileNode | null)[][], node: TileNode) {
       const neighbors = [];
@@ -396,12 +395,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const compenX = cursorX - cursorOriginX - tilePaddingWidth - leftPaths.x;
     const compenY = cursorY - cursorOriginY - tilePaddingHeight - leftPaths.y;
 
-    const innerGradientValues: [number, number, number, number] = [
-      borderPixel,
-      borderPixel,
-      tileSize - borderPixel * 2,
-      tileSize - borderPixel * 2,
-    ];
+    const innerGradientValues: [number, number, number, number] = [borderPixel, borderPixel, tileSize - borderPixel * 2, tileSize - borderPixel * 2];
     const outerGradientValues: [number, number, number, number] = [0, 0, tileSize, tileSize];
 
     const gradientObject = {
@@ -548,12 +542,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         interactionCtx.beginPath();
         interactionCtx.strokeStyle = cursorColor;
         interactionCtx.lineWidth = borderPixel;
-        interactionCtx.strokeRect(
-          clickCanvasX + borderPixel / 2,
-          clickCanvasY + borderPixel / 2,
-          tileSize - borderPixel,
-          tileSize - borderPixel,
-        );
+        interactionCtx.strokeRect(clickCanvasX + borderPixel / 2, clickCanvasY + borderPixel / 2, tileSize - borderPixel, tileSize - borderPixel);
         interactionCtx.closePath();
         // Draw path
         if (paths.length > 0) {
@@ -617,20 +606,8 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         </div>
       ) : (
         <div className={S.canvasContainer}>
-          <canvas
-            className={S.canvas}
-            id="TileCanvas"
-            ref={canvasRefs.tileCanvasRef}
-            width={windowWidth}
-            height={windowHeight}
-          />
-          <canvas
-            className={S.canvas}
-            id="OtherCursors"
-            ref={canvasRefs.otherCursorsRef}
-            width={windowWidth}
-            height={windowHeight}
-          />
+          <canvas className={S.canvas} id="TileCanvas" ref={canvasRefs.tileCanvasRef} width={windowWidth} height={windowHeight} />
+          <canvas className={S.canvas} id="OtherCursors" ref={canvasRefs.otherCursorsRef} width={windowWidth} height={windowHeight} />
           <canvas
             className={S.canvas}
             id="InteractionCanvas"
@@ -638,7 +615,6 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             width={windowWidth}
             height={windowHeight}
             onClick={handleClick}
-            onMouseDown={handleClick}
           />
         </div>
       )}
