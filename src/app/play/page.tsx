@@ -201,8 +201,8 @@ export default function Play() {
         /** When receiving requested tiles */
         case 'tiles': {
           const { tiles, start_p, end_p } = payload;
-          const { start_x, start_y } = start_p;
-          const { end_x, end_y } = end_p;
+          const { x: start_x, y: start_y } = start_p;
+          const { x: end_x, y: end_y } = end_p;
           replaceTiles(end_x, end_y, start_x, start_y, tiles, 'All');
           break;
         }
@@ -225,8 +225,8 @@ export default function Play() {
         }
         case 'tiles-opened': {
           const { tiles, start_p, end_p } = payload;
-          const { start_x, start_y } = start_p;
-          const { end_x, end_y } = end_p;
+          const { x: start_x, y: start_y } = start_p;
+          const { x: end_x, y: end_y } = end_p;
           replaceTiles(end_x, end_y, start_x, start_y, tiles, 'PART');
           break;
         }
