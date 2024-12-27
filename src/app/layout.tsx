@@ -19,13 +19,14 @@ const geistMono = localFont({
 const host = process.env.NEXT_PUBLIC_HOST;
 
 export const metadata: Metadata = {
-  title: 'Minesweeper',
-  description: 'A simple Minesweeper game',
+  title: 'Gamulpung',
+  description: 'Gamulpung, Web Multi-play Infinity Minesweeper Game',
   openGraph: {
     type: 'website',
     locale: 'en_US',
+    alternateLocale: 'ko_KR',
     url: 'https://gamultong.github.io/gamulpung-client/',
-    siteName: 'Minesweeper',
+    siteName: 'Gamulpung',
     images: [
       {
         url: host + '/ogimage.png',
