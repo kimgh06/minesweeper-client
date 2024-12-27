@@ -133,6 +133,7 @@ export default function Play() {
     if (!isOpen && startPoint.x !== endPoint.x && endPoint.y !== startPoint.y) {
       disconnect();
       setLeftReviveTime(-1);
+      setIsInitialized(false);
       const [view_width, view_height] = [endPoint.x - startPoint.x + 1, endPoint.y - startPoint.y + 1];
       connect(webSocketUrl + `?view_width=${view_width}&view_height=${view_height}`);
     }
