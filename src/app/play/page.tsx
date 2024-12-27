@@ -62,13 +62,7 @@ export default function Play() {
    * @param end_y {number} - end y position
    * @param type {string} - Request type (R: Right tiles, L: Left tiles, U: Up tiles, D: Down tiles, A: All tiles)
    *  */
-  const requestTiles = (
-    start_x: number,
-    start_y: number,
-    end_x: number,
-    end_y: number,
-    type: 'R' | 'L' | 'U' | 'D' | 'A',
-  ) => {
+  const requestTiles = (start_x: number, start_y: number, end_x: number, end_y: number, type: 'R' | 'L' | 'U' | 'D' | 'A') => {
     if (!isOpen || !isInitialized) return;
     /** add Dummy data to originTiles */
     const [rowlength, columnlength] = [Math.abs(end_x - start_x) + 1, Math.abs(start_y - end_y) + 1];
@@ -176,36 +170,23 @@ export default function Play() {
     return { rowlength, columnlength, sortedTiles };
   };
 
-  const replaceTiles = (
-    end_x: number,
-    end_y: number,
-    start_x: number,
-    start_y: number,
-    unsortedTiles: string,
-    type: 'All' | 'PART',
-  ) => {
+  const replaceTiles = (end_x: number, end_y: number, start_x: number, start_y: number, unsortedTiles: string, type: 'All' | 'PART') => {
     if (unsortedTiles.length === 0) return;
     const { rowlength, columnlength, sortedTiles } = sortTiles(end_x, end_y, start_x, start_y, unsortedTiles);
     /** Replace dummy data according to coordinates */
     const newTiles = [...cachingTiles];
     for (let i = 0; i < columnlength; i++) {
       let rowIndex = i;
-      if (type === 'All') {
-        /** Move down only when receiving tiles from below. */
-        rowIndex += cursorY < end_y ? endPoint.y - startPoint.y - columnlength + 1 : 0;
-      }
-      if (type === 'PART') {
-        rowIndex += end_y - startPoint.y;
-      }
+      /** Move down only when receiving tiles from below. */
+      if (type === 'All' && cursorY < end_y) rowIndex += endPoint.y - startPoint.y - columnlength + 1;
+      if (type === 'PART') rowIndex += end_y - startPoint.y;
       newTiles[rowIndex] = newTiles[rowIndex] ?? [];
       for (let j = 0; j < rowlength; j++) {
         let tile = sortedTiles[i][j];
-        if (tile?.includes('C') || tile?.includes('F')) {
+        if (['C', 'F'].some(c => tile?.includes(c))) {
           tile += (i - end_y + j - start_x) % 2 === 0 ? '0' : '1';
         }
-        if (tile) {
-          newTiles[rowIndex][j + start_x - startPoint.x] = tile;
-        }
+        if (tile) newTiles[rowIndex][j + start_x - startPoint.x] = tile;
       }
     }
     setCachingTiles(newTiles);
@@ -219,43 +200,33 @@ export default function Play() {
       switch (event) {
         /** When receiving requested tiles */
         case 'tiles': {
-          const {
-            end_p: { x: end_x, y: end_y },
-            start_p: { x: start_x, y: start_y },
-            tiles: unsortedTiles,
-          } = payload;
-          replaceTiles(end_x, end_y, start_x, start_y, unsortedTiles, 'All');
+          const { tiles, start_p, end_p } = payload;
+          const { start_x, start_y } = start_p;
+          const { end_x, end_y } = end_p;
+          replaceTiles(end_x, end_y, start_x, start_y, tiles, 'All');
           break;
         }
         /** When receiving unrequested tiles when sending tile open event */
         case 'flag-set': {
-          const {
-            position: { x, y },
-            is_set,
-            color,
-          } = payload;
+          const { position, is_set, color } = payload;
+          const { x, y } = position;
           const newTiles = [...cachingTiles];
           newTiles[y - startPoint.y][x - startPoint.x] = (is_set ? 'F' + color : 'C') + ((x + y) % 2 === 0 ? '0' : '1');
           setCachingTiles(newTiles);
           break;
         }
         case 'single-tile-opened': {
-          const {
-            position: { x, y },
-            tile,
-          } = payload;
+          const { position, tile } = payload;
+          const { x, y } = position;
           const newTiles = [...cachingTiles];
-          const newTile = parseHex(tile);
-          newTiles[y - startPoint.y][x - startPoint.x] = newTile;
+          newTiles[y - startPoint.y][x - startPoint.x] = parseHex(tile);
           setCachingTiles(newTiles);
           break;
         }
         case 'tiles-opened': {
-          const {
-            end_p: { x: end_x, y: end_y },
-            start_p: { x: start_x, y: start_y },
-            tiles,
-          } = payload;
+          const { tiles, start_p, end_p } = payload;
+          const { start_x, start_y } = start_p;
+          const { end_x, end_y } = end_p;
           replaceTiles(end_x, end_y, start_x, start_y, tiles, 'PART');
           break;
         }
@@ -265,12 +236,8 @@ export default function Play() {
           setOringinPosition(position.x, position.y);
           setCursorPosition(position.x, position.y);
           setColor(color.toLowerCase());
-          if (pointer) {
-            setClickPosition(pointer.x, pointer.y, '');
-          }
-          setTimeout(() => {
-            setIsInitialized(true);
-          }, 1);
+          if (pointer) setClickPosition(pointer.x, pointer.y, '');
+          setTimeout(() => setIsInitialized(true), 0);
           break;
         }
         /** Fetches information of other users. */
@@ -282,13 +249,11 @@ export default function Play() {
         }
         case 'cursors': {
           const { cursors } = payload;
-          const newCursors = cursors.map(
-            ({ position: { x, y }, color }: { position: { x: number; y: number }; color: string }) => ({
-              x,
-              y,
-              color: color.toLowerCase(),
-            }),
-          );
+          const newCursors = cursors.map(({ position: { x, y }, color }: { position: { x: number; y: number }; color: string }) => ({
+            x,
+            y,
+            color: color.toLowerCase(),
+          }));
           addCursors(newCursors);
           break;
         }
@@ -302,9 +267,7 @@ export default function Play() {
             const { x, y, color: cursorColor } = cursor;
             return x === originX && y === originY && cursorColor === color.toLowerCase();
           });
-          if (index !== -1) {
-            newCursors[index] = { x: newX, y: newY, color: color.toLowerCase() };
-          }
+          if (index !== -1) newCursors[index] = { x: newX, y: newY, color: color.toLowerCase() };
           setCursors(newCursors);
           break;
         }
@@ -316,9 +279,7 @@ export default function Play() {
             const { x, y, color: cursorColor } = cursor;
             return x === position.x && y === position.y && cursorColor === color.toLowerCase();
           });
-          if (index !== -1) {
-            newCursors.splice(index, 1);
-          }
+          if (index !== -1) newCursors.splice(index, 1);
           setCursors(newCursors);
           break;
         }
@@ -356,8 +317,8 @@ export default function Play() {
   useEffect(() => {
     const newTileSize = originTileSize * zoom;
     const [tilePaddingWidth, tilePaddingHeight] = [
-      Math.floor(Math.floor((windowWidth * renderRange) / newTileSize) / 2),
-      Math.floor(Math.floor((windowHeight * renderRange) / newTileSize) / 2),
+      Math.floor((windowWidth * renderRange) / newTileSize / 2),
+      Math.floor((windowHeight * renderRange) / newTileSize / 2),
     ];
 
     if (tilePaddingHeight < 1 || tilePaddingWidth < 1) return;
@@ -448,18 +409,11 @@ export default function Play() {
       requestTiles(leftfrom, downfrom, leftto, upto, 'L');
       requestTiles(leftfrom, upfrom, rightto, upto, 'U');
       /** Right move */
-    } else if (widthExtendLength > 0) {
-      requestTiles(rightfrom, endPoint.y, rightto, startPoint.y, 'R');
-      /** Left move */
-    } else if (widthExtendLength < 0) {
-      requestTiles(leftfrom, endPoint.y, leftto, startPoint.y, 'L');
-      /** Down move */
-    } else if (heightExtendLength > 0) {
-      requestTiles(startPoint.x, downfrom, endPoint.x, downto, 'D');
-      /** Up move */
-    } else if (heightExtendLength < 0) {
-      requestTiles(startPoint.x, upfrom, endPoint.x, upto, 'U');
-    }
+    } else if (widthExtendLength > 0) requestTiles(rightfrom, endPoint.y, rightto, startPoint.y, 'R');
+    /** Left move */ else if (widthExtendLength < 0) requestTiles(leftfrom, endPoint.y, leftto, startPoint.y, 'L');
+    /** Down move */ else if (heightExtendLength > 0) requestTiles(startPoint.x, downfrom, endPoint.x, downto, 'D');
+    /** Up move */ else if (heightExtendLength < 0) requestTiles(startPoint.x, upfrom, endPoint.x, upto, 'U');
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursorX, cursorY]);
 
@@ -480,10 +434,7 @@ export default function Play() {
   }, [cursorOriginX, cursorOriginY]);
 
   useEffect(() => {
-    if (leftReviveTime < 1) return;
-    setTimeout(() => {
-      setLeftReviveTime(e => e - 1);
-    }, 1000);
+    if (leftReviveTime > 0) setTimeout(() => setLeftReviveTime(e => --e), 1000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leftReviveTime]);
 
