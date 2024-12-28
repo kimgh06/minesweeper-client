@@ -297,15 +297,11 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     /** initialize tiles */
     const [start, target] = [new TileNode(startX, startY), new TileNode(targetX, targetY)];
     const grid = [...tiles.map(row => [...row.map(() => null)])] as (TileNode | null)[][];
-    for (let i = 0; i < tiles.length; i++) {
-      for (let j = 0; j < tiles[i].length; j++) {
-        if (!tiles[i][j]?.includes('F') && !tiles[i][j]?.includes('C')) {
-          grid[i][j] = new TileNode(j, i);
-        } else {
-          grid[i][j] = null;
-        }
-      }
-    }
+    tiles.forEach((row, i) => {
+      row.forEach((tile, j) => {
+        if (!['F', 'C'].some(c => tile?.includes(c))) grid[i][j] = new TileNode(j, i);
+      });
+    });
 
     /** initialize open and close list */
     let openList = [start];
@@ -335,20 +331,11 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       /** Find neighbor nodes from current node. */
       const neighbors = getNeighbors(grid, current);
       for (const { node: neighbor, isDiagonal } of neighbors) {
-        if (closedList.includes(neighbor)) {
-          continue;
-        }
-
+        if (closedList.includes(neighbor)) continue;
         // Apply different cost for diagonal movement
-        const moveCost = isDiagonal ? 1.5 : 1;
-        const tempG = current.g + moveCost;
-
-        if (!openList.includes(neighbor)) {
-          openList.push(neighbor);
-        } else if (tempG >= neighbor.g) {
-          continue;
-        }
-
+        const tempG = current.g + (isDiagonal ? 1.5 : 1);
+        if (tempG >= neighbor.g) continue;
+        if (!openList.includes(neighbor)) openList.push(neighbor);
         neighbor.parent = current;
         neighbor.g = tempG;
         neighbor.h = Math.abs(neighbor.x - target.x) + Math.abs(neighbor.y - target.y);
@@ -428,9 +415,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     // draw tiles
     tiles?.forEach((row, rowIndex) => {
       row?.forEach((content, colIndex) => {
-        if (renderedTiles[rowIndex]?.[colIndex] === content) {
-          return;
-        }
+        if (renderedTiles[rowIndex]?.[colIndex] === content) return;
         const [x, y] = [(colIndex - tilePaddingWidth) * tileSize, (rowIndex - tilePaddingHeight) * tileSize];
         if (x < -tileSize || y < -tileSize || x > windowWidth + tileSize || y > windowHeight + tileSize) return;
 
@@ -469,25 +454,23 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               tileCtx.fillStyle = 'white';
             }
             tileCtx.fill(tileEdgeVector);
-
             // draw inner tile
             tileCtx.fillStyle = gradientObject.inner[isEven];
             tileCtx.fill(tileVector);
+            if (!content.includes('F')) break;
             // draw flag when flag is on the tile
-            if (content.includes('F')) {
-              tileCtx.restore();
-              tileCtx.save();
-              tileCtx.translate(x + tileSize / 6, y + tileSize / 6);
-              tileCtx.scale(zoom / 4.5, zoom / 4.5);
+            tileCtx.restore();
+            tileCtx.save();
+            tileCtx.translate(x + tileSize / 6, y + tileSize / 6);
+            tileCtx.scale(zoom / 4.5, zoom / 4.5);
 
-              /** flag color follows cursor color. */
-              tileCtx.fillStyle = cursorColors[content.slice(1, -1).toLowerCase() as keyof typeof cursorColors];
-              tileCtx.fill(cachedVectorImages?.flag.flag as Path2D);
+            /** flag color follows cursor color. */
+            tileCtx.fillStyle = cursorColors[content.slice(1, -1).toLowerCase() as keyof typeof cursorColors];
+            tileCtx.fill(cachedVectorImages?.flag.flag as Path2D);
 
-              // draw pole
-              tileCtx.fillStyle = gradientObject.flag;
-              tileCtx.fill(cachedVectorImages?.flag.pole as Path2D);
-            }
+            // draw pole
+            tileCtx.fillStyle = gradientObject.flag;
+            tileCtx.fill(cachedVectorImages?.flag.pole as Path2D);
             break;
           }
           /** Tile has been opend. */
@@ -564,38 +547,35 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
   /** Render */
   useEffect(() => {
-    if (loading) {
-      const lotteriaChabFont = new FontFace(
-        'LOTTERIACHAB',
-        "url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/LOTTERIACHAB.woff2') format('woff2')",
-      );
-
-      Promise.all([lotteriaChabFont.load()]).then(() => {
-        // Set vector images
-        setCachedVectorImages({
-          cursor: new Path2D(cursorPaths),
-          flag: {
-            flag: new Path2D(flagPaths[0]),
-            pole: new Path2D(flagPaths[1]),
-          },
-          boom: {
-            inner: new Path2D(boomPaths[0]),
-            outer: new Path2D(boomPaths[1]),
-          },
-        });
-        setLoading(false);
-        document.fonts.add(lotteriaChabFont);
-      });
+    if (!loading) {
+      renderTiles();
       return;
     }
-    renderTiles();
+    const lotteriaChabFont = new FontFace(
+      'LOTTERIACHAB',
+      "url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302@1.0/LOTTERIACHAB.woff2') format('woff2')",
+    );
+    Promise.all([lotteriaChabFont.load()]).then(() => {
+      // Set vector images
+      setCachedVectorImages({
+        cursor: new Path2D(cursorPaths),
+        flag: {
+          flag: new Path2D(flagPaths[0]),
+          pole: new Path2D(flagPaths[1]),
+        },
+        boom: {
+          inner: new Path2D(boomPaths[0]),
+          outer: new Path2D(boomPaths[1]),
+        },
+      });
+      setLoading(false);
+      document.fonts.add(lotteriaChabFont);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tiles, loading, tileSize, cursorOriginX, cursorOriginY, startPoint, clickX, clickY, color, zoom]);
 
-  useEffect(() => {
-    drawOtherUserCursors();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cursors]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => drawOtherUserCursors(), [cursors]);
 
   return (
     <>

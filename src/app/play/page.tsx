@@ -240,8 +240,8 @@ export default function Play() {
         /** Fetches information of other users. */
         case 'you-died': {
           const { revive_at } = payload;
-          const leftTime = new Date(revive_at)?.getTime() - Date.now();
-          setLeftReviveTime(Math.floor(leftTime / 1000));
+          const leftTime = Math.floor((new Date(revive_at)?.getTime() - Date.now()) / 1000);
+          setLeftReviveTime(leftTime);
           break;
         }
         case 'cursors': {
@@ -333,7 +333,6 @@ export default function Play() {
       y: cursorOriginY - tilePaddingHeight,
     });
     setTileSize(newTileSize);
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowWidth, windowHeight, zoom, cursorOriginX, cursorOriginY, cursorX, cursorY, renderRange, isInitialized]);
 
@@ -378,6 +377,8 @@ export default function Play() {
   /** When cursor position has changed. */
   useEffect(() => {
     const [widthExtendLength, heightExtendLength] = [cursorX - cursorOriginX, cursorY - cursorOriginY];
+    const [isLeft, isRight] = [widthExtendLength < 0, widthExtendLength > 0];
+    const [isUp, isDown] = [heightExtendLength < 0, heightExtendLength > 0];
     const { upfrom, upto, downfrom, downto, leftfrom, leftto, rightfrom, rightto } = {
       upfrom: startPoint.y - 1,
       upto: startPoint.y + heightExtendLength,
@@ -388,29 +389,22 @@ export default function Play() {
       rightfrom: endPoint.x + 1,
       rightto: endPoint.x + widthExtendLength,
     };
-
-    /** Bottom right */
-    if (widthExtendLength > 0 && heightExtendLength > 0) {
+    if (isRight && isDown) {
       requestTiles(rightfrom, downfrom, rightto, upto, 'R');
       requestTiles(leftfrom, downfrom, rightto, downto, 'D');
-      /** Bottom left */
-    } else if (widthExtendLength < 0 && heightExtendLength > 0) {
+    } else if (isLeft && isDown) {
       requestTiles(leftfrom, downfrom, leftto, upto, 'L');
       requestTiles(leftfrom, downfrom, rightto, downto, 'D');
-      /** Top right */
-    } else if (widthExtendLength > 0 && heightExtendLength < 0) {
+    } else if (isRight && isUp) {
       requestTiles(rightfrom, downfrom, rightto, upto, 'R');
       requestTiles(leftfrom, upfrom, rightto, upto, 'U');
-      /** Top left */
-    } else if (widthExtendLength < 0 && heightExtendLength < 0) {
+    } else if (isLeft && isUp) {
       requestTiles(leftfrom, downfrom, leftto, upto, 'L');
       requestTiles(leftfrom, upfrom, rightto, upto, 'U');
-      /** Right move */
-    } else if (widthExtendLength > 0) requestTiles(rightfrom, endPoint.y, rightto, startPoint.y, 'R');
-    /** Left move */ else if (widthExtendLength < 0) requestTiles(leftfrom, endPoint.y, leftto, startPoint.y, 'L');
-    /** Down move */ else if (heightExtendLength > 0) requestTiles(startPoint.x, downfrom, endPoint.x, downto, 'D');
-    /** Up move */ else if (heightExtendLength < 0) requestTiles(startPoint.x, upfrom, endPoint.x, upto, 'U');
-
+    } else if (isRight) requestTiles(rightfrom, endPoint.y, rightto, startPoint.y, 'R');
+    else if (isLeft) requestTiles(leftfrom, endPoint.y, leftto, startPoint.y, 'L');
+    else if (isDown) requestTiles(startPoint.x, downfrom, endPoint.x, downto, 'D');
+    else if (isUp) requestTiles(startPoint.x, upfrom, endPoint.x, upto, 'U');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursorX, cursorY]);
 
@@ -431,7 +425,7 @@ export default function Play() {
   }, [cursorOriginX, cursorOriginY]);
 
   useEffect(() => {
-    if (leftReviveTime > 0) setTimeout(() => setLeftReviveTime(e => --e), 1000);
+    setTimeout(() => setLeftReviveTime(e => (e > 0 ? --e : e)), 1000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leftReviveTime]);
 
