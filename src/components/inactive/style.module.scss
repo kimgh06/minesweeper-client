@@ -1,26 +1,28 @@
 @font-face {
   font-family: 'GeekbleMalang2WOFF2';
-  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/GeekbleMalang2WOFF2.woff2')
-    format('woff2');
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/GeekbleMalang2WOFF2.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
 }
 .inactive {
+  font-family: 'GeekbleMalang2WOFF2';
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 100svw;
   color: white;
   height: 100svh;
   background-color: rgba(0, 0, 0, 0.6);
   z-index: 2;
-  .alert {
-    font-family: 'GeekbleMalang2WOFF2';
-    position: absolute;
-    font-size: 20px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 20px;
+  font-size: 20px;
+  .alert,
+  .ad {
     background-color: rgba(0, 0, 0, 0.35);
     padding: 20px;
     border-radius: 10px;
@@ -32,5 +34,11 @@
     flex-direction: column;
     gap: 20px;
     padding: 30px;
+  }
+  .ad {
+    color: skyblue;
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
