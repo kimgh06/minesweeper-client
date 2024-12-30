@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     alternateLocale: 'ko_KR',
-    url: 'https://gamultong.github.io/gamulpung-client/',
+    url: 'https://gamulpung.vercel.app/',
     siteName: 'Gamulpung',
     images: [
       {
