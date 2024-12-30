@@ -7,7 +7,7 @@ export default function Footer() {
     <footer className={S.footer}>
       <Link href="/">
         <div>
-          <Image src="/gamulpung-client/icon.png" alt="Gamulpung" width={50} height={50} />
+          <Image src="/icon.png" alt="Gamulpung" width={50} height={50} />
           GAMULPUNG
         </div>
       </Link>
