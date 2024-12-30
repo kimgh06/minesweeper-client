@@ -24,7 +24,7 @@ export default function Navigation() {
           </Link>
         </div>
         <div className={S.side}>
-          <Link href={host + `/documents/contribute-guide?lang=${lang}`}>
+          <Link href={`/documents/contribute-guide?lang=${lang}`}>
             <Image src={host + '/contributeButton.svg'} alt="Contribute" width={158} height={55} />
           </Link>
           <Link href="/play">
