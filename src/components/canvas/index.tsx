@@ -594,7 +594,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             ref={canvasRefs.interactionCanvasRef}
             width={windowWidth}
             height={windowHeight}
-            onClick={handleClick}
+            onPointerDown={handleClick}
           />
         </div>
       )}
