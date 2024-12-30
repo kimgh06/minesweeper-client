@@ -8,13 +8,14 @@ interface lang {
 }
 export default function StepVideo({ num, text, source: gif }: { num: number; text: lang; source: string }) {
   const lang = useSearchParams().get('lang');
+  const host = process.env.NEXT_PUBLIC_HOST;
   return (
     <div className={S.stepVideo}>
       <div>
         <p>Step {num}</p>
         <p>{text[lang === 'ko' ? 'ko' : 'en']}</p>
       </div>
-      <Image src={gif} alt={gif} width={400} height={225} />
+      <Image src={host + gif} alt={gif} width={400} height={225} />
     </div>
   );
 }

@@ -9,12 +9,13 @@ export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const searchParams = useSearchParams();
   const lang = searchParams.get('lang') || 'en';
+  const host = process.env.NEXT_PUBLIC_HOST;
   return (
     <nav className={S.nav} onPointerOver={() => setIsMenuOpen(true)} onPointerLeave={() => setIsMenuOpen(false)}>
       <div className={S.navigation}>
         <div className={`${S.side} ${S.gap}`}>
           <Link href={`/?lang=${lang}`}>
-            <Image src="/gamulpung-client/icon.png" alt="Gamulpung" width={50} height={50} />
+            <Image src={host + '/gamulpung-client/icon.png'} alt="Gamulpung" width={50} height={50} />
           </Link>
           <span>Introduce</span>
           <span>Language</span>
@@ -23,11 +24,11 @@ export default function Navigation() {
           </Link>
         </div>
         <div className={S.side}>
-          <Link href={`/documents/contribute-guide?lang=${lang}`}>
-            <Image src="/gamulpung-client/contributeButton.svg" alt="Contribute" width={158} height={55} />
+          <Link href={host + `/documents/contribute-guide?lang=${lang}`}>
+            <Image src={host + '/gamulpung-client/contributeButton.svg'} alt="Contribute" width={158} height={55} />
           </Link>
           <Link href="/play">
-            <Image src="/gamulpung-client/playbutton.svg" alt="Play" width={88} height={55} />
+            <Image src={host + '/gamulpung-client/playbutton.svg'} alt="Play" width={88} height={55} />
           </Link>
         </div>
       </div>

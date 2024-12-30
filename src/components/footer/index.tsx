@@ -3,11 +3,12 @@ import S from './style.module.scss';
 import Link from 'next/link';
 
 export default function Footer() {
+  const host = process.env.NEXT_PUBLIC_HOST;
   return (
     <footer className={S.footer}>
       <Link href="/">
         <div>
-          <Image src="/gamulpung-client/icon.png" alt="Gamulpung" width={50} height={50} />
+          <Image src={host + '/gamulpung-client/icon.png'} alt="Gamulpung" width={50} height={50} />
           GAMULPUNG
         </div>
       </Link>

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import data from './video.json';
 
 export default function Home() {
+  const host = process.env.NEXT_PUBLIC_HOST;
   return (
     <div className={S.page}>
       <div className={S.welcome}>
@@ -27,7 +28,7 @@ export default function Home() {
             <button>Contribute</button>
           </Link>
         </div>
-        <Image src="/gamulpung-client/landingTile.svg" alt="tile" width={400} height={800} />
+        <Image src={host + '/gamulpung-client/landingTile.svg'} alt="tile" width={400} height={800} />
       </div>
     </div>
   );
