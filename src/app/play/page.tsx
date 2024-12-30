@@ -434,6 +434,7 @@ export default function Play() {
       {leftReviveTime > 0 && <Inactive time={leftReviveTime} />}
       <CanvasDashboard />
       <CanvasRenderer
+        leftReviveTime={leftReviveTime}
         paddingTiles={renderRange}
         tiles={renderTiles}
         setCachingTiles={setCachingTiles}

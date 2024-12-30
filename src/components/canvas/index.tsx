@@ -34,6 +34,7 @@ interface CanvasRendererProps {
   cursorOriginY: number;
   paddingTiles: number;
   startPoint: { x: number; y: number };
+  leftReviveTime: number;
   setCachingTiles: Dispatch<SetStateAction<string[][]>>;
 }
 
@@ -61,6 +62,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   cursorOriginX,
   cursorOriginY,
   startPoint,
+  leftReviveTime,
   setCachingTiles,
 }) => {
   /** constants */
@@ -610,7 +612,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           <div className={`${tiles.length < 1 ? S.loadingBar : S.loadComplete}`} />
         </div>
       ) : (
-        <div className={S.canvasContainer}>
+        <div className={`${S.canvasContainer} ${leftReviveTime > 0 ? S.vibration : ''}`}>
           <canvas className={S.canvas} id="TileCanvas" ref={canvasRefs.tileCanvasRef} width={windowWidth} height={windowHeight} />
           <canvas className={S.canvas} id="OtherCursors" ref={canvasRefs.otherCursorsRef} width={windowWidth} height={windowHeight} />
           <canvas
