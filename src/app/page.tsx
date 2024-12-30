@@ -27,7 +27,7 @@ export default function Home() {
             <button>Contribute</button>
           </Link>
         </div>
-        <Image src="/gamulpung-client/landingTile.svg" alt="tile" width={400} height={800} />
+        <Image src="/landingTile.svg" alt="tile" width={400} height={800} />
       </div>
     </div>
   );
