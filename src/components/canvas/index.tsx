@@ -236,10 +236,33 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       setCachingTiles(tiles);
     }
 
+    if (isAlreadyCursorNeighbor(tileX, tileY)) {
+      moveCursor(tileArrayX, tileArrayY, tileX, tileY, clickType);
+      clickEvent(tileX, tileY, clickType);
+      return;
+    }
+
     const { x, y } = findOpenedNeighbors(tileArrayX, tileArrayY);
     moveCursor(x, y, tileX, tileY, clickType);
-    clickEvent(tileX, tileY, clickType);
     return;
+  };
+
+  const isAlreadyCursorNeighbor = (x: number, y: number) => {
+    const directions = [
+      [-1, 0], // left
+      [0, -1], // up
+      [0, 1], // down
+      [1, 0], // right
+      [-1, -1], // left-up
+      [-1, 1], // left-down
+      [1, -1], // right-up
+      [1, 1], // right-down
+    ]; // 8-directional neighbors
+    for (const [dx, dy] of directions) {
+      const [nx, ny] = [cursorOriginX + dx, cursorOriginY + dy];
+      if (nx === x && ny === y) return true;
+    }
+    return false;
   };
 
   const findOpenedNeighbors = (x: number, y: number) => {
