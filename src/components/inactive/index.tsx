@@ -14,7 +14,7 @@ export default function Inactive({ time }: { time: number }) {
         </p>
       </div>
       <Link target="_blank" href={'https://forms.gle/Aub94WBWSKrwq9ud6'} className={S.ad}>
-        <Image src={host + '/gamulpung-client/review.png'} alt="review" width={300} height={100} />
+        <Image src={host + '/review.png'} alt="review" width={300} height={100} />
         기다리는 동안 간단한 설문 참여하기
       </Link>
     </div>

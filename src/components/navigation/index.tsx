@@ -15,7 +15,7 @@ export default function Navigation() {
       <div className={S.navigation}>
         <div className={`${S.side} ${S.gap}`}>
           <Link href={`/?lang=${lang}`}>
-            <Image src={host + '/gamulpung-client/icon.png'} alt="Gamulpung" width={50} height={50} />
+            <Image src={host + '/icon.png'} alt="Gamulpung" width={50} height={50} />
           </Link>
           <span>Introduce</span>
           <span>Language</span>
@@ -25,10 +25,10 @@ export default function Navigation() {
         </div>
         <div className={S.side}>
           <Link href={host + `/documents/contribute-guide?lang=${lang}`}>
-            <Image src={host + '/gamulpung-client/contributeButton.svg'} alt="Contribute" width={158} height={55} />
+            <Image src={host + '/contributeButton.svg'} alt="Contribute" width={158} height={55} />
           </Link>
           <Link href="/play">
-            <Image src={host + '/gamulpung-client/playbutton.svg'} alt="Play" width={88} height={55} />
+            <Image src={host + '/playbutton.svg'} alt="Play" width={88} height={55} />
           </Link>
         </div>
       </div>

@@ -8,7 +8,7 @@ export default function Home() {
   const host = process.env.NEXT_PUBLIC_HOST;
   return (
     <div className={S.page}>
-      <div className={S.welcome}>
+      <div className={S.welcome} style={{ backgroundImage: `url(${host}/main_photo.png)` }}>
         <h2>Welcome to</h2>
         <h1>GAMULPUNG💣</h1>
         <Link href="/play">
@@ -28,7 +28,7 @@ export default function Home() {
             <button>Contribute</button>
           </Link>
         </div>
-        <Image src={host + '/gamulpung-client/landingTile.svg'} alt="tile" width={400} height={800} />
+        <Image src={host + '/landingTile.svg'} alt="tile" width={400} height={800} />
       </div>
     </div>
   );
