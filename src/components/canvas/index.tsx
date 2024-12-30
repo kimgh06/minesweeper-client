@@ -135,13 +135,18 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     };
   }, []);
 
+  /** Check if the tile has been opened */
+  const checkTileHasOpened = (tile: string) => {
+    return !['F', 'C'].some(c => tile.includes(c));
+  };
+
   /**
    * General Click Event Handler
    * @param relativeTileX x position of clicked tile
    * @param relativetileY y position of clicked tile
    * @returns void
    * */
-  const moveCursor = (relativeTileX: number, relativetileY: number) => {
+  const moveCursor = (relativeTileX: number, relativetileY: number, clickedX: number, clickedY: number, type: 'GENERAL_CLICK' | 'SPECIAL_CLICK') => {
     if (movementInterval.current) return;
     let index = 0;
     const paths = findPathUsingAStar(relativeX, relativeY, relativeTileX, relativetileY);
@@ -157,9 +162,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         if (!tileCanvasRef.current || !interactionCanvasRef.current || !otherCursorsRef.current) return;
         const currentRefs = [tileCanvasRef.current, interactionCanvasRef.current, otherCursorsRef.current];
         if (countFrame >= 1) {
-          for (const canvas of currentRefs) {
-            canvas.style.transform = '0'; // reset transform
-          }
+          for (const canvas of currentRefs) canvas.style.transform = '0'; // reset transform
           clearInterval(animation);
           return;
         }
@@ -171,6 +174,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
     movementInterval.current = setInterval(() => {
       if (++index >= paths.length) {
+        clickEvent(clickedX, clickedY, type);
         setPaths([]);
         cancelCurrentMovement();
         return;
@@ -230,11 +234,32 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       setCachingTiles(tiles);
     }
 
-    if (clickType === 'GENERAL_CLICK' && !(clickedTileContent?.includes('F') || clickedTileContent?.includes('C'))) {
-      moveCursor(tileArrayX, tileArrayY);
-    }
+    const { x, y } = findOpenedNeighbors(tileArrayX, tileArrayY);
+    moveCursor(x, y, tileX, tileY, clickType);
     clickEvent(tileX, tileY, clickType);
     return;
+  };
+
+  const findOpenedNeighbors = (x: number, y: number) => {
+    const directions = [
+      [0, 0], //center
+      [-1, 0], // left
+      [0, -1], // up
+      [0, 1], // down
+      [1, 0], // right
+      [-1, -1], // left-up
+      [-1, 1], // left-down
+      [1, -1], // right-up
+      [1, 1], // right-down
+    ]; // 8-directional neighbors
+    for (const [dx, dy] of directions) {
+      const [nx, ny] = [x + dx, y + dy];
+      if (ny >= 0 && ny < tiles.length && nx >= 0 && nx < tiles[ny].length) {
+        const tile = tiles[ny][nx];
+        if (checkTileHasOpened(tile)) return { x: nx, y: ny };
+      }
+    }
+    return { x: Infinity, y: Infinity };
   };
 
   /**
@@ -299,7 +324,7 @@ const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const grid = [...tiles.map(row => [...row.map(() => null)])] as (TileNode | null)[][];
     tiles.forEach((row, i) => {
       row.forEach((tile, j) => {
-        if (!['F', 'C'].some(c => tile?.includes(c))) grid[i][j] = new TileNode(j, i);
+        if (checkTileHasOpened(tile)) grid[i][j] = new TileNode(j, i);
       });
     });
 
