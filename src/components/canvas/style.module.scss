@@ -71,32 +71,17 @@
   0% {
     transform: translate(0, 0);
   }
-  10% {
-    transform: translate($vibration, $vibration);
-  }
   20% {
-    transform: translate(-$vibration, -$vibration);
-  }
-  30% {
-    transform: translate($vibration, -$vibration);
+    transform: translate($vibration, $vibration);
   }
   40% {
-    transform: translate(-$vibration, $vibration);
-  }
-  50% {
-    transform: translate($vibration, $vibration);
-  }
-  60% {
     transform: translate(-$vibration, -$vibration);
   }
-  70% {
+  60% {
     transform: translate($vibration, -$vibration);
   }
   80% {
     transform: translate(-$vibration, $vibration);
-  }
-  90% {
-    transform: translate($vibration, $vibration);
   }
   100% {
     transform: translate(0, 0);
@@ -104,5 +89,5 @@
 }
 
 .vibration {
-  animation: vibration 1s linear;
+  animation: vibration 0.1s ease 7;
 }
